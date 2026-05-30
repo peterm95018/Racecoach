@@ -211,14 +211,14 @@ def build_findings(metrics: list[SegmentMetric]):
             reasons.append(f"peak braking only {m.peak_decel_g:.2f}G")
         if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -3:
             score += abs(m.min_speed_delta_mph) * 0.4
-            reasons.append(f"minimum speed {abs(m.min_speed_delta_mph):.1f} mph below reference")
+            reasons.append(f"minimum speed {(abs(m.min_speed_delta_mph) if m.min_speed_delta_mph is not None else 0):.1f} mph below reference")
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -3:
             score += abs(m.exit_speed_delta_mph) * 0.35
-            reasons.append(f"exit speed {abs(m.exit_speed_delta_mph):.1f} mph below reference")
+            reasons.append(f"exit speed {(abs(m.exit_speed_delta_mph) if m.exit_speed_delta_mph is not None else 0):.1f} mph below reference")
         if m.time_delta is not None and m.time_delta > 0.15:
             score += m.time_delta * 4.0
             reasons.append(f"{m.time_delta:.2f}s slower than reference")
-        if score > 0 and abs(m.time_delta) >= MIN_OPPORTUNITY_DELTA:
+        if score > 0 and m.time_delta is not None and abs(m.time_delta) >= MIN_OPPORTUNITY_DELTA:
             findings.append({"score": score, "segment": m, "reasons": reasons, "coaching": coach_text(m)})
     return sorted(findings, key=lambda x: x["score"], reverse=True)
 
@@ -230,9 +230,9 @@ def coach_text(m: SegmentMetric) -> str:
         return f"{m.name} at {t}: this segment gained {abs(m.time_delta):.2f}s vs reference. Keep the approach."
     if m.time_delta is not None and m.time_delta > 0.15:
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-            return f"{m.name} at {t}: largest opportunity is exit commitment. You lost {m.time_delta:.2f}s and exited {abs(m.exit_speed_delta_mph):.1f} mph slower than reference. Open the exit earlier and stay on throttle."
+            return f"{m.name} at {t}: largest opportunity is exit commitment. You lost {m.time_delta:.2f}s and exited {(abs(m.exit_speed_delta_mph) if m.exit_speed_delta_mph is not None else 0):.1f} mph slower than reference. Open the exit earlier and stay on throttle."
         if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-            return f"{m.name} at {t}: you over-slowed by {abs(m.min_speed_delta_mph):.1f} mph and lost {m.time_delta:.2f}s. Brake/lift more decisively, then carry more speed through the middle."
+            return f"{m.name} at {t}: you over-slowed by {(abs(m.min_speed_delta_mph) if m.min_speed_delta_mph is not None else 0):.1f} mph and lost {m.time_delta:.2f}s. Brake/lift more decisively, then carry more speed through the middle."
         return f"{m.name} at {t}: this was {m.time_delta:.2f}s slower than reference. Look for earlier throttle or less hesitation."
     if m.type in {"hairpin", "turnaround"}:
         return f"For the {m.name} at {t}, prioritize a cleaner V-shaped rotation: brake later with a firmer initial hit, get the car turned, then unwind and accelerate sooner."

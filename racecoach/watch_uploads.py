@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import time
+import traceback
 from pathlib import Path
 
 from watchdog.events import FileSystemEventHandler
@@ -39,7 +40,7 @@ class UploadHandler(FileSystemEventHandler):
             print(f"Processed file moved to: {dest}")
         except Exception as exc:
             print(f"ERROR analyzing {path.name}: {exc}")
-
+            traceback.print_exc()
 
 def main():
     parser = argparse.ArgumentParser()
