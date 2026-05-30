@@ -1,0 +1,27 @@
+#!/bin/bash
+
+read -p "Event name, example salinas_2026-05-17: " EVENT_NAME
+
+if [ -z "$EVENT_NAME" ]; then
+    echo "Event name required."
+    exit 1
+fi
+
+EVENT_DIR="events/$EVENT_NAME"
+
+mkdir -p "$EVENT_DIR/uploads"
+mkdir -p "$EVENT_DIR/reports"
+
+if [ ! -f "$EVENT_DIR/segments.yaml" ]; then
+    cp events/sample_event/segments.yaml "$EVENT_DIR/segments.yaml"
+fi
+
+echo "$EVENT_NAME" > active_event.txt
+
+echo ""
+echo "Active event set to:"
+echo "  $EVENT_NAME"
+echo ""
+echo "Folders ready:"
+echo "  $EVENT_DIR/uploads"
+echo "  $EVENT_DIR/reports"

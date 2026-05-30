@@ -1,0 +1,25 @@
+segments:
+  - name: Launch / first element
+    type: launch
+    start_distance: 0
+    end_distance: 80
+
+  - name: Long left-hander
+    type: sweeper
+    start_distance: 80
+    end_distance: 170
+
+  - name: Slalom / offsets
+    type: slalom
+    start_distance: 170
+    end_distance: 280
+
+  - name: Tight turnaround
+    type: hairpin
+    start_distance: 280
+    end_distance: 390
+
+  - name: Finish section
+    type: finish
+    start_distance: 390
+    end_distance: 520

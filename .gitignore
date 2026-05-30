@@ -1,0 +1,39 @@
+v0.1
+- Event-based architecture
+- Active event management
+- Interactive reference selection
+- Markdown reports
+- HTML reports
+- JSON summaries
+
+Planned
+- Fastest run detection
+- Event leaderboard
+- GPS trace comparison
+- Speed trace overlays
+- Coaching prioritization
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+
+# OS
+.DS_Store
+
+# Temporary files
+*.tmp
+
+# Generated reports
+events/*/reports/*.json
+events/*/reports/*.html
+events/*/reports/*.md
+
+# Uploads (large telemetry files)
+events/*/uploads/*.csv
+
+# Backup archives
+backups/*.tar.gz

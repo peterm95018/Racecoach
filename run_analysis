@@ -1,0 +1,77 @@
+#!/bin/bash
+
+ACTIVE_EVENT=$(cat active_event.txt)
+
+if [ -z "$ACTIVE_EVENT" ]; then
+    echo "No active event set. Run ./prep_event first."
+    exit 1
+fi
+
+EVENT_DIR="events/$ACTIVE_EVENT"
+UPLOAD_DIR="$EVENT_DIR/uploads"
+REPORTS_DIR="$EVENT_DIR/reports"
+
+if [ ! -d "$EVENT_DIR" ]; then
+    echo "Active event not found: $EVENT_DIR"
+    exit 1
+fi
+
+echo ""
+echo "Available CSV files:"
+echo ""
+
+mapfile -t files < <(find "$UPLOAD_DIR" -maxdepth 1 -type f -name "*.csv" | sort)
+
+if [ ${#files[@]} -eq 0 ]; then
+    echo "No CSV files found in $UPLOAD_DIR"
+    exit 1
+fi
+
+for i in "${!files[@]}"; do
+    printf "%2d) %s\n" "$((i+1))" "${files[$i]}"
+done
+
+echo ""
+read -p "Choose REFERENCE run: " ref_choice
+read -p "Choose ANALYSIS run: " analysis_choice
+
+if ! [[ "$ref_choice" =~ ^[0-9]+$ ]] || ! [[ "$analysis_choice" =~ ^[0-9]+$ ]]; then
+    echo "Invalid choice."
+    exit 1
+fi
+
+ref_index=$((ref_choice-1))
+analysis_index=$((analysis_choice-1))
+
+if [ "$ref_index" -lt 0 ] || [ "$ref_index" -ge "${#files[@]}" ]; then
+    echo "Reference choice out of range."
+    exit 1
+fi
+
+if [ "$analysis_index" -lt 0 ] || [ "$analysis_index" -ge "${#files[@]}" ]; then
+    echo "Analysis choice out of range."
+    exit 1
+fi
+
+REFERENCE_FILE="${files[$ref_index]}"
+ANALYSIS_FILE="${files[$analysis_index]}"
+
+echo ""
+echo "Reference:"
+echo "  $REFERENCE_FILE"
+echo ""
+echo "Analyzing:"
+echo "  $ANALYSIS_FILE"
+echo ""
+
+python3 -m racecoach.analyze_run \
+    "$ANALYSIS_FILE" \
+    --event "$EVENT_DIR" \
+    --reference "$REFERENCE_FILE" \
+    --reports "$REPORTS_DIR"
+
+echo ""
+echo "Latest report:"
+ls -t "$REPORTS_DIR"/*_report.md | head -1
+echo ""
+cat "$(ls -t "$REPORTS_DIR"/*_report.md | head -1)"
