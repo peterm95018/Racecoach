@@ -439,13 +439,25 @@ def write_report(
         lines += ["## Top Gains vs Reference", ""]
         if gains:
             for m in gains[:3]:
-                lines.append(f"- **{m.name}**: {m.time_delta:+.2f}s, min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}")
+                lines.append(
+                    f"- **{m.name}**: {m.time_delta:+.2f}s, "
+                    f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
+                    f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}, "
+                    f"throttle {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec "
+                    f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+                )        
         else:
             lines.append("- No faster segments vs reference.")
         lines += ["", "## Top Losses vs Reference", ""]
         if losses:
             for m in losses[:3]:
-                lines.append(f"- **{m.name}**: {m.time_delta:+.2f}s, min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}")
+                lines.append(
+                f"- **{m.name}**: {m.time_delta:+.2f}s, "
+                f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
+                f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}, "
+                f"throttle {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec "
+                f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+            )
         else:
             lines.append("- No slower segments vs reference.")
         lines.append("")
