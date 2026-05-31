@@ -27,6 +27,11 @@ class SegmentMetric:
     throttle_pickup_time: Optional[float]
     segment_distance: float
 
+    coast_time_s: float
+    throttle_pickup_time: Optional[float]
+    brake_start_time: Optional[float]
+    segment_distance: float
+
     reference_duration: Optional[float] = None
     reference_entry_speed_mph: Optional[float] = None
     reference_min_speed_mph: Optional[float] = None
@@ -34,7 +39,10 @@ class SegmentMetric:
     reference_peak_decel_g: Optional[float] = None
     reference_coast_time_s: Optional[float] = None
     reference_throttle_pickup_time: Optional[float] = None
+    reference_brake_start_time: Optional[float] = None
+
     throttle_pickup_delta_s: Optional[float] = None
+    brake_start_delta_s: Optional[float] = None
 
     time_delta: Optional[float] = None
     entry_speed_delta_mph: Optional[float] = None
@@ -197,14 +205,21 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
 
 
 
+    brake_start_time = None
+    braking = part[part["long_g"] < -0.20]
 
+    if len(braking):
+        brake_start_time = float(braking.iloc[0]["time_s"])
 
     return SegmentMetric(
         name=str(seg["name"]), type=str(seg.get("type", "segment")),
         start_time=float(part.iloc[0]["time_s"]), end_time=float(part.iloc[-1]["time_s"]),
         duration=float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"]),
         entry_speed_mph=float(entry), min_speed_mph=float(min_speed), exit_speed_mph=float(exit_),
-        peak_decel_g=float(peak_decel), coast_time_s=coast_time, throttle_pickup_time=throttle_pickup_time,
+        peak_decel_g=float(peak_decel),
+        coast_time_s=coast_time,
+        throttle_pickup_time=throttle_pickup_time,
+        brake_start_time=brake_start_time,
         segment_distance=float(part["distance"].iloc[-1] - part["distance"].iloc[0]),
     )
 
@@ -220,9 +235,15 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.reference_peak_decel_g = r.peak_decel_g
         m.reference_coast_time_s = r.coast_time_s
         m.reference_throttle_pickup_time = r.throttle_pickup_time
+        m.reference_brake_start_time = r.brake_start_time
         m.throttle_pickup_delta_s = (
             m.throttle_pickup_time - r.throttle_pickup_time
             if m.throttle_pickup_time is not None and r.throttle_pickup_time is not None
+            else None
+        )
+        m.brake_start_delta_s = (
+            m.brake_start_time - r.brake_start_time
+            if m.brake_start_time is not None and r.brake_start_time is not None
             else None
         )
 
@@ -498,8 +519,8 @@ def write_report(
     "",
     "## Segment Table",
     "",
-    "| Segment | Δ Time | Min Δ | Exit Δ | Thr Δ | Notes |",
-    "|---|---:|---:|---:|---:|---|",
+    "| Segment | Δ Time | Min Δ | Exit Δ | Brake Δ | Thr Δ | Notes |",
+    "|---|---:|---:|---:|---:|---:|---|",
 ]
     for m in metrics:
         notes = []
@@ -516,6 +537,12 @@ def write_report(
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
             notes.append("exit speed down")
 
+        if m.brake_start_delta_s is not None:
+            if m.brake_start_delta_s > 0.20:
+                notes.append("braked later")
+            elif m.brake_start_delta_s < -0.20:
+                notes.append("braked earlier")
+
         if m.throttle_pickup_delta_s is not None:
             if abs(m.throttle_pickup_delta_s) > 2.0:
                 notes.append("throttle delta suspect")
@@ -525,12 +552,11 @@ def write_report(
                 notes.append("throttle earlier")
 
         lines.append(
-            f"| {m.name} | {delta_str(m.time_delta)} | "
-            f"{delta_str(m.min_speed_delta_mph, 1)} | "
             f"{delta_str(m.exit_speed_delta_mph, 1)} | "
+            f"{delta_str(m.brake_start_delta_s, 2)} | "
             f"{delta_str(m.throttle_pickup_delta_s, 2)} | "
             f"{', '.join(notes)} |"
-    )
+        )
 
         report_text = "\n".join(lines)
 
