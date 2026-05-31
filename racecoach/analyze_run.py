@@ -489,10 +489,12 @@ def write_report(
             notes.append("exit speed down")
 
         if m.throttle_pickup_delta_s is not None:
-            if m.throttle_pickup_delta_s > 0.25:
-                notes.append("throttle later")
-            elif m.throttle_pickup_delta_s < -0.25:
-                notes.append("throttle earlier")
+            if abs(m.throttle_pickup_delta_s) > 2.0:
+            notes.append("throttle delta suspect")
+        elif m.throttle_pickup_delta_s > 0.25:
+             notes.append("throttle later")
+          elif m.throttle_pickup_delta_s < -0.25:
+             notes.append("throttle earlier")
 
         lines.append(
             f"| {m.name} | {delta_str(m.time_delta)} | "
