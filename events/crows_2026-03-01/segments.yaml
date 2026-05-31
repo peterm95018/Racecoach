@@ -1,0 +1,30 @@
+segments:
+  - name: Launch to intersection
+    type: launch
+    start_distance: 0
+    end_distance: 180
+
+  - name: Left sweep to north runway
+    type: sweeper
+    start_distance: 180
+    end_distance: 380
+
+  - name: North runway acceleration
+    type: segment
+    start_distance: 380
+    end_distance: 620
+
+  - name: Cross-over transition
+    type: transition
+    start_distance: 620
+    end_distance: 820
+
+  - name: Westbound section
+    type: segment
+    start_distance: 820
+    end_distance: 1040
+
+  - name: Turnaround and finish
+    type: hairpin
+    start_distance: 1040
+    end_distance: 1196

@@ -20,6 +20,8 @@
       "reference_exit_speed_mph": 47.18511360782739,
       "reference_peak_decel_g": -0.14018,
       "reference_coast_time_s": 0.8450000000000273,
+      "reference_throttle_pickup_time": 0.9080000000000155,
+      "throttle_pickup_delta_s": 0.020000000000095497,
       "time_delta": 0.07799999999991769,
       "entry_speed_delta_mph": 0.005837683258221874,
       "min_speed_delta_mph": 0.011184681460499998,
@@ -46,6 +48,8 @@
       "reference_exit_speed_mph": 46.398265615605226,
       "reference_peak_decel_g": -0.27591,
       "reference_coast_time_s": 0.0,
+      "reference_throttle_pickup_time": 10.867000000000019,
+      "throttle_pickup_delta_s": null,
       "time_delta": -0.1370000000000573,
       "entry_speed_delta_mph": 0.42253102216520233,
       "min_speed_delta_mph": 1.7425733715459018,
@@ -72,6 +76,8 @@
       "reference_exit_speed_mph": 38.58962749459014,
       "reference_peak_decel_g": -0.19652,
       "reference_coast_time_s": 0.0,
+      "reference_throttle_pickup_time": null,
+      "throttle_pickup_delta_s": null,
       "time_delta": 0.0769999999998845,
       "entry_speed_delta_mph": -1.9178295526749238,
       "min_speed_delta_mph": 0.017895490336798048,
@@ -98,6 +104,8 @@
       "reference_exit_speed_mph": 33.84208735758439,
       "reference_peak_decel_g": -0.69219,
       "reference_coast_time_s": 0.0,
+      "reference_throttle_pickup_time": 22.602000000000032,
+      "throttle_pickup_delta_s": -0.8739999999999668,
       "time_delta": -0.37700000000000955,
       "entry_speed_delta_mph": 4.592089466863435,
       "min_speed_delta_mph": 2.753668575575098,
@@ -124,6 +132,8 @@
       "reference_exit_speed_mph": 40.989494319850984,
       "reference_peak_decel_g": -0.61699,
       "reference_coast_time_s": 0.0,
+      "reference_throttle_pickup_time": 22.91700000000003,
+      "throttle_pickup_delta_s": 6.25100000000009,
       "time_delta": 0.38599999999996726,
       "entry_speed_delta_mph": 1.886801386772234,
       "min_speed_delta_mph": 1.458750894804247,
@@ -149,14 +159,6 @@
         "peak braking only -0.29G"
       ],
       "coaching": "In the Long left-hander at 00:07.316, protect momentum. Use one decisive brake/lift, avoid over-slowing, and carry earlier maintenance throttle."
-    },
-    {
-      "score": 1.1779999999998836,
-      "segment": "Launch / first element",
-      "reasons": [
-        "coasted 0.59s"
-      ],
-      "coaching": "At Launch / first element around 00:00.000, reduce hesitation and prioritize earlier throttle commitment."
     }
   ]
 }
