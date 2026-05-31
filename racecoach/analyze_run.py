@@ -159,9 +159,16 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     throttle_pickup_time = None
     if part["throttle"].notna().any():
         min_idx = part["speed_mph"].idxmin()
-        pickup = part.loc[min_idx:][part.loc[min_idx:]["throttle"] > 20]
-        if len(pickup):
-            throttle_pickup_time = float(pickup.iloc[0]["time_s"])
+        after_min = part.loc[min_idx:].reset_index(drop=True)
+
+        sustained_samples = 3
+        throttle_threshold = 20
+
+    for i in range(0, len(after_min) - sustained_samples + 1):
+        window = after_min.iloc[i : i + sustained_samples]
+        if (window["throttle"] > throttle_threshold).all():
+            throttle_pickup_time = float(window.iloc[0]["time_s"])
+            break
 
 
 
