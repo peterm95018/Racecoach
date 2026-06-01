@@ -206,7 +206,12 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
 
 
     brake_start_time = None
-    braking = part[part["long_g"] < -0.20]
+
+    min_idx = part["speed_mph"].idxmin()
+
+    before_min = part.loc[:min_idx]
+
+    braking = before_min[before_min["long_g"] < -0.20]
 
     if len(braking):
         brake_start_time = float(braking.iloc[0]["time_s"])
