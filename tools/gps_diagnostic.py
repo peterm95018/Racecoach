@@ -32,27 +32,40 @@ def main():
     uploads = Path("events/gglc_2025-11-01/uploads")
 
     lap4 = normalize_columns(
-        read_racechrono_csv(uploads / "session_20251101_120901_gglc_11012025_lap4_v3.csv")
+        read_racechrono_csv(
+            uploads / "session_20251101_120901_gglc_11012025_lap4_v3.csv"
+        )
     )
+
     lap5 = normalize_columns(
-        read_racechrono_csv(uploads / "session_20251101_121758_gglc_11012025_lap5_v3.csv")
+        read_racechrono_csv(
+            uploads / "session_20251101_121758_gglc_11012025_lap5_v3.csv"
+        )
     )
 
-    # Start with Lap 5 finish as a known GPS anchor.
-    anchor = lap5.iloc[-1]
-    lat = anchor["latitude"]
-    lon = anchor["longitude"]
+    anchors = [
+        ("25%", lap5.iloc[len(lap5) // 4]),
+        ("50%", lap5.iloc[len(lap5) // 2]),
+        ("75%", lap5.iloc[(3 * len(lap5)) // 4]),
+        ("100%", lap5.iloc[-1]),
+    ]
 
-    print(f"Anchor lat/lon: {lat:.7f}, {lon:.7f}")
+    for label, anchor in anchors:
+        lat = anchor["latitude"]
+        lon = anchor["longitude"]
 
-    for name, df in [("lap4", lap4), ("lap5", lap5)]:
-        row, err_m = nearest_sample(df, lat, lon)
-        print(f"\n{name}")
-        print(f"nearest error: {err_m:.2f} m")
-        print(f"time: {row['time_s']:.3f}")
-        print(f"distance: {row['distance']:.2f}")
-        print(f"speed: {row['speed_mph']:.1f} mph")
-        print(f"throttle: {row['throttle']:.1f}")
+        print(f"\n=== {label} Anchor ===")
+        print(f"GPS: {lat:.7f}, {lon:.7f}")
+
+        for name, df in [("lap4", lap4), ("lap5", lap5)]:
+            row, err_m = nearest_sample(df, lat, lon)
+
+            print(f"\n{name}")
+            print(f"nearest error: {err_m:.2f} m")
+            print(f"time: {row['time_s']:.3f}")
+            print(f"distance: {row['distance']:.2f}")
+            print(f"speed: {row['speed_mph']:.1f} mph")
+            print(f"throttle: {row['throttle']:.1f}")
 
 
 if __name__ == "__main__":
