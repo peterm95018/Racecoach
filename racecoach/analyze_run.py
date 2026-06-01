@@ -298,25 +298,75 @@ def build_findings(metrics: list[SegmentMetric]):
 
 def coach_text(m: SegmentMetric) -> str:
     t = fmt_time(m.start_time)
+
     if m.time_delta is not None and m.time_delta < -0.15:
-        if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 2:
-            return f"{m.name} at {t}: this was a gain. You carried {m.min_speed_delta_mph:+.1f} mph more minimum speed and gained {abs(m.time_delta):.2f}s vs reference. Keep this commitment."
-        return f"{m.name} at {t}: this segment gained {abs(m.time_delta):.2f}s vs reference. Keep the approach."
+        if (
+            m.brake_start_delta_s is not None
+            and m.brake_start_delta_s < -0.20
+            and m.min_speed_delta_mph is not None
+            and m.min_speed_delta_mph > 1
+            and m.exit_speed_delta_mph is not None
+            and m.exit_speed_delta_mph > 1
+        ):
+            return (
+                f"{m.name} at {t}: this was a gain. You braked "
+                f"{abs(m.brake_start_delta_s):.2f}s earlier, carried "
+                f"{m.min_speed_delta_mph:+.1f} mph more minimum speed, "
+                f"and exited {m.exit_speed_delta_mph:+.1f} mph faster. "
+                "This suggests the earlier setup improved rotation and exit."
+            )
+
+        if m.throttle_pickup_delta_s is not None and m.throttle_pickup_delta_s < -0.25:
+            return (
+                f"{m.name} at {t}: this was a gain. You picked up throttle "
+                f"{abs(m.throttle_pickup_delta_s):.2f}s earlier and gained "
+                f"{abs(m.time_delta):.2f}s vs reference."
+            )
+
+        if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 1:
+            return (
+                f"{m.name} at {t}: this was a gain. You carried "
+                f"{m.min_speed_delta_mph:+.1f} mph more minimum speed and gained "
+                f"{abs(m.time_delta):.2f}s vs reference."
+            )
+
+        return (
+            f"{m.name} at {t}: this segment gained "
+            f"{abs(m.time_delta):.2f}s vs reference. Keep the approach."
+        )
+
     if m.time_delta is not None and m.time_delta > 0.15:
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-            return f"{m.name} at {t}: largest opportunity is exit commitment. You lost {m.time_delta:.2f}s and exited {(abs(m.exit_speed_delta_mph) if m.exit_speed_delta_mph is not None else 0):.1f} mph slower than reference. Open the exit earlier and stay on throttle."
+            return (
+                f"{m.name} at {t}: the loss is exit-speed related. You lost "
+                f"{m.time_delta:.2f}s and exited "
+                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
+                "Prioritize the exit line and throttle commitment."
+            )
+
         if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-            return f"{m.name} at {t}: you over-slowed by {(abs(m.min_speed_delta_mph) if m.min_speed_delta_mph is not None else 0):.1f} mph and lost {m.time_delta:.2f}s. Brake/lift more decisively, then carry more speed through the middle."
-        return f"{m.name} at {t}: this was {m.time_delta:.2f}s slower than reference. Look for earlier throttle or less hesitation."
-    if m.type in {"hairpin", "turnaround"}:
-        return f"For the {m.name} at {t}, prioritize a cleaner V-shaped rotation: brake later with a firmer initial hit, get the car turned, then unwind and accelerate sooner."
-    if m.type == "sweeper":
-        return f"In the {m.name} at {t}, protect momentum. Use one decisive brake/lift, avoid over-slowing, and carry earlier maintenance throttle."
-    if m.type == "slalom":
-        return f"In the {m.name} at {t}, commit earlier to the first cone and reduce hesitation between transitions."
-    if m.type == "finish":
-        return f"In the {m.name} at {t}, stay committed and avoid unnecessary lift before timing."
-    return f"At {m.name} around {t}, reduce hesitation and prioritize earlier throttle commitment."
+            return (
+                f"{m.name} at {t}: you lost {m.time_delta:.2f}s and carried "
+                f"{abs(m.min_speed_delta_mph):.1f} mph less minimum speed. "
+                "Focus on the setup that lets the car rotate without over-slowing."
+            )
+
+        if m.throttle_pickup_delta_s is not None and m.throttle_pickup_delta_s > 0.25:
+            return (
+                f"{m.name} at {t}: throttle pickup was "
+                f"{m.throttle_pickup_delta_s:.2f}s later than reference and the "
+                f"segment lost {m.time_delta:.2f}s. Focus on earlier commitment."
+            )
+
+        return (
+            f"{m.name} at {t}: this was {m.time_delta:.2f}s slower than reference. "
+            "Check whether the loss came from setup, exit speed, or throttle delay."
+        )
+
+    return (
+        f"{m.name} at {t}: no strong coaching conclusion. Review the deltas before "
+        "changing the driving approach."
+    )
 
 def explain_delta(m: SegmentMetric) -> str:
     reasons = []
