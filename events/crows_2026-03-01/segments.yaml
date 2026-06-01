@@ -1,3 +1,6 @@
+timed_start_distance: 0
+timed_finish_distance: 1196
+
 segments:
   - name: Launch to intersection
     type: launch
@@ -24,7 +27,12 @@ segments:
     start_distance: 820
     end_distance: 1040
 
-  - name: Turnaround and finish
+  - name: Final turnaround
     type: hairpin
     start_distance: 1040
+    end_distance: 1120
+
+  - name: Finish acceleration
+    type: finish
+    start_distance: 1120
     end_distance: 1196
