@@ -91,6 +91,8 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     longg_col = pick_existing(df, ["longitudinal_acc"])
     latg_col = pick_existing(df, ["lateral_acc"])
     throttle_col = pick_existing(df, ["relative_throttle_pos"])
+    lat_col = pick_existing(df, ["latitude"])
+    lon_col = pick_existing(df, ["longitude"])
     if time_col:
         out["time_s"] = parse_numeric(df[time_col])
         out["time_s"] = out["time_s"] - out["time_s"].iloc[0]
@@ -122,8 +124,10 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
         out["long_g"] = (speed_mps.diff() / dt / 9.80665).replace([np.inf, -np.inf], np.nan)
     out["lat_g"] = parse_numeric(df[latg_col]) if latg_col else np.nan
     out["throttle"] = parse_numeric(df[throttle_col]) if throttle_col else np.nan
+    out["latitude"] = parse_numeric(df[lat_col]) if lat_col else np.nan
+    out["longitude"] = parse_numeric(df[lon_col]) if lon_col else np.nan
     out = out.replace([np.inf, -np.inf], np.nan)
-    for col in ["time_s", "distance", "speed_mph", "long_g", "lat_g", "throttle"]:
+    for col in ["time_s", "distance", "speed_mph", "long_g", "lat_g", "throttle", "latitude", "longitude"]:
         out[col] = out[col].interpolate().ffill().bfill()
     return out.dropna(subset=["time_s", "distance", "speed_mph"]).reset_index(drop=True)
 
