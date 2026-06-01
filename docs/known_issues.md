@@ -16,4 +16,30 @@ Future solution:
 - GPS trace segmentation
 - Course markers
 
+Known Issues
+
+Segment Timing May Not Match Official Results
+
+Current segment timing uses distance traveled.
+
+This can produce:
+
+* incorrect gain/loss attribution
+* segment deltas that do not sum to official run deltas
+* misleading coaching recommendations
+
+Symptoms:
+
+* segment gains exceeding total run gains
+* opposite-sign deltas
+* anomalous turnaround behavior
+
+Status:
+
+Under investigation.
+
+Likely solution:
+
+GPS-position-based segmentation.
+
 
