@@ -236,3 +236,13 @@ Potential approaches:
 4. RaceChrono split markers
 
 Distance-based segmentation remains useful for initial experimentation but should not be considered authoritative.
+
+
+
+GPS Anchor Workflow
+
+1. Export RaceChrono CSV
+2. Preserve latitude/longitude
+3. Export anchor points from reference lap
+4. Build segments from anchor pairs
+5. Compare telemetry between anchor locations
