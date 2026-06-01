@@ -1,0 +1,27 @@
+reference_csv: session_20251101_121758_gglc_11012025_lap5_v3.csv
+anchors:
+  launch_start:
+    time_s: 0.0
+    distance: 0.0
+    latitude: 36.5822688
+    longitude: -121.756707
+  quarter_course:
+    time_s: 9.582000000000022
+    distance: 115.93165
+    latitude: 36.5815152
+    longitude: -121.7560972
+  half_course:
+    time_s: 19.275000000000006
+    distance: 283.16204999999997
+    latitude: 36.5809175
+    longitude: -121.7553847
+  three_quarter_course:
+    time_s: 28.831000000000017
+    distance: 458.01500000000004
+    latitude: 36.5812876
+    longitude: -121.756173
+  finish:
+    time_s: 38.485000000000014
+    distance: 609.4558000000001
+    latitude: 36.5805648
+    longitude: -121.754827
