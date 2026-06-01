@@ -318,30 +318,30 @@ def coach_text(m: SegmentMetric) -> str:
         return f"In the {m.name} at {t}, stay committed and avoid unnecessary lift before timing."
     return f"At {m.name} around {t}, reduce hesitation and prioritize earlier throttle commitment."
 
-    def explain_delta(m: SegmentMetric) -> str:
-        reasons = []
+def explain_delta(m: SegmentMetric) -> str:
+    reasons = []
 
-        if m.brake_start_delta_s is not None:
-            if m.brake_start_delta_s < -0.20:
-                reasons.append(
-                    f"braked {abs(m.brake_start_delta_s):.2f}s earlier"
-                )
-            elif m.brake_start_delta_s > 0.20:
-                reasons.append(
-                    f"braked {m.brake_start_delta_s:.2f}s later"
-                )
-
-        if m.min_speed_delta_mph is not None and abs(m.min_speed_delta_mph) > 1:
+    if m.brake_start_delta_s is not None:
+        if m.brake_start_delta_s < -0.20:
             reasons.append(
-                f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph"
+                f"braked {abs(m.brake_start_delta_s):.2f}s earlier"
+            )
+        elif m.brake_start_delta_s > 0.20:
+            reasons.append(
+                f"braked {m.brake_start_delta_s:.2f}s later"
             )
 
-        if m.exit_speed_delta_mph is not None and abs(m.exit_speed_delta_mph) > 1:
-            reasons.append(
-                f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph"
-            )
+    if m.min_speed_delta_mph is not None and abs(m.min_speed_delta_mph) > 1:
+        reasons.append(
+            f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph"
+        )
 
-        return "; ".join(reasons)
+    if m.exit_speed_delta_mph is not None and abs(m.exit_speed_delta_mph) > 1:
+        reasons.append(
+            f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph"
+        )
+
+    return "; ".join(reasons)
 
 def fmt_time(seconds: float) -> str:
     minutes = int(seconds // 60)
