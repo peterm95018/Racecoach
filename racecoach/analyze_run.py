@@ -552,6 +552,9 @@ def write_report(
                 notes.append("throttle earlier")
 
         lines.append(
+            f"| {m.name} | "
+            f"{delta_str(m.time_delta, 2)} | "
+            f"{delta_str(m.min_speed_delta_mph, 1)} | "
             f"{delta_str(m.exit_speed_delta_mph, 1)} | "
             f"{delta_str(m.brake_start_delta_s, 2)} | "
             f"{delta_str(m.throttle_pickup_delta_s, 2)} | "
