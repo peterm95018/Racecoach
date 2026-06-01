@@ -1,0 +1,18 @@
+timed_start_distance: 0
+timed_finish_distance: 600
+
+segments:
+  - name: Launch
+    type: launch
+    start_distance: 0
+    end_distance: 200
+
+  - name: Middle course
+    type: segment
+    start_distance: 200
+    end_distance: 400
+
+  - name: Finish section
+    type: finish
+    start_distance: 400
+    end_distance: 600
