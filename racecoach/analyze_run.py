@@ -585,22 +585,30 @@ def write_report(
         for i, f in enumerate(findings[:3], start=1):
             m = f["segment"]
             lines += [
-                f"### {i}. {m.name} — {fmt_time(m.start_time)}",
-                "",
-                f["coaching"],
-                f"- Analysis: {explain_delta(m)}",
-                "",
-                "**Telemetry:**",
-                f"- Throttle pickup: {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec ({delta_str(m.throttle_pickup_delta_s, 2)})",
-                f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
-                f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
-                f"- Minimum speed: {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}",
-                f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
-                f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
-                f"- Coast time: {fmt_ref(m.coast_time_s, m.reference_coast_time_s, m.coast_time_delta_s, 'sec', 2)}",
-                f"- Why flagged: {', '.join(f['reasons'])}",
-                "",
-            ]
+            f"### {i}. {m.name} — {fmt_time(m.start_time)}",
+            "",
+            f["coaching"],
+            f"- Analysis: {explain_delta(m)}",
+            "",
+            "**Telemetry:**",
+            f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
+            f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
+            f"- Minimum speed: {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}",
+            f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
+            f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
+            f"- Coast time: {fmt_ref(m.coast_time_s, m.reference_coast_time_s, m.coast_time_delta_s, 'sec', 2)}",
+            f"- Why flagged: {', '.join(f['reasons'])}",
+        ]
+
+            if m.throttle_pickup_time is not None or m.reference_throttle_pickup_time is not None:
+                lines.append(
+                    f"- Throttle pickup: {fmt_optional(m.throttle_pickup_time)} vs "
+                    f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
+                    f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+                )
+
+    lines.append("")
+    
     lines += [
     "",
     "## Segment Table",
@@ -608,6 +616,7 @@ def write_report(
     "| Segment | Δ Time | Min Δ | Exit Δ | Brake Δ | Thr Δ | Notes |",
     "|---|---:|---:|---:|---:|---:|---|",
 ]
+
     for m in metrics:
         notes = []
             
