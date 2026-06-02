@@ -1,0 +1,5 @@
+segmentation_mode: reference_path
+
+reference_path:
+  reference_csv: session_20251101_121758_gglc_11012025_lap5_v3.csv
+  finish_position_m: 552
