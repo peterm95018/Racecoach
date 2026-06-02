@@ -9,6 +9,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import yaml
+from racecoach.event_config import load_event_config
 
 MPS_TO_MPH = 2.2369362921
 
@@ -265,15 +266,13 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
     df = normalize_columns(read_racechrono_csv(csv_path))
-    segments = load_segments(event_dir)
-    metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
-    ref_path = reference_path or (event_dir / "reference.csv")
-    if ref_path.exists():
-        ref_df = normalize_columns(read_racechrono_csv(ref_path))
-        ref_metrics = {m.name: m for seg in segments if (m := metrics_for_segment(ref_df, seg))}
-        attach_reference_metrics(metrics, ref_metrics)
-    findings = build_findings(metrics)
-    return df, metrics, findings
+
+    config = load_event_config(event_dir)
+
+    print(
+        f"Segmentation mode: "
+        f"{config.get('segmentation_mode', 'distance')}"
+    )
 
 def build_findings(metrics: list[SegmentMetric]):
     findings = []
