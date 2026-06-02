@@ -11,6 +11,11 @@ import pandas as pd
 import yaml
 from racecoach.event_config import load_event_config
 
+from racecoach.reference_path import (
+    add_gps_path_position,
+    project_lap_to_reference,
+)
+
 MPS_TO_MPH = 2.2369362921
 
 @dataclass
@@ -268,11 +273,14 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
     df = normalize_columns(read_racechrono_csv(csv_path))
 
     config = load_event_config(event_dir)
+    mode = config.get("segmentation_mode", "distance")
 
-    print(
-        f"Segmentation mode: "
-        f"{config.get('segmentation_mode', 'distance')}"
-    )
+    print(f"Segmentation mode: {mode}")
+
+    if mode == "reference_path":
+        print("Reference path mode selected, but production metrics still use distance segments.")
+
+    segments = load_segments(event_dir)
 
     segments = load_segments(event_dir)
     metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
