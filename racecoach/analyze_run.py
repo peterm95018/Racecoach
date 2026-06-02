@@ -274,6 +274,21 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
         f"{config.get('segmentation_mode', 'distance')}"
     )
 
+    segments = load_segments(event_dir)
+    metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
+
+    ref_path = reference_path or (event_dir / "reference.csv")
+    if ref_path.exists():
+        ref_df = normalize_columns(read_racechrono_csv(ref_path))
+        ref_metrics = {
+            m.name: m
+            for seg in segments
+            if (m := metrics_for_segment(ref_df, seg))
+        }
+        attach_reference_metrics(metrics, ref_metrics)
+
+    findings = build_findings(metrics)
+    return df, metrics, findings
 def build_findings(metrics: list[SegmentMetric]):
     findings = []
     MIN_OPPORTUNITY_DELTA = 0.10
