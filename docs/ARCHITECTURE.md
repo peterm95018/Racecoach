@@ -246,3 +246,18 @@ GPS Anchor Workflow
 3. Export anchor points from reference lap
 4. Build segments from anchor pairs
 5. Compare telemetry between anchor locations
+
+Reference Path Segmentation
+
+Current:
+- Distance-based segments
+
+Experimental:
+- Reference path projection
+
+Future:
+1. Load reference lap
+2. Build reference path
+3. Project lap onto path
+4. Calculate course position
+5. Compute segment metrics by course position

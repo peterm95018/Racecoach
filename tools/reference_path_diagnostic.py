@@ -7,61 +7,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from racecoach.analyze_run import read_racechrono_csv, normalize_columns
 
 
-def haversine_m(lat1, lon1, lat2, lon2):
-    r = 6371000.0
-    p1 = math.radians(lat1)
-    p2 = math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lon2 - lon1)
-
-    a = (
-        math.sin(dp / 2) ** 2
-        + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    from racecoach.reference_path import (
+        add_gps_path_position,
+        project_lap_to_reference,
     )
-    return 2 * r * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-
-def add_gps_path_position(df):
-    positions = [0.0]
-    total = 0.0
-
-    for i in range(1, len(df)):
-        total += haversine_m(
-            df.iloc[i - 1]["latitude"],
-            df.iloc[i - 1]["longitude"],
-            df.iloc[i]["latitude"],
-            df.iloc[i]["longitude"],
-        )
-        positions.append(total)
-
-    df = df.copy()
-    df["gps_path_m"] = positions
-    return df
-
-
-def nearest_reference_position(ref_df, lat, lon):
-    best_idx = None
-    best_dist = float("inf")
-
-    for idx, row in ref_df.iterrows():
-        d = haversine_m(lat, lon, row["latitude"], row["longitude"])
-        if d < best_dist:
-            best_idx = idx
-            best_dist = d
-
-    return float(ref_df.loc[best_idx, "gps_path_m"]), best_dist
-
-
-def project_lap_to_reference(lap_df, ref_df):
-    projected = []
-
-    for _, row in lap_df.iterrows():
-        ref_pos, err = nearest_reference_position(
-            ref_df,
-            row["latitude"],
-            row["longitude"],
-        )
-        projected.append((ref_pos, err))
 
     lap_df = lap_df.copy()
     lap_df["ref_pos_m"] = [x[0] for x in projected]
