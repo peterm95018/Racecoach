@@ -514,10 +514,20 @@ def write_report(
             reverse=True
         )
 
+        summary_gains = [
+            m for m in gains
+            if m.name not in {"Start", "Launch"}
+        ]
+
+        summary_losses = [
+            m for m in losses
+            if m.name not in {"Start", "Launch"}
+        ]
+
         lines += ["## Run Summary", ""]
 
-        if gains:
-            g = gains[0]
+        if summary_gains:
+            g = summary_gains[0]
 
             lines.append(
                 f"Biggest gain: **{g.name}** ({g.time_delta:+.2f}s)"
@@ -535,8 +545,8 @@ def write_report(
 
             lines.append("")
 
-        if losses:
-            l = losses[0]
+        if summary_losses:
+            l = summary_losses[0]
 
             lines.append(
                 f"Biggest loss: **{l.name}** ({l.time_delta:+.2f}s)"
@@ -628,18 +638,19 @@ def write_report(
         else:
             lines.append("- No faster segments vs reference lap.")
         lines += ["", "## Top Losses vs Reference Lap", ""]
-        if losses:
-            for m in losses[:3]:
-                lines.append(
-                f"- **{m.name}**: {m.time_delta:+.2f}s, "
-                f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
-                f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}, "
-                f"throttle {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec "
-                f"({delta_str(m.throttle_pickup_delta_s, 2)})"
-            )
-        else:
-            lines.append("- No slower segments vs reference lap.")
-        lines.append("")
+
+        coaching_losses = [
+            m for m in losses
+            if m.name not in {"Start", "Launch"}
+        ]
+
+        lines += ["", "## Top Losses vs Reference Lap", ""]
+            if coaching_losses:
+                for m in coaching_losses[:3]:
+            else:
+                lines.append("- No slower segments vs reference lap.")
+            lines.append("")
+
     lines += ["## Top 3 Opportunities", ""]
 
     opportunities = [
