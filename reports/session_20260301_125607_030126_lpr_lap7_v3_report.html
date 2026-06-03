@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RaceCoach Report</title>
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    line-height: 1.45;
+}
+pre {
+    background: #f5f5f5;
+    padding: 12px;
+    overflow-x: auto;
+}
+</style>
+</head>
+<body>
+<pre># RaceCoach Report — session_20260301_125607_030126_lpr_lap7_v3.csv<br>
+<br>
+Reference Run: session_20260301_100805_030126_lpr_lap4_v3.csv<br>
+<br>
+<h2>Run Summary<br>
+<br>
+Biggest gain: **Final turnaround** (-3.72s)<br>
+- Min speed: +27.5 mph vs reference<br>
+- Exit speed: +25.5 mph vs reference<br>
+<br>
+Biggest loss: **Launch to intersection** (+0.25s)<br>
+- Min speed: +0.0 mph vs reference<br>
+- Exit speed: -0.4 mph vs reference<br>
+<br>
+<h3>Next Run Focus<br>
+<br>
+1. Reduce time loss in Launch to intersection.<br>
+2. Repeat the approach used in Final turnaround.<br>
+3. Look for earlier throttle commitment after the slowest corner.<br>
+<br>
+---<br>
+<br>
+<h2>Top Gains vs Reference<br>
+<br>
+- **Final turnaround**: -3.72s, min speed 29.9 vs 2.4 mph (+27.5), exit 41.0 vs 15.4 mph (+25.5), throttle 77.85 vs 80.30 sec (-2.44)<br>
+- **Left sweep to north runway**: -0.13s, min speed 30.3 vs 31.3 mph (-1.0), exit 37.1 vs 37.9 mph (-0.8), throttle 40.85 vs  sec ()<br>
+- **Finish acceleration**: -0.07s, min speed 12.3 vs 15.6 mph (-3.3), exit 21.0 vs 23.1 mph (-2.1), throttle  vs  sec ()<br>
+<br>
+<h2>Top Losses vs Reference<br>
+<br>
+- **Launch to intersection**: +0.25s, min speed 0.0 vs 0.0 mph (+0.0), exit 46.9 vs 47.2 mph (-0.4), throttle 23.58 vs 23.45 sec (+0.12)<br>
+- **Westbound section**: +0.14s, min speed 38.5 vs 37.9 mph (+0.6), exit 53.6 vs 50.0 mph (+3.5), throttle 64.74 vs 64.38 sec (+0.36)<br>
+- **North runway acceleration**: +0.13s, min speed 32.0 vs 35.3 mph (-3.3), exit 38.0 vs 40.0 mph (-2.0), throttle 46.77 vs 45.61 sec (+1.16)<br>
+<br>
+<h2>Top 3 Opportunities<br>
+<br>
+<h3>1. Launch to intersection — 00:00.000<br>
+<br>
+Launch to intersection at 00:00.000: this was 0.25s slower than reference. Check whether the loss came from setup, exit speed, or throttle delay.<br>
+- Analysis: <br>
+<br>
+**Telemetry:**<br>
+- Duration: 33.55 vs 33.31 sec (+0.25)<br>
+- Entry speed: 0.3 vs 1.6 mph (-1.3)<br>
+- Minimum speed: 0.0 vs 0.0 mph (+0.0)<br>
+- Exit speed: 46.9 vs 47.2 mph (-0.4)<br>
+- Peak braking/decel: -0.27 vs -0.28 G (+0.02)<br>
+- Coast time: 20.34 vs 20.32 sec (+0.02)<br>
+- Why flagged: coasted 20.34s, 0.25s slower than reference<br>
+- Throttle pickup: 23.58 vs 23.45 sec (+0.12)<br>
+<h3>2. North runway acceleration — 00:43.421<br>
+<br>
+North runway acceleration at 00:43.421: no strong coaching conclusion. Review the deltas before changing the driving approach.<br>
+- Analysis: minimum speed changed by -3.3 mph; exit speed changed by -2.0 mph<br>
+<br>
+**Telemetry:**<br>
+- Duration: 11.81 vs 11.69 sec (+0.13)<br>
+- Entry speed: 39.4 vs 37.4 mph (+2.0)<br>
+- Minimum speed: 32.0 vs 35.3 mph (-3.3)<br>
+- Exit speed: 38.0 vs 40.0 mph (-2.0)<br>
+- Peak braking/decel: -0.95 vs -0.92 G (-0.03)<br>
+- Coast time: 0.00 vs 0.06 sec (-0.06)<br>
+- Why flagged: minimum speed 3.3 mph below reference<br>
+- Throttle pickup: 46.77 vs 45.61 sec (+1.16)<br>
+<br>
+<br>
+<h2>Segment Table<br>
+<br>
+| Segment | Δ Time | Min Δ | Exit Δ | Brake Δ | Thr Δ | Notes |<br>
+|---|---:|---:|---:|---:|---:|---|<br>
+| Launch to intersection | +0.25 | +0.0 | -0.4 |  | +0.12 | thr=23.6, loss |<br>
+| Left sweep to north runway | -0.13 | -1.0 | -0.8 | -0.01 |  | thr=40.9, gain |<br>
+| North runway acceleration | +0.13 | -3.3 | -2.0 |  | +1.16 | thr=46.8, loss, throttle later |<br>
+| Cross-over transition | +0.12 | +0.6 | +0.5 | +0.30 |  | thr=62.8, loss, braked later |<br>
+| Westbound section | +0.14 | +0.6 | +3.5 |  | +0.36 | thr=64.7, loss, throttle later |<br>
+| Final turnaround | -3.72 | +27.5 | +25.5 | +0.50 | -2.44 | thr=77.9, gain, braked later, throttle delta suspect |<br>
+| Finish acceleration | -0.07 | -3.3 | -2.1 | -4.36 |  | gain, exit speed down, braked earlier |</pre>
+</body>
+</html>
