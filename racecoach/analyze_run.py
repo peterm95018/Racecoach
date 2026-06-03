@@ -563,63 +563,44 @@ def write_report(
                 )
 
             lines.append("")
-
         lines += [
             "### Next Run Focus",
             "",
         ]
 
-        if losses:
-            l = losses[0]
+        focus_items = []
+
+        if summary_losses:
+            l = summary_losses[0]
 
             if l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
-                lines.append(
-                    f"1. Recover exit speed in {l.name}."
-                )
-
+                focus_items.append(f"Recover exit speed in {l.name}.")
             elif l.min_speed_delta_mph is not None and l.min_speed_delta_mph < -2:
-                lines.append(
-                    f"1. Carry more minimum speed through {l.name}."
-                )
-
+                focus_items.append(f"Carry more minimum speed through {l.name}.")
             else:
-                lines.append(
-                    f"1. Reduce time loss in {l.name}."
-                )
+                focus_items.append(f"Reduce time loss in {l.name}.")
 
-        if gains:
-            g = gains[0]
-            lines.append(
-                f"2. Repeat the approach used in {g.name}."
-            )
+        if summary_gains:
+            g = summary_gains[0]
+            focus_items.append(f"Repeat the approach used in {g.name}.")
 
-        if losses:
-            l = losses[0]
+        if summary_losses:
+            l = summary_losses[0]
 
             if l.throttle_pickup_delta_s is not None and l.throttle_pickup_delta_s > 0.20:
-                lines.append(
-                    f"2. Pick up throttle earlier in {l.name}."
-                )
-
+                focus_items.append(f"Pick up throttle earlier in {l.name}.")
             elif l.coast_time_s > 0.30:
-                lines.append(
-                    f"2. Reduce coasting through {l.name}."
-                )
-
+                focus_items.append(f"Reduce coasting through {l.name}.")
             elif l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
-                lines.append(
-                    f"2. Prioritize exit speed out of {l.name}."
-                )
-
+                focus_items.append(f"Prioritize exit speed out of {l.name}.")
             else:
-                lines.append(
-                    f"2. Review braking and throttle timing in {l.name}."
-                )
-        else:
-            lines.append(
-                "3. Protect the gains and continue building speed gradually."
-            )
-            
+                focus_items.append(f"Review braking and throttle timing in {l.name}.")
+
+        if not focus_items:
+            focus_items.append("Protect the gains and continue building speed gradually.")
+
+        for i, item in enumerate(focus_items[:3], start=1):
+            lines.append(f"{i}. {item}")
 
         lines += ["", "---", ""]    
     if has_reference:
