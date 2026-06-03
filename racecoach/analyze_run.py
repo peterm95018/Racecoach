@@ -487,7 +487,7 @@ def write_report(
     lines = [f"# RaceCoach Report — {csv_path.name}", ""]
     if reference_path:
         lines.extend([
-            f"Reference Run: {reference_path.name}",
+            f"Reference Lap: {reference_path.name}",
             ""
         ])
     if has_reference:
@@ -513,12 +513,12 @@ def write_report(
 
             if g.min_speed_delta_mph is not None:
                 lines.append(
-                    f"- Min speed: {g.min_speed_delta_mph:+.1f} mph vs reference"
+                    f"- Min speed: {g.min_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
             if g.exit_speed_delta_mph is not None:
                 lines.append(
-                    f"- Exit speed: {g.exit_speed_delta_mph:+.1f} mph vs reference"
+                    f"- Exit speed: {g.exit_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
             lines.append("")
@@ -532,12 +532,12 @@ def write_report(
 
             if l.min_speed_delta_mph is not None:
                 lines.append(
-                    f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference"
+                    f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
             if l.exit_speed_delta_mph is not None:
                 lines.append(
-                    f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference"
+                    f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
             lines.append("")
@@ -579,7 +579,7 @@ def write_report(
     if has_reference:
         gains = sorted([m for m in metrics if m.time_delta is not None and m.time_delta < 0], key=lambda x: x.time_delta)
         losses = sorted([m for m in metrics if m.time_delta is not None and m.time_delta > 0], key=lambda x: x.time_delta, reverse=True)
-        lines += ["## Top Gains vs Reference", ""]
+        lines += ["## Top Gains vs Reference Lap", ""]
         if gains:
             for m in gains[:3]:
                 lines.append(
@@ -590,8 +590,8 @@ def write_report(
                     f"({delta_str(m.throttle_pickup_delta_s, 2)})"
                 )        
         else:
-            lines.append("- No faster segments vs reference.")
-        lines += ["", "## Top Losses vs Reference", ""]
+            lines.append("- No faster segments vs reference lap.")
+        lines += ["", "## Top Losses vs Reference Lap", ""]
         if losses:
             for m in losses[:3]:
                 lines.append(
