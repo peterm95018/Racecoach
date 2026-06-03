@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import argparse
@@ -299,7 +300,7 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
     return df, metrics, findings
 def build_findings(metrics: list[SegmentMetric]):
     findings = []
-    MIN_OPPORTUNITY_DELTA = 0.10
+    MIN_OPPORTUNITY_DELTA = 0.05
     for m in metrics:
         score = 0.0
         reasons = []
@@ -318,7 +319,7 @@ def build_findings(metrics: list[SegmentMetric]):
         if m.time_delta is not None and m.time_delta > 0.15:
             score += m.time_delta * 4.0
             reasons.append(f"{m.time_delta:.2f}s slower than reference")
-        if score > 0 and m.time_delta is not None and abs(m.time_delta) >= MIN_OPPORTUNITY_DELTA:
+        if score > 0:
             findings.append({"score": score, "segment": m, "reasons": reasons, "coaching": coach_text(m)})
     return sorted(findings, key=lambda x: x["score"], reverse=True)
 
@@ -397,28 +398,40 @@ def coach_text(m: SegmentMetric) -> str:
 def explain_delta(m: SegmentMetric) -> str:
     reasons = []
 
+    if m.time_delta is not None:
+        if m.time_delta > 0.05:
+            reasons.append(f"lost {m.time_delta:.2f}s versus reference lap")
+        elif m.time_delta < -0.05:
+            reasons.append(f"gained {abs(m.time_delta):.2f}s versus reference lap")
+
     if m.brake_start_delta_s is not None:
         if m.brake_start_delta_s < -0.20:
-            reasons.append(
-                f"braked {abs(m.brake_start_delta_s):.2f}s earlier"
-            )
+            reasons.append(f"braked {abs(m.brake_start_delta_s):.2f}s earlier")
         elif m.brake_start_delta_s > 0.20:
-            reasons.append(
-                f"braked {m.brake_start_delta_s:.2f}s later"
-            )
+            reasons.append(f"braked {m.brake_start_delta_s:.2f}s later")
+
+    if m.throttle_pickup_delta_s is not None:
+        if m.throttle_pickup_delta_s > 0.20:
+            reasons.append(f"picked up throttle {m.throttle_pickup_delta_s:.2f}s later")
+        elif m.throttle_pickup_delta_s < -0.20:
+            reasons.append(f"picked up throttle {abs(m.throttle_pickup_delta_s):.2f}s earlier")
 
     if m.min_speed_delta_mph is not None and abs(m.min_speed_delta_mph) > 1:
-        reasons.append(
-            f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph"
-        )
+        reasons.append(f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph")
 
     if m.exit_speed_delta_mph is not None and abs(m.exit_speed_delta_mph) > 1:
-        reasons.append(
-            f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph"
-        )
+        reasons.append(f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph")
+
+    if m.coast_time_delta_s is not None and abs(m.coast_time_delta_s) > 0.20:
+        if m.coast_time_delta_s > 0:
+            reasons.append(f"coasted {m.coast_time_delta_s:.2f}s longer")
+        else:
+            reasons.append(f"coasted {abs(m.coast_time_delta_s):.2f}s less")
+
+    if not reasons:
+        reasons.append("flagged by combined telemetry pattern; review speed, throttle, coast time, and braking together")
 
     return "; ".join(reasons)
-
 def fmt_time(seconds: float) -> str:
     minutes = int(seconds // 60)
     sec = seconds - 60 * minutes
@@ -571,9 +584,33 @@ def write_report(
                 f"2. Repeat the approach used in {g.name}."
             )
 
-        lines.append(
-            "3. Look for earlier throttle commitment after the slowest corner."
-        )
+        if losses:
+            l = losses[0]
+
+            if l.throttle_pickup_delta_s is not None and l.throttle_pickup_delta_s > 0.20:
+                lines.append(
+                    f"3. Pick up throttle earlier in {l.name}."
+                )
+
+            elif l.coast_time_s > 0.30:
+                lines.append(
+                    f"3. Reduce coasting through {l.name}."
+                )
+
+            elif l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
+                lines.append(
+                    f"3. Prioritize exit speed out of {l.name}."
+                )
+
+            else:
+                lines.append(
+                    f"3. Review braking and throttle timing in {l.name}."
+                )
+        else:
+            lines.append(
+                "3. Protect the gains and continue building speed gradually."
+            )
+            
 
         lines += ["", "---", ""]    
     if has_reference:
