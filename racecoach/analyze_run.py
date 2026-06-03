@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import argparse
@@ -589,22 +588,22 @@ def write_report(
 
             if l.throttle_pickup_delta_s is not None and l.throttle_pickup_delta_s > 0.20:
                 lines.append(
-                    f"3. Pick up throttle earlier in {l.name}."
+                    f"2. Pick up throttle earlier in {l.name}."
                 )
 
             elif l.coast_time_s > 0.30:
                 lines.append(
-                    f"3. Reduce coasting through {l.name}."
+                    f"2. Reduce coasting through {l.name}."
                 )
 
             elif l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
                 lines.append(
-                    f"3. Prioritize exit speed out of {l.name}."
+                    f"2. Prioritize exit speed out of {l.name}."
                 )
 
             else:
                 lines.append(
-                    f"3. Review braking and throttle timing in {l.name}."
+                    f"2. Review braking and throttle timing in {l.name}."
                 )
         else:
             lines.append(
@@ -616,7 +615,7 @@ def write_report(
     if has_reference:
         gains = sorted([m for m in metrics if m.time_delta is not None and m.time_delta < 0], key=lambda x: x.time_delta)
         losses = sorted([m for m in metrics if m.time_delta is not None and m.time_delta > 0], key=lambda x: x.time_delta, reverse=True)
-        lines += ["## Top Gains vs Reference Lap", ""]
+        lines += ["## Time Gained vs Reference Lap", ""]
         if gains:
             for m in gains[:3]:
                 lines.append(
@@ -639,16 +638,24 @@ def write_report(
                 f"({delta_str(m.throttle_pickup_delta_s, 2)})"
             )
         else:
-            lines.append("- No slower segments vs reference.")
+            lines.append("- No slower segments vs reference lap.")
         lines.append("")
     lines += ["## Top 3 Opportunities", ""]
-    if not findings:
+
+    opportunities = [
+        f for f in findings
+        if f["segment"].time_delta is not None
+        and f["segment"].time_delta > 0
+        and f["segment"].name not in {"Launch", "Start"}
+    ]
+    
+    if not opportunities:
         lines.append("No high-confidence opportunities detected. Check segment definitions and reference run.")
     else:
-        for i, f in enumerate(findings[:3], start=1):
+        for i, f in enumerate(opportunities[:3], start=1):
             m = f["segment"]
             lines += [
-            f"### {i}. {m.name} — {fmt_time(m.start_time)}",
+            f"### {i}. {m.name} ({m.time_delta:+.2f}s)",
             "",
             f["coaching"],
             f"- Analysis: {explain_delta(m)}",

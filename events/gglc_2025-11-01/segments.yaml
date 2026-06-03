@@ -2,8 +2,8 @@ timed_start_distance: 0
 timed_finish_distance: 600
 
 segments:
-  - name: Launch
-    type: launch
+  - name: Start
+    type: start
     start_distance: 0
     end_distance: 200
 
