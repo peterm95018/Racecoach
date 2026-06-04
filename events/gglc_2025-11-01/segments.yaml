@@ -1,5 +1,5 @@
 timed_start_distance: 0
-timed_finish_distance: 600
+timed_finish_distance: 615
 
 segments:
   - name: Start
@@ -15,4 +15,4 @@ segments:
   - name: Finish section
     type: finish
     start_distance: 400
-    end_distance: 600
+    end_distance: 615
