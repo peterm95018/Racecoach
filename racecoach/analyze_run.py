@@ -182,20 +182,20 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         sustained_samples = 3
         throttle_threshold = 20
 
-    for i in range(0, len(after_min) - sustained_samples + 1):
-        window = after_min.iloc[i : i + sustained_samples]
-        if (window["throttle"] > throttle_threshold).all():
-            candidate_time = float(window.iloc[0]["time_s"])
+        for i in range(0, len(after_min) - sustained_samples + 1):
+            window = after_min.iloc[i : i + sustained_samples]
+            if (window["throttle"] > throttle_threshold).all():
+                candidate_time = float(window.iloc[0]["time_s"])
 
-            # Ignore pickups that occur very late in the segment.
-            # These are usually finish-line artifacts or a second throttle event.
-            segment_progress = (
-                candidate_time - float(part.iloc[0]["time_s"])
-            ) / max(float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"]), 0.001)
+                # Ignore pickups that occur very late in the segment.
+                # These are usually finish-line artifacts or a second throttle event.
+                segment_progress = (
+                    candidate_time - float(part.iloc[0]["time_s"])
+                ) / max(float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"]), 0.001)
 
-            if segment_progress <= 0.80:
-                throttle_pickup_time = candidate_time
-                break
+                if segment_progress <= 0.80:
+                    throttle_pickup_time = candidate_time
+                    break
 
 
 
