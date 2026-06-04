@@ -312,3 +312,13 @@ Over:
 - Peak braking G
 - Peak cornering G
 - Minimum speed alone
+
+
+## Future Metrics
+
+- Path length by segment
+- Path efficiency
+- Momentum recovery index
+- Time to acceleration after minimum speed
+- Overdriving detection
+- Delta-time accumulation by segment
