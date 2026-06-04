@@ -261,3 +261,54 @@ Future:
 3. Project lap onto path
 4. Calculate course position
 5. Compute segment metrics by course position
+
+
+## Telemetry Sources
+
+### Primary Production Source
+
+RaceCoach is designed around:
+
+- RaceChrono Pro
+- RaceBox GPS (25 Hz)
+- OBDLink MX+
+
+RaceChrono CSV exports are the canonical input format.
+
+Available channels include:
+
+- GPS position
+- Speed
+- Distance
+- Longitudinal acceleration
+- Lateral acceleration
+- Throttle position
+- RPM
+- Engine load
+- Additional OBD channels
+
+### Secondary Sources
+
+RaceBox CSV and VBO exports may be used for:
+
+- Algorithm validation
+- Historical analysis
+- GPS-only testing
+
+These are not the primary production workflow.
+
+### Analysis Philosophy
+
+RaceCoach should prioritize:
+
+1. Time delta
+2. Exit speed
+3. Momentum recovery
+4. Throttle timing
+5. Path efficiency
+
+Over:
+
+- Peak braking G
+- Peak cornering G
+- Minimum speed alone
