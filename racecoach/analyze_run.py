@@ -788,15 +788,13 @@ def write_report(
 
     for m in metrics:
         notes = []
-            
 
         if m.throttle_pickup_time is not None:
             notes.append(f"thr={m.throttle_pickup_time:.1f}")
-        
         if m.time_delta is not None:
-    		if m.time_delta > 0.15:
+        	if m.time_delta > 0.15:
         		notes.append("loss")
-    		elif m.time_delta < -0.15:
+        	elif m.time_delta < -0.15:
         		notes.append("gain")
 
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
