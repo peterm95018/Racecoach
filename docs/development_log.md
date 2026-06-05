@@ -91,3 +91,88 @@ Likely next approach:
 Reference-path projection.
 
 A reference lap will be treated as the course centerline. Other laps will be projected onto that path to produce a stable course-position coordinate.
+
+## 2026-06-05 — Average Speed Diagnostics
+
+### Problem
+
+Several reports contained large segment time losses that were not explained by:
+
+- Minimum speed
+- Exit speed
+- Coast time
+- Throttle pickup timing
+
+Example:
+
+text Finish section: +1.54s slower  Min speed: +0.4 mph Exit speed: +1.3 mph 
+
+The telemetry suggested a significant loss, but the reported metrics did not explain it.
+
+### Investigation
+
+Added average segment speed calculations.
+
+Testing against GGLC 2025-11-01 data showed:
+
+text Finish section  Entry speed: -3.5 mph Average speed: -5.2 mph Minimum speed: +0.4 mph Exit speed: +1.3 mph 
+
+This revealed that the segment was compromised before the apex and remained slower throughout the segment.
+
+### Changes Implemented
+
+#### Metrics
+
+Added:
+
+- Average speed
+- Average speed delta
+
+#### Coaching Logic
+
+Added coaching rule:
+
+text Average speed significantly lower than reference AND Exit speed does not explain the loss 
+
+Resulting coaching:
+
+text The loss developed through the segment rather than at the apex. Look earlier in the course for the mistake that carried into this section. 
+
+#### Report Summary
+
+Run Summary now prefers:
+
+- Average speed delta
+- Entry speed delta
+
+when they explain the largest segment loss better than minimum speed or exit speed.
+
+### Additional Improvements
+
+Implemented over-driving detection:
+
+text Higher minimum speed Lower exit speed Slower segment 
+
+Coaching:
+
+text Give up a little entry speed, rotate once, and protect the exit. 
+
+### Outcome
+
+Reports now better distinguish between:
+
+1. Entry/setup problems
+2. Over-driving
+3. Exit-speed losses
+4. Segment-wide speed deficits
+
+This represents a significant improvement in coaching quality compared with earlier versions.
+
+### Next Development Item
+
+Momentum Recovery metric:
+
+- Locate minimum-speed point
+- Measure acceleration recovery after minimum speed
+- Compare against reference lap
+- Generate coaching based on recovery rate and timing
