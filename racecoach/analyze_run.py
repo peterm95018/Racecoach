@@ -340,7 +340,7 @@ def build_findings(metrics: list[SegmentMetric]):
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -3:
             score += abs(m.exit_speed_delta_mph) * 0.35
             reasons.append(f"exit speed {(abs(m.exit_speed_delta_mph) if m.exit_speed_delta_mph is not None else 0):.1f} mph below reference")
-        if m.time_delta is not None and m.time_delta > 0.15:
+        if m.time_delta is not None and m.time_delta > 0.10:
             score += m.time_delta * 4.0
             reasons.append(f"{m.time_delta:.2f}s slower than reference")
         if score > 0:
@@ -350,7 +350,7 @@ def build_findings(metrics: list[SegmentMetric]):
 def coach_text(m: SegmentMetric) -> str:
     t = fmt_time(m.start_time)
 
-    if m.time_delta is not None and m.time_delta < -0.15:
+    if m.time_delta is not None and m.time_delta < -0.10:
         if (
             m.brake_start_delta_s is not None
             and m.brake_start_delta_s < -0.20
@@ -386,8 +386,43 @@ def coach_text(m: SegmentMetric) -> str:
             f"{abs(m.time_delta):.2f}s vs reference. Keep the approach."
         )
 
-    if m.time_delta is not None and m.time_delta > 0.15:
-        if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
+    if m.time_delta is not None and m.time_delta > 0.10:
+        exit_down = (
+            m.exit_speed_delta_mph is not None
+            and m.exit_speed_delta_mph < -2
+        )
+        min_down = (
+            m.min_speed_delta_mph is not None
+            and m.min_speed_delta_mph < -2
+        )
+        min_up = (
+            m.min_speed_delta_mph is not None
+            and m.min_speed_delta_mph > 1
+        )
+        throttle_late = (
+            m.throttle_pickup_delta_s is not None
+            and m.throttle_pickup_delta_s > 0.20
+        )
+
+        if min_up and exit_down:
+            return (
+                f"{m.name} at {t}: the loss looks like over-driving entry. "
+                f"You lost {m.time_delta:.2f}s, carried "
+                f"{m.min_speed_delta_mph:+.1f} mph more minimum speed, but exited "
+                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
+                "Give up a little entry speed, rotate once, and protect the exit."
+            )
+
+        if throttle_late and exit_down:
+            return (
+                f"{m.name} at {t}: the loss is late-throttle related. "
+                f"You lost {m.time_delta:.2f}s, picked up throttle "
+                f"{m.throttle_pickup_delta_s:.2f}s later, and exited "
+                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
+                "Commit to throttle earlier after rotation."
+            )
+
+        if exit_down:
             return (
                 f"{m.name} at {t}: the loss is exit-speed related. You lost "
                 f"{m.time_delta:.2f}s and exited "
@@ -395,14 +430,14 @@ def coach_text(m: SegmentMetric) -> str:
                 "Prioritize the exit line and throttle commitment."
             )
 
-        if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
+        if min_down:
             return (
                 f"{m.name} at {t}: you lost {m.time_delta:.2f}s and carried "
                 f"{abs(m.min_speed_delta_mph):.1f} mph less minimum speed. "
                 "Focus on the setup that lets the car rotate without over-slowing."
             )
 
-        if m.throttle_pickup_delta_s is not None and m.throttle_pickup_delta_s > 0.25:
+        if throttle_late:
             return (
                 f"{m.name} at {t}: throttle pickup was "
                 f"{m.throttle_pickup_delta_s:.2f}s later than reference and the "
@@ -414,6 +449,7 @@ def coach_text(m: SegmentMetric) -> str:
             "Check whether the loss came from setup, exit speed, or throttle delay."
         )
 
+        
     return (
         f"{m.name} at {t}: no strong coaching conclusion. Review the deltas before "
         "changing the driving approach."
@@ -597,30 +633,48 @@ def write_report(
 
         if summary_losses:
             l = summary_losses[0]
+            name = l.name
 
-            if l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
-                focus_items.append(f"Recover exit speed in {l.name}.")
-            elif l.min_speed_delta_mph is not None and l.min_speed_delta_mph < -2:
-                focus_items.append(f"Carry more minimum speed through {l.name}.")
+            exit_down = (
+                l.exit_speed_delta_mph is not None
+                and l.exit_speed_delta_mph < -2
+            )
+            min_down = (
+                l.min_speed_delta_mph is not None
+                and l.min_speed_delta_mph < -2
+            )
+            min_up = (
+                l.min_speed_delta_mph is not None
+                and l.min_speed_delta_mph > 1
+            )
+            throttle_late = (
+                l.throttle_pickup_delta_s is not None
+                and l.throttle_pickup_delta_s > 0.20
+            )
+            coasting = l.coast_time_s is not None and l.coast_time_s > 0.30
+
+            if min_up and exit_down:
+                focus_items.append(f"{name}: slow the entry slightly and protect exit speed.")
+                focus_items.append("Rotate once, then commit to throttle.")
+            elif throttle_late and exit_down:
+                focus_items.append(f"{name}: pick up throttle earlier.")
+                focus_items.append("Prioritize exit speed over entry speed.")
+            elif min_down:
+                focus_items.append(f"{name}: carry more minimum speed.")
+                focus_items.append("Brake less or release earlier.")
+            elif coasting:
+                focus_items.append(f"{name}: reduce coasting.")
+                focus_items.append("Choose brake or throttle, not neutral.")
+            elif exit_down:
+                focus_items.append(f"{name}: recover exit speed.")
+                focus_items.append("Look earlier and unwind sooner.")
             else:
-                focus_items.append(f"Reduce time loss in {l.name}.")
+                focus_items.append(f"{name}: reduce the biggest time loss.")
+                focus_items.append("Review braking, rotation, and throttle timing.")
 
         if summary_gains:
             g = summary_gains[0]
-            focus_items.append(f"Repeat the approach used in {g.name}.")
-
-        if summary_losses:
-            l = summary_losses[0]
-
-            if l.throttle_pickup_delta_s is not None and l.throttle_pickup_delta_s > 0.20:
-                focus_items.append(f"Pick up throttle earlier in {l.name}.")
-            elif l.coast_time_s > 0.30:
-                focus_items.append(f"Reduce coasting through {l.name}.")
-            elif l.exit_speed_delta_mph is not None and l.exit_speed_delta_mph < -2:
-                focus_items.append(f"Prioritize exit speed out of {l.name}.")
-            else:
-                focus_items.append(f"Review braking and throttle timing in {l.name}.")
-
+            focus_items.append(f"Repeat what worked in {g.name}.")
         if not focus_items:
             focus_items.append("Protect the gains and continue building speed gradually.")
 
@@ -634,13 +688,23 @@ def write_report(
         lines += ["## Time Gained vs Reference Lap", ""]
         if gains:
             for m in gains[:3]:
-                lines.append(
+                gain_line = (
                     f"- **{m.name}**: {m.time_delta:+.2f}s, "
                     f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
-                    f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}, "
-                    f"throttle {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec "
-                    f"({delta_str(m.throttle_pickup_delta_s, 2)})"
-                )        
+                    f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}"
+                )
+
+                if (
+                    m.throttle_pickup_time is not None
+                    or m.reference_throttle_pickup_time is not None
+                ):
+                    gain_line += (
+                        f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
+                        f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
+                        f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+                    )
+
+                lines.append(gain_line)
         else:
             lines.append("- No faster segments vs reference lap.")
 
@@ -653,19 +717,29 @@ def write_report(
 
         if coaching_losses:
             for m in coaching_losses[:3]:
-                lines.append(
+                summary_line = (
                     f"- **{m.name}**: {m.time_delta:+.2f}s, "
                     f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
-                    f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}, "
-                    f"throttle {fmt_optional(m.throttle_pickup_time)} vs {fmt_optional(m.reference_throttle_pickup_time)} sec "
-                    f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+                    f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}"
                 )
+
+                if (
+                    m.throttle_pickup_time is not None
+                    or m.reference_throttle_pickup_time is not None
+                ):
+                    summary_line += (
+                        f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
+                        f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
+                        f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+                    )
+
+                lines.append(summary_line)
         else:
             lines.append("- No slower segments vs reference lap.")
 
         lines.append("")
 
-    lines += ["## Top 3 Opportunities", ""]
+    lines += ["## Top Opportunities", ""]
 
     opportunities = [
         f for f in findings
@@ -719,10 +793,11 @@ def write_report(
         if m.throttle_pickup_time is not None:
             notes.append(f"thr={m.throttle_pickup_time:.1f}")
         
-        if m.time_delta is not None and m.time_delta > 0:
-            notes.append("loss")
-        elif m.time_delta is not None and m.time_delta < 0:
-            notes.append("gain")
+        if m.time_delta is not None:
+    		if m.time_delta > 0.15:
+        		notes.append("loss")
+    		elif m.time_delta < -0.15:
+        		notes.append("gain")
 
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
             notes.append("exit speed down")
