@@ -28,6 +28,7 @@ class SegmentMetric:
     entry_speed_mph: float
     min_speed_mph: float
     exit_speed_mph: float
+    avg_speed_mph: float
     peak_decel_g: float
     coast_time_s: float
     throttle_pickup_time: Optional[float]
@@ -42,6 +43,7 @@ class SegmentMetric:
     reference_entry_speed_mph: Optional[float] = None
     reference_min_speed_mph: Optional[float] = None
     reference_exit_speed_mph: Optional[float] = None
+    reference_avg_speed_mph: Optional[float] = None
     reference_peak_decel_g: Optional[float] = None
     reference_coast_time_s: Optional[float] = None
     reference_throttle_pickup_time: Optional[float] = None
@@ -54,6 +56,7 @@ class SegmentMetric:
     entry_speed_delta_mph: Optional[float] = None
     min_speed_delta_mph: Optional[float] = None
     exit_speed_delta_mph: Optional[float] = None
+    avg_speed_delta_mph: Optional[float] = None
     peak_decel_delta_g: Optional[float] = None
     coast_time_delta_s: Optional[float] = None
 
@@ -170,6 +173,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     n = max(3, len(part) // 10)
     entry = part.iloc[:n]["speed_mph"].mean()
     exit_ = part.iloc[-n:]["speed_mph"].mean()
+    avg_speed = part["speed_mph"].mean()
     min_speed = part["speed_mph"].min()
     peak_decel = part["long_g"].min()
     if part["throttle"].notna().any():
@@ -235,6 +239,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         start_time=float(part.iloc[0]["time_s"]), end_time=float(part.iloc[-1]["time_s"]),
         duration=float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"]),
         entry_speed_mph=float(entry), min_speed_mph=float(min_speed), exit_speed_mph=float(exit_),
+        avg_speed_mph=float(avg_speed),
         peak_decel_g=float(peak_decel),
         coast_time_s=coast_time,
         throttle_pickup_time=throttle_pickup_time,
@@ -251,6 +256,7 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.reference_entry_speed_mph = r.entry_speed_mph
         m.reference_min_speed_mph = r.min_speed_mph
         m.reference_exit_speed_mph = r.exit_speed_mph
+        m.reference_avg_speed_mph = r.avg_speed_mph
         m.reference_peak_decel_g = r.peak_decel_g
         m.reference_coast_time_s = r.coast_time_s
         m.reference_throttle_pickup_time = r.throttle_pickup_time
@@ -270,6 +276,7 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.entry_speed_delta_mph = m.entry_speed_mph - r.entry_speed_mph
         m.min_speed_delta_mph = m.min_speed_mph - r.min_speed_mph
         m.exit_speed_delta_mph = m.exit_speed_mph - r.exit_speed_mph
+        m.avg_speed_delta_mph = m.avg_speed_mph - r.avg_speed_mph
         m.peak_decel_delta_g = m.peak_decel_g - r.peak_decel_g
         m.coast_time_delta_s = m.coast_time_s - r.coast_time_s
 
@@ -444,6 +451,19 @@ def coach_text(m: SegmentMetric) -> str:
                 f"segment lost {m.time_delta:.2f}s. Focus on earlier commitment."
             )
 
+        if (
+           m.time_delta is not None
+           and m.time_delta > 0.30
+           and m.avg_speed_delta_mph is not None
+           and m.avg_speed_delta_mph < -3
+       ):
+            return (
+            f"{m.name} at {t}: average speed was "
+            f"{abs(m.avg_speed_delta_mph):.1f} mph below reference. "
+            f"The loss developed through the segment rather than at the apex. "
+            f"Look earlier in the course for the mistake that carried into this section."
+    )
+    
         return (
             f"{m.name} at {t}: this was {m.time_delta:.2f}s slower than reference. "
             "Check whether the loss came from setup, exit speed, or throttle delay."
@@ -476,12 +496,23 @@ def explain_delta(m: SegmentMetric) -> str:
         elif m.throttle_pickup_delta_s < -0.20:
             reasons.append(f"picked up throttle {abs(m.throttle_pickup_delta_s):.2f}s earlier")
 
-    if m.min_speed_delta_mph is not None and abs(m.min_speed_delta_mph) > 1:
-        reasons.append(f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph")
+    if (
+        m.avg_speed_delta_mph is not None
+        and m.avg_speed_delta_mph < -3
+        and (
+            m.exit_speed_delta_mph is None
+            or abs(m.exit_speed_delta_mph) < 3
+        )
+    ):
+        reasons.append(
+            f"average speed was {abs(m.avg_speed_delta_mph):.1f} mph lower through the segment"
+        )
+    else:
+        if m.min_speed_delta_mph is not None and abs(m.min_speed_delta_mph) > 1:
+            reasons.append(f"minimum speed changed by {m.min_speed_delta_mph:+.1f} mph")
 
-    if m.exit_speed_delta_mph is not None and abs(m.exit_speed_delta_mph) > 1:
-        reasons.append(f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph")
-
+        if m.exit_speed_delta_mph is not None and abs(m.exit_speed_delta_mph) > 1:
+            reasons.append(f"exit speed changed by {m.exit_speed_delta_mph:+.1f} mph")
     if m.coast_time_delta_s is not None and abs(m.coast_time_delta_s) > 0.20:
         if m.coast_time_delta_s > 0:
             reasons.append(f"coasted {m.coast_time_delta_s:.2f}s longer")
@@ -492,6 +523,7 @@ def explain_delta(m: SegmentMetric) -> str:
         reasons.append("flagged by combined telemetry pattern; review speed, throttle, coast time, and braking together")
 
     return "; ".join(reasons)
+
 def fmt_time(seconds: float) -> str:
     minutes = int(seconds // 60)
     sec = seconds - 60 * minutes
@@ -613,6 +645,20 @@ def write_report(
                 f"Biggest loss: **{l.name}** ({l.time_delta:+.2f}s)"
             )
 
+        if (
+            l.avg_speed_delta_mph is not None
+            and l.avg_speed_delta_mph < -3
+        ):
+
+            lines.append(
+                f"- Average speed: {l.avg_speed_delta_mph:+.1f} mph vs reference lap"
+            )
+
+        if l.entry_speed_delta_mph is not None:
+            lines.append(
+                    f"- Entry speed: {l.entry_speed_delta_mph:+.1f} mph vs reference lap"
+            )
+        else:
             if l.min_speed_delta_mph is not None:
                 lines.append(
                     f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference lap"
@@ -620,11 +666,13 @@ def write_report(
 
             if l.exit_speed_delta_mph is not None:
                 lines.append(
-                    f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
+                        f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
             lines.append("")
+            lines.append("")
         lines += [
+            "",
             "### Next Run Focus",
             "",
         ]
@@ -762,6 +810,7 @@ def write_report(
             "**Telemetry:**",
             f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
             f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
+            f"- Average speed: {fmt_ref(m.avg_speed_mph, m.reference_avg_speed_mph, m.avg_speed_delta_mph, 'mph')}",
             f"- Minimum speed: {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}",
             f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
             f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
