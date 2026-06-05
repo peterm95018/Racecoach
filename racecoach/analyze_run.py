@@ -153,11 +153,15 @@ def pick_existing(df: pd.DataFrame, candidates: list[str]) -> Optional[str]:
 def parse_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce")
 
-def load_segments(event_dir: Path):
+def load_segment_config(event_dir: Path):
     segments_file = event_dir / "segments.yaml"
     if not segments_file.exists():
         raise FileNotFoundError(f"Missing segments file: {segments_file}")
-    return yaml.safe_load(segments_file.read_text())["segments"]
+    return yaml.safe_load(segments_file.read_text())
+
+
+def load_segments(event_dir: Path):
+    return load_segment_config(event_dir)["segments"]
 
 def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     part = df[(df["distance"] >= float(seg["start_distance"])) & (df["distance"] <= float(seg["end_distance"]))].copy()
@@ -281,13 +285,33 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
         print("Reference path mode selected, but production metrics still use distance segments.")
 
     segments = load_segments(event_dir)
+    segment_config = load_segment_config(event_dir)
 
-    segments = load_segments(event_dir)
+    start_d = float(segment_config.get("timed_start_distance", 0))
+    finish_d = float(segment_config.get("timed_finish_distance", df["distance"].max()))
+
+    df = df[
+        (df["distance"] >= start_d) &
+        (df["distance"] <= finish_d)
+    ].copy()
+
+    df["time_s"] = df["time_s"] - df["time_s"].iloc[0]
+    df["distance"] = df["distance"] - df["distance"].iloc[0]
+
     metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
 
     ref_path = reference_path or (event_dir / "reference.csv")
     if ref_path.exists():
         ref_df = normalize_columns(read_racechrono_csv(ref_path))
+
+        ref_df = ref_df[
+            (ref_df["distance"] >= start_d) &
+            (ref_df["distance"] <= finish_d)
+        ].copy()
+
+        ref_df["time_s"] = ref_df["time_s"] - ref_df["time_s"].iloc[0]
+        ref_df["distance"] = ref_df["distance"] - ref_df["distance"].iloc[0]
+
         ref_metrics = {
             m.name: m
             for seg in segments
@@ -297,6 +321,7 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
     findings = build_findings(metrics)
     return df, metrics, findings
+
 def build_findings(metrics: list[SegmentMetric]):
     findings = []
     MIN_OPPORTUNITY_DELTA = 0.05

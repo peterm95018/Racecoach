@@ -66,3 +66,13 @@ Indicators:
 Outputs:
 Low / Medium / High confidence overdriving flag.
 
+## Known Findings
+
+### GGLC 2025-11-01
+
+An early version of the segment definitions ended at distance 600 while laps extended beyond 609-613.
+
+This caused segment deltas to overstate losses because the final portion of the course was not included in analysis.
+
+Lesson:
+Segment definitions must extend through the entire timed course.
