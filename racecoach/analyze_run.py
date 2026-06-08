@@ -52,6 +52,10 @@ class SegmentMetric:
     throttle_pickup_delta_s: Optional[float] = None
     brake_start_delta_s: Optional[float] = None
 
+    recovery_speed_1s_mph: Optional[float] = None
+    reference_recovery_speed_1s_mph: Optional[float] = None
+    recovery_speed_delta_mph: Optional[float] = None
+
     time_delta: Optional[float] = None
     entry_speed_delta_mph: Optional[float] = None
     min_speed_delta_mph: Optional[float] = None
@@ -185,7 +189,25 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     throttle_pickup_time = None
     if part["throttle"].notna().any():
         min_idx = part["speed_mph"].idxmin()
+
         after_min = part.loc[min_idx:].reset_index(drop=True)
+        recovery_speed_1s_mph = None
+
+        min_time = float(part.loc[min_idx, "time_s"])
+        min_speed = float(part.loc[min_idx, "speed_mph"])
+
+        recovery_points = part[
+            part["time_s"] >= (min_time + 1.0)
+        ]
+
+        if len(recovery_points):
+            speed_after_1s = float(
+                recovery_points.iloc[0]["speed_mph"]
+            )
+
+            recovery_speed_1s_mph = (
+                speed_after_1s - min_speed
+            )
 
         sustained_samples = 3
         throttle_threshold = 20
@@ -245,6 +267,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         throttle_pickup_time=throttle_pickup_time,
         brake_start_time=brake_start_time,
         segment_distance=float(part["distance"].iloc[-1] - part["distance"].iloc[0]),
+        recovery_speed_1s_mph=recovery_speed_1s_mph,
     )
 
 def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str, SegmentMetric]) -> None:
@@ -279,6 +302,19 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.avg_speed_delta_mph = m.avg_speed_mph - r.avg_speed_mph
         m.peak_decel_delta_g = m.peak_decel_g - r.peak_decel_g
         m.coast_time_delta_s = m.coast_time_s - r.coast_time_s
+
+        m.reference_recovery_speed_1s_mph = (
+            r.recovery_speed_1s_mph
+        )
+
+        if (
+            m.recovery_speed_1s_mph is not None
+            and r.recovery_speed_1s_mph is not None
+        ):
+            m.recovery_speed_delta_mph = (
+                m.recovery_speed_1s_mph
+                - r.recovery_speed_1s_mph
+            )
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
     df = normalize_columns(read_racechrono_csv(csv_path))
@@ -802,21 +838,29 @@ def write_report(
         for i, f in enumerate(opportunities[:3], start=1):
             m = f["segment"]
             lines += [
-            f"### {i}. {m.name} ({m.time_delta:+.2f}s)",
-            "",
-            f["coaching"],
-            f"- Analysis: {explain_delta(m)}",
-            "",
-            "**Telemetry:**",
-            f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
-            f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
-            f"- Average speed: {fmt_ref(m.avg_speed_mph, m.reference_avg_speed_mph, m.avg_speed_delta_mph, 'mph')}",
-            f"- Minimum speed: {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}",
-            f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
-            f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
-            f"- Coast time: {fmt_ref(m.coast_time_s, m.reference_coast_time_s, m.coast_time_delta_s, 'sec', 2)}",
-            f"- Why flagged: {', '.join(f['reasons'])}",
-        ]
+                f"### {i}. {m.name} ({m.time_delta:+.2f}s)",
+                "",
+                f["coaching"],
+                f"- Analysis: {explain_delta(m)}",
+                "",
+                "**Telemetry:**",
+                f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
+                f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
+                f"- Average speed: {fmt_ref(m.avg_speed_mph, m.reference_avg_speed_mph, m.avg_speed_delta_mph, 'mph')}",
+                f"- Minimum speed: {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}",
+                f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
+            ]
+
+            if m.recovery_speed_1s_mph is not None:
+                lines.append(
+                    f"- Recovery speed (+1s): {fmt_ref(m.recovery_speed_1s_mph, m.reference_recovery_speed_1s_mph, m.recovery_speed_delta_mph, 'mph', 1)}"
+                )
+
+            lines += [
+                f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
+                f"- Coast time: {fmt_ref(m.coast_time_s, m.reference_coast_time_s, m.coast_time_delta_s, 'sec', 2)}",
+                f"- Why flagged: {', '.join(f['reasons'])}",
+            ]
 
             if m.throttle_pickup_time is not None or m.reference_throttle_pickup_time is not None:
                 lines.append(
