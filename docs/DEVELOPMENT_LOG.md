@@ -176,3 +176,22 @@ Momentum Recovery metric:
 - Measure acceleration recovery after minimum speed
 - Compare against reference lap
 - Generate coaching based on recovery rate and timing
+
+## 2026-06-08 — Momentum Recovery Foundation
+
+### Added
+
+- `recovery_speed_1s_mph`
+- `reference_recovery_speed_1s_mph`
+- `recovery_speed_delta_mph`
+
+### Purpose
+
+Measure how much speed is recovered one second after the minimum-speed point in a segment.
+
+### Initial Finding
+
+In the GGLC lap 5 vs lap 3 test, the Middle Course showed:
+
+```text
+Recovery speed (+1s): 3.0 vs 3.6 mph (-0.5)
