@@ -38,6 +38,7 @@ class SegmentMetric:
     throttle_pickup_time: Optional[float]
     brake_start_time: Optional[float]
     segment_distance: float
+    recovery_speed_1s_mph: Optional[float] = None
 
     reference_duration: Optional[float] = None
     reference_entry_speed_mph: Optional[float] = None
@@ -51,8 +52,6 @@ class SegmentMetric:
 
     throttle_pickup_delta_s: Optional[float] = None
     brake_start_delta_s: Optional[float] = None
-
-    recovery_speed_1s_mph: Optional[float] = None
     reference_recovery_speed_1s_mph: Optional[float] = None
     recovery_speed_delta_mph: Optional[float] = None
 
@@ -851,7 +850,11 @@ def write_report(
                 f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
             ]
 
-            if m.recovery_speed_1s_mph is not None:
+            if (
+                m.recovery_speed_1s_mph is not None
+                and m.reference_recovery_speed_1s_mph is not None
+            ):
+        	
                 lines.append(
                     f"- Recovery speed (+1s): {fmt_ref(m.recovery_speed_1s_mph, m.reference_recovery_speed_1s_mph, m.recovery_speed_delta_mph, 'mph', 1)}"
                 )
