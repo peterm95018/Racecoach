@@ -764,6 +764,8 @@ def write_report(
         summary_losses = [
             m for m in losses
             if m.name not in {"Start", "Launch"}
+            and m.time_delta is not None
+            and m.time_delta >= 0.10
             and not low_confidence_loss(m)
         ]
 
@@ -814,10 +816,10 @@ def write_report(
                         f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference lap"
                     )
 
-                if l.exit_speed_delta_mph is not None:
-                    lines.append(
-                        f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
-                )
+                    if l.exit_speed_delta_mph is not None:
+                        lines.append(
+                            f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
+                    )
 
             lines.append("")
             lines.append("")
