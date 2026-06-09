@@ -363,9 +363,6 @@ def build_findings(metrics: list[SegmentMetric]):
     findings = []
     MIN_OPPORTUNITY_DELTA = 0.05
 
-    if low_confidence_loss(m):
-        continue
-
     for m in metrics:
         score = 0.0
         reasons = []
@@ -418,26 +415,6 @@ def low_confidence_loss(m: SegmentMetric) -> bool:
         and brake_delta < 0.20
     )
 
-    result = (
-
-        min_delta < 1.0
-
-        and exit_delta < 1.0
-
-        and avg_delta < 2.0
-
-        and throttle_delta < 0.10
-
-        and brake_delta < 0.20
-
-    )
-
-    if result:
-
-        print(f"LOW CONFIDENCE: {m.name}")
-
-    return result
-    
 
 def classify_loss(m: SegmentMetric) -> Optional[str]:
     if m.time_delta is None or m.time_delta <= 0.05:
@@ -780,11 +757,14 @@ def write_report(
         summary_gains = [
             m for m in gains
             if m.name not in {"Start", "Launch"}
+            and m.time_delta is not None
+            and abs(m.time_delta) >= 0.10
         ]
 
         summary_losses = [
             m for m in losses
             if m.name not in {"Start", "Launch"}
+            and not low_confidence_loss(m)
         ]
 
         lines += ["## Run Summary", ""]
