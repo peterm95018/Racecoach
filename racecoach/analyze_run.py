@@ -37,6 +37,7 @@ class SegmentMetric:
     coast_time_s: float
     throttle_pickup_time: Optional[float]
     brake_start_time: Optional[float]
+    brake_start_distance: Optional[float]
     segment_distance: float
     recovery_speed_1s_mph: Optional[float] = None
 
@@ -54,6 +55,10 @@ class SegmentMetric:
     brake_start_delta_s: Optional[float] = None
     reference_recovery_speed_1s_mph: Optional[float] = None
     recovery_speed_delta_mph: Optional[float] = None
+
+    brake_start_distance: Optional[float] = None
+    reference_brake_start_distance: Optional[float] = None
+    brake_start_distance_delta: Optional[float] = None
 
     time_delta: Optional[float] = None
     entry_speed_delta_mph: Optional[float] = None
@@ -226,34 +231,17 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
                     throttle_pickup_time = candidate_time
                     break
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     brake_start_time = None
+    brake_start_distance = None
 
     min_idx = part["speed_mph"].idxmin()
-
     before_min = part.loc[:min_idx]
-
     braking = before_min[before_min["long_g"] < -0.20]
 
     if len(braking):
         brake_start_time = float(braking.iloc[0]["time_s"])
+        brake_start_distance = float(braking.iloc[0]["distance"])
+
 
     return SegmentMetric(
         name=str(seg["name"]), type=str(seg.get("type", "segment")),
@@ -265,6 +253,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         coast_time_s=coast_time,
         throttle_pickup_time=throttle_pickup_time,
         brake_start_time=brake_start_time,
+        brake_start_distance=brake_start_distance,
         segment_distance=float(part["distance"].iloc[-1] - part["distance"].iloc[0]),
         recovery_speed_1s_mph=recovery_speed_1s_mph,
     )
@@ -274,7 +263,10 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         r = ref_metrics.get(m.name)
         if not r:
             continue
+
         m.reference_duration = r.duration
+        m.time_delta = m.duration - r.duration
+
         m.reference_entry_speed_mph = r.entry_speed_mph
         m.reference_min_speed_mph = r.min_speed_mph
         m.reference_exit_speed_mph = r.exit_speed_mph
@@ -283,18 +275,9 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.reference_coast_time_s = r.coast_time_s
         m.reference_throttle_pickup_time = r.throttle_pickup_time
         m.reference_brake_start_time = r.brake_start_time
-        m.throttle_pickup_delta_s = (
-            m.throttle_pickup_time - r.throttle_pickup_time
-            if m.throttle_pickup_time is not None and r.throttle_pickup_time is not None
-            else None
-        )
-        m.brake_start_delta_s = (
-            m.brake_start_time - r.brake_start_time
-            if m.brake_start_time is not None and r.brake_start_time is not None
-            else None
-        )
+        m.reference_brake_start_distance = r.brake_start_distance
+        m.reference_recovery_speed_1s_mph = r.recovery_speed_1s_mph
 
-        m.time_delta = m.duration - r.duration
         m.entry_speed_delta_mph = m.entry_speed_mph - r.entry_speed_mph
         m.min_speed_delta_mph = m.min_speed_mph - r.min_speed_mph
         m.exit_speed_delta_mph = m.exit_speed_mph - r.exit_speed_mph
@@ -302,18 +285,30 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.peak_decel_delta_g = m.peak_decel_g - r.peak_decel_g
         m.coast_time_delta_s = m.coast_time_s - r.coast_time_s
 
-        m.reference_recovery_speed_1s_mph = (
-            r.recovery_speed_1s_mph
+        m.throttle_pickup_delta_s = (
+            m.throttle_pickup_time - r.throttle_pickup_time
+            if m.throttle_pickup_time is not None and r.throttle_pickup_time is not None
+            else None
         )
 
-        if (
-            m.recovery_speed_1s_mph is not None
-            and r.recovery_speed_1s_mph is not None
-        ):
-            m.recovery_speed_delta_mph = (
-                m.recovery_speed_1s_mph
-                - r.recovery_speed_1s_mph
-            )
+        m.brake_start_delta_s = (
+            m.brake_start_time - r.brake_start_time
+            if m.brake_start_time is not None and r.brake_start_time is not None
+            else None
+        )
+
+        m.brake_start_distance_delta = (
+            m.brake_start_distance - r.brake_start_distance
+            if m.brake_start_distance is not None and r.brake_start_distance is not None
+            else None
+        )
+
+        m.recovery_speed_delta_mph = (
+            m.recovery_speed_1s_mph - r.recovery_speed_1s_mph
+            if m.recovery_speed_1s_mph is not None and r.recovery_speed_1s_mph is not None
+            else None
+        )
+
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
     df = normalize_columns(read_racechrono_csv(csv_path))
@@ -680,27 +675,27 @@ def write_report(
                 f"Biggest loss: **{l.name}** ({l.time_delta:+.2f}s)"
             )
 
-        if (
-            l.avg_speed_delta_mph is not None
-            and l.avg_speed_delta_mph < -3
-        ):
+            if (
+                l.avg_speed_delta_mph is not None
+                and l.avg_speed_delta_mph < -3
+            ):
 
-            lines.append(
-                f"- Average speed: {l.avg_speed_delta_mph:+.1f} mph vs reference lap"
-            )
-
-        if l.entry_speed_delta_mph is not None:
-            lines.append(
-                    f"- Entry speed: {l.entry_speed_delta_mph:+.1f} mph vs reference lap"
-            )
-        else:
-            if l.min_speed_delta_mph is not None:
                 lines.append(
-                    f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference lap"
+                    f"- Average speed: {l.avg_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
-            if l.exit_speed_delta_mph is not None:
-                lines.append(
+                if l.entry_speed_delta_mph is not None:
+                    lines.append(
+                        f"- Entry speed: {l.entry_speed_delta_mph:+.1f} mph vs reference lap"
+                    )
+            else:
+                if l.min_speed_delta_mph is not None:
+                    lines.append(
+                        f"- Min speed: {l.min_speed_delta_mph:+.1f} mph vs reference lap"
+                    )
+
+                if l.exit_speed_delta_mph is not None:
+                    lines.append(
                         f"- Exit speed: {l.exit_speed_delta_mph:+.1f} mph vs reference lap"
                 )
 
@@ -850,6 +845,14 @@ def write_report(
                 f"- Exit speed: {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}",
             ]
 
+            if (
+                m.brake_start_distance is not None
+                and m.reference_brake_start_distance is not None
+            ):
+                lines.append(
+                    f"- Brake start distance: "
+                    f"{fmt_ref(m.brake_start_distance, m.reference_brake_start_distance, m.brake_start_distance_delta, 'ft', 1)}"
+                )
             if (
                 m.recovery_speed_1s_mph is not None
                 and m.reference_recovery_speed_1s_mph is not None
