@@ -912,7 +912,7 @@ def write_report(
     if has_reference:
         gains = sorted([m for m in metrics if m.time_delta is not None and m.time_delta < 0], key=lambda x: x.time_delta)
         losses = sorted([m for m in metrics if m.time_delta is not None and m.time_delta > 0], key=lambda x: x.time_delta, reverse=True)
-        lines += ["## Time Gained vs Reference Lap", ""]
+        lines += ["## Segment Time vs Reference Lap", ""]
         display_gains = [
             m for m in gains
             if m.name not in {"Start", "Launch", "Launch / first element"}
@@ -940,7 +940,7 @@ def write_report(
         else:
             lines.append("- No faster segments vs reference lap.")
 
-            lines += ["", "## Top Losses vs Reference Lap", ""]
+            lines += ["", "## Slower Segments vs Reference Lap", ""]
 
         coaching_losses = [
             m for m in losses
