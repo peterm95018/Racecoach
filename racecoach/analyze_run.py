@@ -421,6 +421,20 @@ def classify_loss(m: SegmentMetric) -> Optional[str]:
         return None
 
     if (
+        m.time_delta is not None
+        and m.time_delta > 0.30
+        and m.entry_speed_delta_mph is not None
+        and m.entry_speed_delta_mph > 1.0
+        and m.min_speed_delta_mph is not None
+        and m.min_speed_delta_mph > 1.0
+        and m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph > 1.0
+        and m.avg_speed_delta_mph is not None
+        and abs(m.avg_speed_delta_mph) < 1.0
+    ):
+        return "unexplained timing loss"
+
+    if (
         m.entry_speed_delta_mph is not None
         and m.entry_speed_delta_mph > 2.0
         and m.avg_speed_delta_mph is not None
@@ -507,6 +521,12 @@ def coach_text(m: SegmentMetric) -> str:
                 f"{m.name} at {t}: this was {m.time_delta:.2f}s slower, "
                 "but entry speed, minimum speed, exit speed, throttle timing, "
                 "and braking were all close to reference. Treat this as normal variation."
+            )
+        if cause == "unexplained timing loss":
+            return (
+                f"{m.name} at {t}: the segment was slower, but entry speed, "
+                "minimum speed, and exit speed were all as good or better than reference. "
+                "Review trace alignment or segment boundaries before changing driving technique."
             )
         if cause == "over-attacked entry":
             return (
