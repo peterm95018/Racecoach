@@ -363,11 +363,17 @@ def build_findings(metrics: list[SegmentMetric]):
     findings = []
     MIN_OPPORTUNITY_DELTA = 0.05
 
+
     for m in metrics:
         score = 0.0
         reasons = []
+        
         if low_confidence_loss(m):
             continue
+
+        if classify_loss(m) == "unexplained timing loss":
+            continue
+
         if m.coast_time_s > 0.45:
             score += min(3.0, m.coast_time_s * 2.0)
             reasons.append(f"coasted {m.coast_time_s:.2f}s")
@@ -787,6 +793,7 @@ def write_report(
             and m.time_delta is not None
             and m.time_delta >= 0.10
             and not low_confidence_loss(m)
+            and classify_loss(m) != "unexplained timing loss"
         ]
 
         lines += ["## Run Summary", ""]
