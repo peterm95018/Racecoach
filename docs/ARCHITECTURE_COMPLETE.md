@@ -1,4 +1,4 @@
-## Momentum Recovery Metric
+## Momentum Recovery Summary
 
 Purpose:
 Measure how quickly speed is rebuilt after minimum speed.
@@ -104,7 +104,10 @@ Compare analysis lap against reference lap:
 
 Momentum Recovery should help explain patterns like:
 
-```text
 Minimum speed: +1.1 mph
 Exit speed: -10.4 mph
 Segment time: +0.36s
+
+Interpretation:
+
+The driver carried speed into the corner but did not rebuild speed after the apex as effectively as the reference lap. Focus on earlier rotation and earlier throttle commitment rather than carrying additional entry speed.
