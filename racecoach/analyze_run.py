@@ -199,44 +199,27 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     dt = part["time_s"].diff().fillna(0).clip(lower=0, upper=1)
     coast_time = float(dt[coast_mask].sum())
     throttle_pickup_time = None
+    min_idx = part["speed_mph"].idxmin()
+    min_time = float(part.loc[min_idx, "time_s"])
+    min_speed = float(part.loc[min_idx, "speed_mph"])
+
+    recovery_speed_1s_mph = None
+    recovery_speed_2s_mph = None
+    recovery_gain_1s_mph = None
+    recovery_gain_2s_mph = None
+
+    recovery_1s = part[part["time_s"] >= (min_time + 1.0)]
+    if len(recovery_1s):
+        recovery_speed_1s_mph = float(recovery_1s.iloc[0]["speed_mph"])
+        recovery_gain_1s_mph = recovery_speed_1s_mph - min_speed
+
+    recovery_2s = part[part["time_s"] >= (min_time + 2.0)]
+    if len(recovery_2s):
+        recovery_speed_2s_mph = float(recovery_2s.iloc[0]["speed_mph"])
+        recovery_gain_2s_mph = recovery_speed_2s_mph - min_speed
+
     if part["throttle"].notna().any():
-        min_idx = part["speed_mph"].idxmin()
-
         after_min = part.loc[min_idx:].reset_index(drop=True)
-        
-        recovery_speed_1s_mph = None
-        recovery_speed_2s_mph = None
-        recovery_gain_1s_mph = None
-        recovery_gain_2s_mph = None
-
-        min_time = float(part.loc[min_idx, "time_s"])
-        min_speed = float(part.loc[min_idx, "speed_mph"])
-
-        recovery_1s = part[part["time_s"] >= (min_time + 1.0)]
-        if len(recovery_1s):
-            recovery_speed_1s_mph = float(recovery_1s.iloc[0]["speed_mph"])
-            recovery_gain_1s_mph = recovery_speed_1s_mph - min_speed
-
-        recovery_2s = part[part["time_s"] >= (min_time + 2.0)]
-        if len(recovery_2s):
-            recovery_speed_2s_mph = float(recovery_2s.iloc[0]["speed_mph"])
-            recovery_gain_2s_mph = recovery_speed_2s_mph - min_speed
-
-        min_time = float(part.loc[min_idx, "time_s"])
-        min_speed = float(part.loc[min_idx, "speed_mph"])
-
-        recovery_points = part[
-            part["time_s"] >= (min_time + 1.0)
-        ]
-
-        if len(recovery_points):
-            speed_after_1s = float(
-                recovery_points.iloc[0]["speed_mph"]
-            )
-
-            recovery_speed_1s_mph = (
-                speed_after_1s - min_speed
-            )
 
         sustained_samples = 3
         throttle_threshold = 20
@@ -305,6 +288,18 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.reference_brake_start_time = r.brake_start_time
         m.reference_brake_start_distance = r.brake_start_distance
         m.reference_recovery_speed_1s_mph = r.recovery_speed_1s_mph
+
+        m.recovery_gain_1s_delta_mph = (
+            m.recovery_gain_1s_mph - r.recovery_gain_1s_mph
+            if m.recovery_gain_1s_mph is not None and r.recovery_gain_1s_mph is not None
+            else None
+        )
+
+        m.recovery_gain_2s_delta_mph = (
+            m.recovery_gain_2s_mph - r.recovery_gain_2s_mph
+            if m.recovery_gain_2s_mph is not None and r.recovery_gain_2s_mph is not None
+            else None
+        )
 
         m.entry_speed_delta_mph = m.entry_speed_mph - r.entry_speed_mph
         m.min_speed_delta_mph = m.min_speed_mph - r.min_speed_mph
@@ -1006,6 +1001,7 @@ def write_report(
         if f["segment"].time_delta is not None
         and f["segment"].time_delta > 0
         and f["segment"].name not in {"Launch", "Start"}
+        and classify_loss(f["segment"]) != "unexplained timing loss"
     ]
     
     if not opportunities:
@@ -1042,6 +1038,27 @@ def write_report(
 
                 lines.append(
                     f"- Recovery speed (+1s): {fmt_ref(m.recovery_speed_1s_mph, m.reference_recovery_speed_1s_mph, m.recovery_speed_delta_mph, 'mph', 1)}"
+                )
+
+
+            if (
+                m.recovery_gain_1s_mph is not None
+                and m.recovery_gain_1s_delta_mph is not None
+            ):
+                lines.append(
+                    f"- Recovery gain (+1s): "
+                    f"{m.recovery_gain_1s_mph:.1f} mph "
+                    f"({delta_str(m.recovery_gain_1s_delta_mph, 1)})"
+                )
+
+            if (
+                m.recovery_gain_2s_mph is not None
+                and m.recovery_gain_2s_delta_mph is not None
+            ):
+                lines.append(
+                    f"- Recovery gain (+2s): "
+                    f"{m.recovery_gain_2s_mph:.1f} mph "
+                    f"({delta_str(m.recovery_gain_2s_delta_mph, 1)})"
                 )
 
             lines += [
