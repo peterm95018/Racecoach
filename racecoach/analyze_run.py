@@ -115,7 +115,11 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     speed_col = pick_existing(df, ["speed"])
     longg_col = pick_existing(df, ["longitudinal_acc"])
     latg_col = pick_existing(df, ["lateral_acc"])
-    throttle_col = pick_existing(df, ["relative_throttle_pos"])
+    throttle_col = pick_existing(df, ["accelerator_pos", "relative_throttle_pos", "throttle_pos"])
+
+    if throttle_col:
+        print(f"Using driver input channel: {throttle_col}")
+    
     lat_col = pick_existing(df, ["latitude"])
     lon_col = pick_existing(df, ["longitude"])
     if time_col:
