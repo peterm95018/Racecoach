@@ -913,8 +913,13 @@ def write_report(
         gains = sorted([m for m in metrics if m.time_delta is not None and m.time_delta < 0], key=lambda x: x.time_delta)
         losses = sorted([m for m in metrics if m.time_delta is not None and m.time_delta > 0], key=lambda x: x.time_delta, reverse=True)
         lines += ["## Time Gained vs Reference Lap", ""]
-        if gains:
-            for m in gains[:3]:
+        display_gains = [
+            m for m in gains
+            if m.name not in {"Start", "Launch", "Launch / first element"}
+        ]
+
+        if display_gains:
+            for m in display_gains[:3]:
                 gain_line = (
                     f"- **{m.name}**: {m.time_delta:+.2f}s, "
                     f"min speed {fmt_ref(m.min_speed_mph, m.reference_min_speed_mph, m.min_speed_delta_mph, 'mph')}, "
@@ -1006,7 +1011,7 @@ def write_report(
                 m.recovery_speed_1s_mph is not None
                 and m.reference_recovery_speed_1s_mph is not None
             ):
-        	
+
                 lines.append(
                     f"- Recovery speed (+1s): {fmt_ref(m.recovery_speed_1s_mph, m.reference_recovery_speed_1s_mph, m.recovery_speed_delta_mph, 'mph', 1)}"
                 )
