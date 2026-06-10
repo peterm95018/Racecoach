@@ -68,6 +68,14 @@ class SegmentMetric:
     peak_decel_delta_g: Optional[float] = None
     coast_time_delta_s: Optional[float] = None
 
+    recovery_speed_1s_mph: float | None = None
+    recovery_speed_2s_mph: float | None = None
+    recovery_gain_1s_mph: float | None = None
+    recovery_gain_2s_mph: float | None = None
+
+    recovery_gain_1s_delta_mph: float | None = None
+    recovery_gain_2s_delta_mph: float | None = None
+
 def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
     lines = csv_path.read_text(errors="replace").splitlines()
     header_idx = None
@@ -195,7 +203,24 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         min_idx = part["speed_mph"].idxmin()
 
         after_min = part.loc[min_idx:].reset_index(drop=True)
+        
         recovery_speed_1s_mph = None
+        recovery_speed_2s_mph = None
+        recovery_gain_1s_mph = None
+        recovery_gain_2s_mph = None
+
+        min_time = float(part.loc[min_idx, "time_s"])
+        min_speed = float(part.loc[min_idx, "speed_mph"])
+
+        recovery_1s = part[part["time_s"] >= (min_time + 1.0)]
+        if len(recovery_1s):
+            recovery_speed_1s_mph = float(recovery_1s.iloc[0]["speed_mph"])
+            recovery_gain_1s_mph = recovery_speed_1s_mph - min_speed
+
+        recovery_2s = part[part["time_s"] >= (min_time + 2.0)]
+        if len(recovery_2s):
+            recovery_speed_2s_mph = float(recovery_2s.iloc[0]["speed_mph"])
+            recovery_gain_2s_mph = recovery_speed_2s_mph - min_speed
 
         min_time = float(part.loc[min_idx, "time_s"])
         min_speed = float(part.loc[min_idx, "speed_mph"])
@@ -256,6 +281,9 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         brake_start_distance=brake_start_distance,
         segment_distance=float(part["distance"].iloc[-1] - part["distance"].iloc[0]),
         recovery_speed_1s_mph=recovery_speed_1s_mph,
+        recovery_speed_2s_mph=recovery_speed_2s_mph,
+        recovery_gain_1s_mph=recovery_gain_1s_mph,
+        recovery_gain_2s_mph=recovery_gain_2s_mph,
     )
 
 def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str, SegmentMetric]) -> None:

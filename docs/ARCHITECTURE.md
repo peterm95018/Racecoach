@@ -82,3 +82,22 @@ Planned improvements:
 :::
 
 Then keep ARCHITECTURE_COMPLETE.md as the detailed engineering history and design rationale document. That's where all the distance-vs-GPS discussion, average-speed diagnostics rationale, and future segmentation research belong.
+
+## Low-Confidence Loss Filtering
+
+Purpose:
+Reduce false-positive coaching recommendations.
+
+Implementation:
+- classify_loss() can return "unexplained timing loss"
+- low_confidence_loss() identifies segments with slower time but no meaningful telemetry degradation
+- Such segments are excluded from:
+  - Run Summary
+  - Next Run Focus
+  - Top Opportunities
+
+They remain visible in:
+  - Segment Time vs Reference Lap
+  - Segment Table
+
+This prevents coaching recommendations based solely on timing differences when entry speed, minimum speed, average speed, exit speed, braking, and throttle metrics do not indicate a clear driving error.
