@@ -1039,11 +1039,15 @@ def write_report(
 
         if m.throttle_pickup_time is not None:
             notes.append(f"thr={m.throttle_pickup_time:.1f}")
+        
         if m.time_delta is not None:
-        	if m.time_delta > 0.15:
-        		notes.append("loss")
-        	elif m.time_delta < -0.15:
-        		notes.append("gain")
+            if m.time_delta > 0.15:
+                if classify_loss(m) == "unexplained timing loss":
+                    notes.append("timing loss unexplained")
+                else:
+                    notes.append("loss")
+            elif m.time_delta < -0.15:
+                notes.append("gain")
 
         if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
             notes.append("exit speed down")
