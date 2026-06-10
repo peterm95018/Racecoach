@@ -1080,7 +1080,7 @@ def write_report(
     "",
     "## Segment Table",
     "",
-    "| Segment | Δ Time | Min Δ | Exit Δ | Brake Δ | Thr Δ | Notes |",
+    "| Segment | Δ Time | Min Δ | Exit Δ | Rec+1 | Rec+2 | Notes |",
     "|---|---:|---:|---:|---:|---:|---|",
 ]
 
@@ -1121,8 +1121,8 @@ def write_report(
             f"{delta_str(m.time_delta, 2)} | "
             f"{delta_str(m.min_speed_delta_mph, 1)} | "
             f"{delta_str(m.exit_speed_delta_mph, 1)} | "
-            f"{delta_str(m.brake_start_delta_s, 2)} | "
-            f"{delta_str(m.throttle_pickup_delta_s, 2)} | "
+            f"{delta_str(m.recovery_gain_1s_delta_mph, 1)} | "
+            f"{delta_str(m.recovery_gain_2s_delta_mph, 1)} | "
             f"{', '.join(notes)} |"
         )
 
