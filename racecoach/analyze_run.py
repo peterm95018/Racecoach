@@ -76,6 +76,14 @@ class SegmentMetric:
     recovery_gain_1s_delta_mph: float | None = None
     recovery_gain_2s_delta_mph: float | None = None
 
+    throttle_commit_delay_s: Optional[float] = None
+    reference_throttle_commit_delay_s: Optional[float] = None
+
+    throttle_commit_delay_s: Optional[float] = None
+    reference_throttle_commit_delay_s: Optional[float] = None
+    throttle_commit_delay_delta_s: Optional[float] = None
+
+
 def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
     lines = csv_path.read_text(errors="replace").splitlines()
     header_idx = None
@@ -204,6 +212,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     coast_time = float(dt[coast_mask].sum())
     throttle_pickup_time = None
     min_idx = part["speed_mph"].idxmin()
+    min_speed_time = float(part.loc[min_idx, "time_s"])
     min_time = float(part.loc[min_idx, "time_s"])
     min_speed = float(part.loc[min_idx, "speed_mph"])
 
@@ -255,15 +264,26 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         brake_start_distance = float(braking.iloc[0]["distance"])
 
 
+
+
+    throttle_commit_delay_s = None
+    if throttle_pickup_time is not None:
+        throttle_commit_delay_s = throttle_pickup_time - min_speed_time
+
     return SegmentMetric(
-        name=str(seg["name"]), type=str(seg.get("type", "segment")),
-        start_time=float(part.iloc[0]["time_s"]), end_time=float(part.iloc[-1]["time_s"]),
+        name=str(seg["name"]),
+        type=str(seg.get("type", "segment")),
+        start_time=float(part.iloc[0]["time_s"]),
+        end_time=float(part.iloc[-1]["time_s"]),
         duration=float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"]),
-        entry_speed_mph=float(entry), min_speed_mph=float(min_speed), exit_speed_mph=float(exit_),
+        entry_speed_mph=float(entry),
+        min_speed_mph=float(min_speed),
+        exit_speed_mph=float(exit_),
         avg_speed_mph=float(avg_speed),
         peak_decel_g=float(peak_decel),
         coast_time_s=coast_time,
         throttle_pickup_time=throttle_pickup_time,
+        throttle_commit_delay_s=throttle_commit_delay_s,
         brake_start_time=brake_start_time,
         brake_start_distance=brake_start_distance,
         segment_distance=float(part["distance"].iloc[-1] - part["distance"].iloc[0]),
@@ -272,6 +292,7 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
         recovery_gain_1s_mph=recovery_gain_1s_mph,
         recovery_gain_2s_mph=recovery_gain_2s_mph,
     )
+
 
 def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str, SegmentMetric]) -> None:
     for m in metrics:
@@ -289,6 +310,16 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
         m.reference_peak_decel_g = r.peak_decel_g
         m.reference_coast_time_s = r.coast_time_s
         m.reference_throttle_pickup_time = r.throttle_pickup_time
+
+        m.reference_throttle_commit_delay_s = r.throttle_commit_delay_s
+        if (
+            m.throttle_commit_delay_s is not None
+            and r.throttle_commit_delay_s is not None
+        ):
+            m.throttle_commit_delay_delta_s = (
+                m.throttle_commit_delay_s - r.throttle_commit_delay_s
+            )
+
         m.reference_brake_start_time = r.brake_start_time
         m.reference_brake_start_distance = r.brake_start_distance
         m.reference_recovery_speed_1s_mph = r.recovery_speed_1s_mph
@@ -955,7 +986,7 @@ def write_report(
 
                 if (
                     m.throttle_pickup_time is not None
-                    or m.reference_throttle_pickup_time is not None
+                    and m.reference_throttle_pickup_time is not None
                 ):
                     gain_line += (
                         f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
@@ -984,7 +1015,7 @@ def write_report(
 
                 if (
                     m.throttle_pickup_time is not None
-                    or m.reference_throttle_pickup_time is not None
+                    and m.reference_throttle_pickup_time is not None
                 ):
                     summary_line += (
                         f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
@@ -1071,15 +1102,25 @@ def write_report(
                 f"- Why flagged: {', '.join(f['reasons'])}",
             ]
 
-            if m.throttle_pickup_time is not None or m.reference_throttle_pickup_time is not None:
+            if m.throttle_pickup_time is not None and  m.reference_throttle_pickup_time is not None:
                 lines.append(
                     f"- Throttle pickup: {fmt_optional(m.throttle_pickup_time)} vs "
                     f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
                     f"({delta_str(m.throttle_pickup_delta_s, 2)})"
                 )
 
+            if (
+                m.throttle_commit_delay_s is not None
+                and m.reference_throttle_commit_delay_s is not None
+            ):
+                lines.append(
+                    f"- Throttle after min speed: {fmt_optional(m.throttle_commit_delay_s)} vs "
+                    f"{fmt_optional(m.reference_throttle_commit_delay_s)} sec "
+                    f"({delta_str(m.throttle_commit_delay_delta_s, 2)})"
+                )
+
     lines.append("")
-    
+
     lines += [
     "",
     "## Segment Table",
