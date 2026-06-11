@@ -1132,9 +1132,9 @@ def write_report(
     for m in metrics:
         notes = []
 
-        if m.throttle_pickup_time is not None:
-            notes.append(f"thr={m.throttle_pickup_time:.1f}")
-        
+        if m.throttle_commit_delay_delta_s is not None:
+            notes.append(f"thrΔ={m.throttle_commit_delay_delta_s:+.2f}s")
+
         if m.time_delta is not None:
             if m.time_delta > 0.15:
                 if classify_loss(m) == "unexplained timing loss":
