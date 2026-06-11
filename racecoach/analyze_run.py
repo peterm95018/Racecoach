@@ -519,8 +519,8 @@ def classify_loss(m: SegmentMetric) -> Optional[str]:
         return "weak exit"
 
     if (
-        m.throttle_pickup_delta_s is not None
-        and m.throttle_pickup_delta_s > 0.25
+        m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.25
     ):
         return "late throttle"
 
@@ -721,11 +721,15 @@ def explain_delta(m: SegmentMetric) -> str:
         elif m.brake_start_delta_s > 0.20:
             reasons.append(f"braked {m.brake_start_delta_s:.2f}s later")
 
-    if m.throttle_pickup_delta_s is not None:
-        if m.throttle_pickup_delta_s > 0.20:
-            reasons.append(f"picked up throttle {m.throttle_pickup_delta_s:.2f}s later")
-        elif m.throttle_pickup_delta_s < -0.20:
-            reasons.append(f"picked up throttle {abs(m.throttle_pickup_delta_s):.2f}s earlier")
+    if m.throttle_commit_delay_delta_s is not None:
+        if m.throttle_commit_delay_delta_s > 0.20:
+            reasons.append(
+                f"committed to throttle {m.throttle_commit_delay_delta_s:.2f}s later after min speed"
+            )
+        elif m.throttle_commit_delay_delta_s < -0.20:
+            reasons.append(
+                f"committed to throttle {abs(m.throttle_commit_delay_delta_s):.2f}s earlier after min speed"
+            )
 
     if (
         m.avg_speed_delta_mph is not None
