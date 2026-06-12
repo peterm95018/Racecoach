@@ -988,15 +988,15 @@ def write_report(
                     f"exit {fmt_ref(m.exit_speed_mph, m.reference_exit_speed_mph, m.exit_speed_delta_mph, 'mph')}"
                 )
 
-                if (
-                    m.throttle_pickup_time is not None
-                    and m.reference_throttle_pickup_time is not None
-                ):
-                    gain_line += (
-                        f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
-                        f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
-                        f"({delta_str(m.throttle_pickup_delta_s, 2)})"
-                    )
+#                if (
+#                    m.throttle_pickup_time is not None
+#                    and m.reference_throttle_pickup_time is not None
+#                ):
+#                    gain_line += (
+#                        f", throttle {fmt_optional(m.throttle_pickup_time)} vs "
+#                        f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
+#                        f"({delta_str(m.throttle_pickup_delta_s, 2)})"
+#                    )
 
                 lines.append(gain_line)
         else:
@@ -1106,13 +1106,6 @@ def write_report(
                 f"- Why flagged: {', '.join(f['reasons'])}",
             ]
 
-            if m.throttle_pickup_time is not None and  m.reference_throttle_pickup_time is not None:
-                lines.append(
-                    f"- Throttle pickup: {fmt_optional(m.throttle_pickup_time)} vs "
-                    f"{fmt_optional(m.reference_throttle_pickup_time)} sec "
-                    f"({delta_str(m.throttle_pickup_delta_s, 2)})"
-                )
-
             if (
                 m.throttle_commit_delay_s is not None
                 and m.reference_throttle_commit_delay_s is not None
@@ -1157,13 +1150,13 @@ def write_report(
             elif m.brake_start_delta_s < -0.20:
                 notes.append("braked earlier")
 
-        if m.throttle_pickup_delta_s is not None:
-            if abs(m.throttle_pickup_delta_s) > 2.0:
-                notes.append("throttle delta suspect")
-            elif m.throttle_pickup_delta_s > 0.25:
-                notes.append("throttle later")
-            elif m.throttle_pickup_delta_s < -0.25:
-                notes.append("throttle earlier")
+#        if m.throttle_pickup_delta_s is not None:
+#            if abs(m.throttle_pickup_delta_s) > 2.0:
+#                notes.append("throttle delta suspect")
+#            elif m.throttle_pickup_delta_s > 0.25:
+#                notes.append("throttle later")
+#            elif m.throttle_pickup_delta_s < -0.25:
+#                notes.append("earlier throttle commitment")
 
         lines.append(
             f"| {m.name} | "
