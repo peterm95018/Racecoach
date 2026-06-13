@@ -99,3 +99,37 @@ They remain visible in:
 This prevents coaching recommendations based solely on timing differences when entry speed, minimum speed, average speed, exit speed, braking, and throttle metrics do not indicate a clear driving error.
 
 Recovery gain metrics are experimental. Initial testing showed strong sensitivity to apex timing and segment shape. Metrics are displayed for research purposes only and are not used in coaching scores.
+
+## Driver Input Analysis
+
+RaceCoach prefers the following channels in order:
+
+1. accelerator_pos
+2. relative_throttle_pos
+3. throttle_pos
+
+The selected source is displayed in the report header.
+
+Throttle coaching uses throttle commitment timing rather than raw throttle pickup timestamps.
+
+Throttle commitment is defined as:
+
+Throttle application time - minimum speed time
+
+This metric better represents when the driver commits to acceleration after rotation.
+
+## Report Publishing
+
+RaceCoach generates:
+
+- Markdown report
+- HTML report
+- JSON summary
+
+Current mobile workflow:
+
+RaceChrono -> FTP Manager -> Ubuntu -> RaceCoach -> Drupal-served HTML report
+
+Primary report URL:
+
+https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
