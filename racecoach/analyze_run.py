@@ -460,8 +460,8 @@ def low_confidence_loss(m: SegmentMetric) -> bool:
     avg_delta = abs(m.avg_speed_delta_mph or 0)
 
     throttle_delta = (
-        abs(m.throttle_pickup_delta_s)
-        if m.throttle_pickup_delta_s is not None
+        abs(m.throttle_commit_delay_delta_s)
+        if m.throttle_commit_delay_delta_s is not None
         else 0
     )
 
@@ -560,11 +560,14 @@ def coach_text(m: SegmentMetric) -> str:
                 "This suggests the earlier setup improved rotation and exit."
             )
 
-        if m.throttle_pickup_delta_s is not None and m.throttle_pickup_delta_s < -0.25:
+        if (
+            m.throttle_commit_delay_delta_s is not None
+            and m.throttle_commit_delay_delta_s < -0.25
+        ):
             return (
-                f"{m.name} at {t}: this was a gain. You picked up throttle "
-                f"{abs(m.throttle_pickup_delta_s):.2f}s earlier and gained "
-                f"{abs(m.time_delta):.2f}s vs reference."
+                f"{m.name} at {t}: this was a gain. You committed to throttle "
+                f"{abs(m.throttle_commit_delay_delta_s):.2f}s earlier after min speed "
+                f"and gained {abs(m.time_delta):.2f}s vs reference."
             )
 
         if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 1:
@@ -641,8 +644,8 @@ def coach_text(m: SegmentMetric) -> str:
             and m.min_speed_delta_mph > 1
         )
         throttle_late = (
-            m.throttle_pickup_delta_s is not None
-            and m.throttle_pickup_delta_s > 0.20
+            m.throttle_commit_delay_delta_s is not None
+            and m.throttle_commit_delay_delta_s > 0.20
         )
 
         if min_up and exit_down:
@@ -658,7 +661,7 @@ def coach_text(m: SegmentMetric) -> str:
             return (
                 f"{m.name} at {t}: the loss is late-throttle related. "
                 f"You lost {m.time_delta:.2f}s, picked up throttle "
-                f"{m.throttle_pickup_delta_s:.2f}s later, and exited "
+                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed"
                 f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
                 "Commit to throttle earlier after rotation."
             )
@@ -681,7 +684,7 @@ def coach_text(m: SegmentMetric) -> str:
         if throttle_late:
             return (
                 f"{m.name} at {t}: throttle pickup was "
-                f"{m.throttle_pickup_delta_s:.2f}s later than reference and the "
+                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed"
                 f"segment lost {m.time_delta:.2f}s. Focus on earlier commitment."
             )
 
@@ -937,8 +940,8 @@ def write_report(
                 and l.min_speed_delta_mph > 1
             )
             throttle_late = (
-                l.throttle_pickup_delta_s is not None
-                and l.throttle_pickup_delta_s > 0.20
+                l.throttle_commit_delay_delta_s is not None
+                and l.throttle_commit_delay_delta_s > 0.20
             )
             coasting = l.coast_time_s is not None and l.coast_time_s > 0.30
 
