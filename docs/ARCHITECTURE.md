@@ -78,10 +78,6 @@ Planned improvements:
 - Automatic segment discovery
 - Video synchronization
 - Grid coaching summaries
-```
-:::
-
-Then keep ARCHITECTURE_COMPLETE.md as the detailed engineering history and design rationale document. That's where all the distance-vs-GPS discussion, average-speed diagnostics rationale, and future segmentation research belong.
 
 ## Low-Confidence Loss Filtering
 
@@ -101,3 +97,5 @@ They remain visible in:
   - Segment Table
 
 This prevents coaching recommendations based solely on timing differences when entry speed, minimum speed, average speed, exit speed, braking, and throttle metrics do not indicate a clear driving error.
+
+Recovery gain metrics are experimental. Initial testing showed strong sensitivity to apex timing and segment shape. Metrics are displayed for research purposes only and are not used in coaching scores.
