@@ -9,6 +9,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import yaml
+import markdown
 from racecoach.event_config import load_event_config
 
 from racecoach.reference_path import (
@@ -783,15 +784,10 @@ def fmt_ref(current: float, ref: Optional[float], delta: Optional[float], unit: 
     return f"{current:.{precision}f} vs {ref:.{precision}f} {unit} ({delta:+.{precision}f})"
 
 def markdown_to_html(markdown_text: str) -> str:
-    import html
-
-    body = html.escape(markdown_text)
-
-    body = body.replace("\n# ", "\n<h1>")
-    body = body.replace("\n## ", "\n<h2>")
-    body = body.replace("\n### ", "\n<h3>")
-
-    body = body.replace("\n", "<br>\n")
+    body = markdown.markdown(
+        markdown_text,
+        extensions=["tables"]
+    )
 
     return f"""<!doctype html>
 <html>
@@ -801,19 +797,40 @@ def markdown_to_html(markdown_text: str) -> str:
 <style>
 body {{
     font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
-    max-width: 900px;
-    margin: 40px auto;
-    line-height: 1.45;
-}}
-pre {{
-    background: #f5f5f5;
+    max-width: 1000px;
+    margin: 20px auto;
     padding: 12px;
-    overflow-x: auto;
+    line-height: 1.5;
+}}
+
+table {{
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}}
+
+th, td {{
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+}}
+
+th {{
+    background: #f5f5f5;
+}}
+
+h1 {{
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 6px;
+}}
+
+h2 {{
+    margin-top: 1.5em;
 }}
 </style>
 </head>
 <body>
-<pre>{body}</pre>
+{body}
 </body>
 </html>
 """
@@ -845,6 +862,15 @@ def write_report(
             "",
         ])
 
+    lines.extend([
+        '<p><strong>Help & Documentation</strong></p>',
+        '<ul>',
+        '<li><a href="https://github.com/peterm95018/racecoach/blob/momentum-recovery/docs/USER_GUIDE.md" target="_blank">User Guide</a></li>',
+        '<li><a href="https://github.com/peterm95018/racecoach/blob/momentum-recovery/docs/ARCHITECTURE.md" target="_blank">Architecture</a></li>',
+        '</ul>',
+        '',
+    ])
+    
     if has_reference:
         gains = sorted(
             [m for m in metrics if m.time_delta is not None and m.time_delta < 0],
