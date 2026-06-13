@@ -125,9 +125,11 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     latg_col = pick_existing(df, ["lateral_acc"])
     throttle_col = pick_existing(df, ["accelerator_pos", "relative_throttle_pos", "throttle_pos"])
 
+    out.attrs["driver_input_source"] = throttle_col or "none"
     if throttle_col:
         print(f"Using driver input channel: {throttle_col}")
-    
+        
+
     lat_col = pick_existing(df, ["latitude"])
     lon_col = pick_existing(df, ["longitude"])
     if time_col:
@@ -661,8 +663,8 @@ def coach_text(m: SegmentMetric) -> str:
             return (
                 f"{m.name} at {t}: the loss is late-throttle related. "
                 f"You lost {m.time_delta:.2f}s, picked up throttle "
-                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed"
-                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
+                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed."
+                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference."
                 "Commit to throttle earlier after rotation."
             )
 
@@ -684,7 +686,7 @@ def coach_text(m: SegmentMetric) -> str:
         if throttle_late:
             return (
                 f"{m.name} at {t}: throttle pickup was "
-                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed"
+                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed, "
                 f"segment lost {m.time_delta:.2f}s. Focus on earlier commitment."
             )
 
@@ -815,12 +817,14 @@ pre {{
 </body>
 </html>
 """
+
 def write_report(
     csv_path: Path,
     reference_path: Path | None,
     metrics: list[SegmentMetric],
     findings: list[dict],
-    reports_dir: Path
+    reports_dir: Path,
+    driver_input_source: str | None = None,
 ):
     reports_dir.mkdir(parents=True, exist_ok=True)
     stem = csv_path.stem
@@ -828,22 +832,32 @@ def write_report(
     json_path = reports_dir / f"{stem}_summary.json"
     has_reference = any(m.time_delta is not None for m in metrics)
     lines = [f"# RaceCoach Report — {csv_path.name}", ""]
+
     if reference_path:
         lines.extend([
             f"Reference Lap: {reference_path.name}",
-            ""
+            "",
         ])
+
+    if driver_input_source:
+        lines.extend([
+            f"Driver Input Source: {driver_input_source}",
+            "",
+        ])
+
     if has_reference:
         gains = sorted(
             [m for m in metrics if m.time_delta is not None and m.time_delta < 0],
-            key=lambda x: x.time_delta
+            key=lambda x: x.time_delta,
         )
 
         losses = sorted(
             [m for m in metrics if m.time_delta is not None and m.time_delta > 0],
             key=lambda x: x.time_delta,
-            reverse=True
+            reverse=True,
         )
+
+
 
         summary_gains = [
             m for m in gains
@@ -1171,7 +1185,7 @@ def write_report(
             f"{', '.join(notes)} |"
         )
 
-        report_text = "\n".join(lines)
+    report_text = "\n".join(lines)
 
     md_path.write_text(report_text)
 
@@ -1196,14 +1210,15 @@ def main():
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--reports", type=Path, default=Path("reports"))
     args = parser.parse_args()
-    _, metrics, findings = analyze(args.csv, args.event, args.reference)
+    df, metrics, findings = analyze(args.csv, args.event, args.reference)
     md, js = write_report(
-    args.csv,
-    args.reference,
-    metrics,
-    findings,
-    args.reports
-)
+        args.csv,
+        args.reference,
+        metrics,
+        findings,
+        args.reports,
+        driver_input_source=df.attrs.get("driver_input_source"),
+    )
     print(md.read_text())
     print(f"\nWrote: {md}")
     print(f"Wrote: {js}")
