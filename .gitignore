@@ -16,6 +16,10 @@ __pycache__/
 events/*/reports/*.json
 events/*/reports/*.html
 events/*/reports/*.md
+events/*.csv
+events/*/uploads/*.csv
+events/*/reports/*
+
 
 # Uploads (large telemetry files)
 events/*/uploads/*.csv
