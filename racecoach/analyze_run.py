@@ -1095,9 +1095,11 @@ def write_report(
                 f"### {i}. {m.name} ({m.time_delta:+.2f}s)",
                 "",
                 f["coaching"],
+                "",
                 f"- Analysis: {explain_delta(m)}",
                 "",
                 "**Telemetry:**",
+                "",
                 f"- Duration: {fmt_ref(m.duration, m.reference_duration, m.time_delta, 'sec', 2)}",
                 f"- Entry speed: {fmt_ref(m.entry_speed_mph, m.reference_entry_speed_mph, m.entry_speed_delta_mph, 'mph')}",
                 f"- Average speed: {fmt_ref(m.avg_speed_mph, m.reference_avg_speed_mph, m.avg_speed_delta_mph, 'mph')}",
@@ -1146,19 +1148,31 @@ def write_report(
             lines += [
                 f"- Peak braking/decel: {fmt_ref(m.peak_decel_g, m.reference_peak_decel_g, m.peak_decel_delta_g, 'G', 2)}",
                 f"- Coast time: {fmt_ref(m.coast_time_s, m.reference_coast_time_s, m.coast_time_delta_s, 'sec', 2)}",
-                f"- Why flagged: {', '.join(f['reasons'])}",
             ]
 
             if (
                 m.throttle_commit_delay_s is not None
                 and m.reference_throttle_commit_delay_s is not None
             ):
-                lines.append(
+                lines += [
+                    "",
+                    "#### Throttle Commitment",
+                    "",
                     f"- Throttle after min speed: {fmt_optional(m.throttle_commit_delay_s)} vs "
                     f"{fmt_optional(m.reference_throttle_commit_delay_s)} sec "
-                    f"({delta_str(m.throttle_commit_delay_delta_s, 2)})"
-                )
+                    f"({delta_str(m.throttle_commit_delay_delta_s, 2)})",
+                ]
 
+            lines += [
+                "",
+                "#### Why Flagged",
+                "",
+            ]
+
+            for reason in f["reasons"]:
+                lines.append(f"- {reason}")
+
+            lines.append("")
     lines.append("")
 
     lines += [
