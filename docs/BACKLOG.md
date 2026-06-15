@@ -35,6 +35,48 @@ Questions:
 
 ---
 
+### Fix Top Opportunities telemetry formatting
+Priority: Medium
+
+Current issue:
+
+The telemetry section in Top Opportunities is difficult to scan on a phone.
+
+Examples:
+- Long lines wrap poorly
+- Related metrics are separated
+- Throttle and braking metrics are not consistently grouped
+- Experimental metrics can distract from primary coaching metrics
+
+Goals:
+- Improve mobile readability
+- Group related metrics together
+- Prioritize coaching-relevant metrics
+- Reduce visual clutter
+
+Possible approach:
+
+Primary metrics:
+- Duration
+- Entry speed
+- Minimum speed
+- Exit speed
+- Throttle commitment
+- Brake start
+
+Secondary metrics:
+- Average speed
+- Peak decel
+- Coast time
+
+Experimental metrics:
+- Recovery gain (+1s)
+- Recovery gain (+2s)
+
+Success criteria:
+
+A driver should be able to understand why a segment was flagged within 5 seconds while standing in grid.
+
 ### Validate throttle commitment metric
 
 Questions:
