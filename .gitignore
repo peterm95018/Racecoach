@@ -6,30 +6,25 @@ __pycache__/
 # Virtual environment
 .venv/
 
-# OS
+# macOS
 .DS_Store
+
+# Editor files
+*.swp
+.vscode/
 
 # Temporary files
 *.tmp
 
 # Generated reports
-events/*/reports/*.json
-events/*/reports/*.html
-events/*/reports/*.md
-events/*.csv
-events/*/uploads/*.csv
 events/*/reports/*
 
-
-# Uploads (large telemetry files)
+# Uploaded telemetry
 events/*/uploads/*.csv
+uploads/*.csv
 
 # Backup archives
 backups/*.tar.gz
 
 # Active event tracking
 active_event.txt
-
-# Editor files
-*.swp
-
