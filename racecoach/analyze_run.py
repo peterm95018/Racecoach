@@ -909,7 +909,8 @@ def write_report(
             lines.append(
                 f"Biggest gain: **{g.name}** ({g.time_delta:+.2f}s)"
             )
-
+            lines.append("")
+            
             if g.min_speed_delta_mph is not None:
                 lines.append(
                     f"- Min speed: {g.min_speed_delta_mph:+.1f} mph vs reference lap"
@@ -928,7 +929,8 @@ def write_report(
             lines.append(
                 f"Biggest loss: **{l.name}** ({l.time_delta:+.2f}s)"
             )
-
+            lines.append("")
+            
             if (
                 l.avg_speed_delta_mph is not None
                 and l.avg_speed_delta_mph < -3
