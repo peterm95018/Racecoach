@@ -33,7 +33,16 @@ class UploadHandler(FileSystemEventHandler):
         try:
             print(f"Analyzing {path.name}...")
             _, metrics, findings = analyze(path, self.event_dir)
-            md, js = write_report(path, metrics, findings, self.reports_dir)
+
+            reference_path = self.event_dir / "reference.csv"
+
+            md, js = write_report(
+                path,
+                reference_path,
+                metrics,
+                findings,
+                self.reports_dir,
+            )
             dest = self.processed_dir / path.name
             shutil.move(str(path), str(dest))
             print(f"Report written: {md}")

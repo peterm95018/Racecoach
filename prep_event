@@ -17,6 +17,7 @@ if [ ! -f "$EVENT_DIR/segments.yaml" ]; then
 fi
 
 echo "$EVENT_NAME" > active_event.txt
+./install_service.sh
 
 echo ""
 echo "Active event set to:"
