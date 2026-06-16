@@ -180,3 +180,43 @@ Protect gains before searching for new speed.
 - ARCHITECTURE.md — engineering details
 - Event segment definitions
 - RaceChrono setup documentation
+
+## Event-Day Workflow
+
+1. Run:
+
+    ./prep_event
+
+2. Upload RaceChrono CSV files to:
+
+    events/<event>/uploads/
+
+3. Watcher automatically:
+
+    - creates reference.csv if needed
+    - analyzes uploaded run
+    - updates reports
+    - updates Drupal report page
+
+4. Open RaceCoach report URL
+
+5. Use run_analysis for custom comparisons
+
+
+Known failure modes:
+
+- Empty report:
+  Usually reference.csv missing.
+
+- Uploads disappear:
+  Watcher accidentally moving CSVs to processed.
+
+- Drupal shows old report:
+  current symlink points to previous event.
+
+- Watcher running but not processing:
+  File already existed before watcher started.
+  Watchdog only triggers on new file creation events.
+
+- write_report TypeError:
+  watch_uploads.py out of sync with analyze_run.py API.

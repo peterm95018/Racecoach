@@ -72,3 +72,17 @@ prep_event
 → Drupal report publication
 
 This significantly reduces event-day operational risk.
+
+Tag: event-workflow-ready-v1
+
+Verified:
+
+- prep_event updates active event
+- watcher auto-reconfigures
+- first upload creates reference.csv
+- uploads remain available for later comparisons
+- reports generate automatically
+- Drupal report updates correctly
+- watcher survives service restart
+
+Validated: 2026-06-16

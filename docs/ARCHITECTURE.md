@@ -213,3 +213,13 @@ Future architecture:
     events/<active_event>/
 
 This would eliminate service reconfiguration and allow a single permanent watcher process.
+
+### Reference Lap Creation
+
+If reference.csv does not exist:
+
+1. First uploaded CSV is copied to reference.csv
+2. Report is generated using that lap as baseline
+3. Subsequent uploads compare against reference.csv
+
+This allows a new event to become operational without manual reference setup.
