@@ -32,9 +32,18 @@ class UploadHandler(FileSystemEventHandler):
 
         try:
             print(f"Analyzing {path.name}...")
-            _, metrics, findings = analyze(path, self.event_dir)
 
             reference_path = self.event_dir / "reference.csv"
+
+            if not reference_path.exists():
+                shutil.copy2(path, reference_path)
+                print(f"Created reference lap: {reference_path.name}")
+
+            df, metrics, findings = analyze(
+                path,
+                self.event_dir,
+                reference_path,
+            )
 
             md, js = write_report(
                 path,
@@ -42,11 +51,12 @@ class UploadHandler(FileSystemEventHandler):
                 metrics,
                 findings,
                 self.reports_dir,
+                df.attrs.get("driver_input_source"),
             )
-            dest = self.processed_dir / path.name
-            shutil.move(str(path), str(dest))
+                
             print(f"Report written: {md}")
-            print(f"Processed file moved to: {dest}")
+            print(f"Processed file retained in uploads: {path}")
+
         except Exception as exc:
             print(f"ERROR analyzing {path.name}: {exc}")
             traceback.print_exc()

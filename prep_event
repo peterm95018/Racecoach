@@ -19,6 +19,17 @@ fi
 echo "$EVENT_NAME" > active_event.txt
 ./install_service.sh
 
+
+DRUPAL_CURRENT="/var/www/html/drupal10/web/sites/default/files/racecoach/events/current"
+
+mkdir -p "$DRUPAL_CURRENT"
+
+ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.html" "$DRUPAL_CURRENT/latest_report.html"
+ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.md" "$DRUPAL_CURRENT/latest_report.md"
+
+echo "Drupal report links updated:"
+echo "  $DRUPAL_CURRENT/latest_report.html"
+
 echo ""
 echo "Active event set to:"
 echo "  $EVENT_NAME"
