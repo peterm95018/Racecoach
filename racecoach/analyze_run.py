@@ -1389,6 +1389,14 @@ def write_report(
     summary = {"source": csv_path.name, "metrics": [asdict(m) for m in metrics], "findings": [{"score": f["score"], "segment": f["segment"].name, "reasons": f["reasons"], "coaching": f["coaching"]} for f in findings]}
     json_path.write_text(json.dumps(summary, indent=2))
 
+    write_grid_report(
+        csv_path,
+        reference_path,
+        metrics,
+        findings,
+        reports_dir,
+    )
+
     return md_path, json_path
 
 def main():
@@ -1400,13 +1408,6 @@ def main():
     args = parser.parse_args()
     df, metrics, findings = analyze(args.csv, args.event, args.reference)
 
-    write_grid_report(
-        csv_path,
-        reference_path,
-        metrics,
-        findings,
-        reports_dir,
-    )
     md, js = write_report(
         args.csv,
         args.reference,
