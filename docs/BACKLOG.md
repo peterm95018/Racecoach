@@ -146,3 +146,55 @@ Status:
 Questions:
 - Are Rec+1 and Rec+2 providing signal beyond exit speed?
 - Keep, move to detail view, or remove?
+
+### Compare Against Previous Run
+Priority: High
+
+Current:
+- Reports compare against reference.csv
+
+Desired:
+- Compare newest run against previous run
+- Compare newest run against reference lap
+- Compare newest run against any selected run
+
+Proposed run_analysis flow:
+
+1. Reference Lap
+2. Previous Run
+3. Choose Run
+
+Goal:
+Provide immediate between-run coaching while standing in grid.
+
+### Auto Reference Management
+Priority: High
+
+Current:
+- First uploaded CSV becomes reference.csv
+
+Future:
+- Allow promoting a run to reference.csv
+- Optionally auto-promote fastest clean run
+- Preserve manual reference selection
+
+Questions:
+- Fastest clean run?
+- Driver-selected run?
+- Best run this session?
+
+### Eliminate Event-Specific Watcher Configuration
+Priority: Medium
+
+Current:
+- prep_event regenerates systemd service
+- watcher points to event-specific uploads directory
+
+Future:
+- Single permanent uploads directory
+- watch_uploads.py reads active_event.txt
+- Files routed dynamically to current event
+
+Benefits:
+- Simpler architecture
+- No service restart when changing events
