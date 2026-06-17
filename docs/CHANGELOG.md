@@ -86,3 +86,16 @@ Verified:
 - watcher survives service restart
 
 Validated: 2026-06-16
+
+## Important Recovery Tags
+
+event-workflow-ready-v1
+- prep_event reconfigures watcher
+- reference.csv auto-created
+- uploads retained
+- Drupal report publishing validated
+
+previous-run-comparison-v1
+- compare against previous run
+- compare against selected run
+- existing reference workflow preserved

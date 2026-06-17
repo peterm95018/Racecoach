@@ -223,3 +223,40 @@ If reference.csv does not exist:
 3. Subsequent uploads compare against reference.csv
 
 This allows a new event to become operational without manual reference setup.
+
+
+Event directory structure
+
+events/<event>/
+├── uploads/
+├── reports/
+├── processed/
+├── reference.csv
+├── segments.yaml
+├── event.yaml
+
+Generated automatically:
+- reports/*
+- processed/*
+- reference.csv (first upload)
+
+RaceChrono CSV
+    ↓
+watch_uploads.py
+    ↓
+analyze()
+    ↓
+write_report()
+    ↓
+latest_report.md
+latest_report.html
+    ↓
+Drupal current symlink
+
+Current assumptions
+
+- First uploaded run becomes reference.csv
+- Uploaded CSVs are retained
+- Reports are regenerated from uploaded files
+- Watcher is event-specific
+- Active event controlled by active_event.txt

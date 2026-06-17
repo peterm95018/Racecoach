@@ -27,6 +27,9 @@ mkdir -p "$DRUPAL_CURRENT"
 ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.html" "$DRUPAL_CURRENT/latest_report.html"
 ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.md" "$DRUPAL_CURRENT/latest_report.md"
 
+ln -sfn "$PWD/$EVENT_DIR/reports/grid_report.html" "$DRUPAL_CURRENT/grid_report.html"
+ln -sfn "$PWD/$EVENT_DIR/reports/grid_report.md" "$DRUPAL_CURRENT/grid_report.md"
+
 echo "Drupal report links updated:"
 echo "  $DRUPAL_CURRENT/latest_report.html"
 

@@ -835,6 +835,152 @@ h2 {{
 </html>
 """
 
+def primary_action(m: SegmentMetric) -> str:
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
+        return "Unwind earlier and protect exit speed."
+    if (
+        m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.25
+    ):
+        return "Finish rotation sooner and commit to throttle earlier."
+    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
+        return "Carry more speed without adding steering."
+    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -3:
+        return "Look for excess steering, early braking, or extra distance."
+    return "Repeat the reference technique and make one clean improvement."
+
+
+def primary_cause(m: SegmentMetric) -> str:
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
+        return f"Exit speed {m.exit_speed_delta_mph:+.1f} mph"
+    if (
+        m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.25
+    ):
+        return f"Throttle commitment {m.throttle_commit_delay_delta_s:+.2f}s"
+    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
+        return f"Minimum speed {m.min_speed_delta_mph:+.1f} mph"
+    if m.avg_speed_delta_mph is not None:
+        return f"Average speed {m.avg_speed_delta_mph:+.1f} mph"
+    return "No single telemetry cause"
+
+
+def write_grid_report(
+    csv_path: Path,
+    reference_path: Path | None,
+    metrics: list[SegmentMetric],
+    findings: list[dict],
+    reports_dir: Path,
+):
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    grid_md_path = reports_dir / "grid_report.md"
+    grid_html_path = reports_dir / "grid_report.html"
+
+    losses = sorted(
+        [m for m in metrics if m.time_delta is not None and m.time_delta > 0.10],
+        key=lambda x: x.time_delta,
+        reverse=True,
+    )
+
+    gains = sorted(
+        [m for m in metrics if m.time_delta is not None and m.time_delta < -0.10],
+        key=lambda x: x.time_delta,
+    )
+
+    lines = [
+        f"# Grid Mode — {csv_path.name}",
+        "",
+    ]
+
+    if reference_path:
+        lines += [
+            f"Reference: {reference_path.name}",
+            "",
+        ]
+
+    if losses:
+        m = losses[0]
+        lines += [
+            "## NEXT RUN",
+            "",
+            f"### Fix: {m.name}",
+            "",
+            f"**Loss:** {m.time_delta:+.2f}s",
+            "",
+            f"**Why:** {primary_cause(m)}",
+            "",
+            f"**Do this:** {primary_action(m)}",
+            "",
+        ]
+
+        if len(losses) > 1:
+            m2 = losses[1]
+            lines += [
+                "## SECOND PRIORITY",
+                "",
+                f"### {m2.name}",
+                "",
+                f"**Loss:** {m2.time_delta:+.2f}s",
+                "",
+                f"**Why:** {primary_cause(m2)}",
+                "",
+                f"**Do this:** {primary_action(m2)}",
+                "",
+            ]
+
+    else:
+        lines += [
+            "## NEXT RUN",
+            "",
+            "No major losses detected.",
+            "",
+            "**Do this:** Repeat the cleanest sections and avoid chasing speed.",
+            "",
+        ]
+
+    if gains:
+        g = gains[0]
+        lines += [
+            "## KEEP",
+            "",
+            f"### {g.name}",
+            "",
+            f"**Gain:** {g.time_delta:+.2f}s",
+            "",
+            "Repeat what worked here.",
+            "",
+        ]
+
+    lines += [
+        "---",
+        "",
+        "## Quick Segment Check",
+        "",
+        "| Segment | Δ Time | Exit Δ | Note |",
+        "|---|---:|---:|---|",
+    ]
+
+    for m in metrics:
+        note = ""
+        if m.time_delta is not None and m.time_delta > 0.10:
+            note = "loss"
+        elif m.time_delta is not None and m.time_delta < -0.10:
+            note = "gain"
+
+        lines.append(
+            f"| {m.name} | {delta_str(m.time_delta, 2)} | "
+            f"{delta_str(m.exit_speed_delta_mph, 1)} | {note} |"
+        )
+
+    text = "\n".join(lines) + "\n"
+
+    grid_md_path.write_text(text)
+    grid_html_path.write_text(markdown_to_html(text))
+
+    return grid_md_path, grid_html_path
+
+
 def write_report(
     csv_path: Path,
     reference_path: Path | None,
@@ -1253,6 +1399,14 @@ def main():
     parser.add_argument("--reports", type=Path, default=Path("reports"))
     args = parser.parse_args()
     df, metrics, findings = analyze(args.csv, args.event, args.reference)
+
+    write_grid_report(
+        csv_path,
+        reference_path,
+        metrics,
+        findings,
+        reports_dir,
+    )
     md, js = write_report(
         args.csv,
         args.reference,

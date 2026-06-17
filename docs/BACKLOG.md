@@ -198,3 +198,48 @@ Future:
 Benefits:
 - Simpler architecture
 - No service restart when changing events
+
+
+### Mobile-First Grid Coaching
+Priority: High
+
+Target user experience:
+
+- Standing in grid
+- iPhone only
+- 30-60 seconds available
+
+Reports should:
+
+- Identify biggest loss immediately
+- Explain cause
+- Provide one coaching action
+- Hide secondary telemetry below fold
+
+### Pre-Event Course Preparation
+Priority: High
+
+Inputs:
+
+- Course map
+- Event notes
+- Segment definitions
+
+Goal:
+
+Prepare segments and coaching structure before arriving at event.
+
+### Grid Mode Report
+Priority: High
+
+Target:
+5-minute between-run workflow
+
+Output:
+
+- Biggest loss
+- Root cause
+- One corrective action
+- One reminder for next run
+
+Must fit on one phone screen.
