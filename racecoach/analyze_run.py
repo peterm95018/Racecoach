@@ -914,7 +914,11 @@ def write_grid_report(
             "",
         ]
 
-        if len(losses) > 1:
+        if (
+            len(losses) > 1
+            and losses[1].time_delta is not None
+            and losses[1].time_delta >= 0.25
+        ):
             m2 = losses[1]
             lines += [
                 "## SECOND PRIORITY",
@@ -938,7 +942,6 @@ def write_grid_report(
             "**Do this:** Repeat the cleanest sections and avoid chasing speed.",
             "",
         ]
-
     if gains:
         g = gains[0]
         lines += [
@@ -963,9 +966,9 @@ def write_grid_report(
 
     for m in metrics:
         note = ""
-        if m.time_delta is not None and m.time_delta > 0.10:
+        if m.time_delta is not None and m.time_delta >= 0.25:
             note = "loss"
-        elif m.time_delta is not None and m.time_delta < -0.10:
+        elif m.time_delta is not None and m.time_delta <= -0.25:
             note = "gain"
 
         lines.append(
