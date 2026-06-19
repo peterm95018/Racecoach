@@ -835,6 +835,29 @@ h2 {{
 </html>
 """
 
+def driver_translation(m: SegmentMetric) -> str:
+    if (
+        m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph < -8
+        and m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.30
+    ):
+        return "You were late getting the car pointed and late getting back to power."
+
+    if (
+        m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph < -8
+    ):
+        return "You protected entry but gave away the exit."
+
+    if (
+        m.min_speed_delta_mph is not None
+        and m.min_speed_delta_mph < -3
+    ):
+        return "You over-slowed the car."
+
+    return "Repeat the reference technique."
+    
 def primary_action(m: SegmentMetric) -> str:
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
         return "Unwind earlier and protect exit speed."
@@ -863,6 +886,29 @@ def primary_cause(m: SegmentMetric) -> str:
     if m.avg_speed_delta_mph is not None:
         return f"Average speed {m.avg_speed_delta_mph:+.1f} mph"
     return "No single telemetry cause"
+
+def driver_translation(m: SegmentMetric) -> str:
+    if (
+        m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph < -8
+        and m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.30
+    ):
+        return "You were late getting the car pointed and late getting back to power."
+
+    if (
+        m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph < -8
+    ):
+        return "You protected entry but gave away the exit."
+
+    if (
+        m.min_speed_delta_mph is not None
+        and m.min_speed_delta_mph < -3
+    ):
+        return "You over-slowed the car."
+
+    return "Repeat the reference technique."
 
 
 def write_grid_report(
@@ -901,6 +947,14 @@ def write_grid_report(
 
     if losses:
         m = losses[0]
+
+        lines += [
+            "## ONE THING TO REMEMBER",
+            "",
+            driver_translation(m),
+            "",
+        ]
+
         lines += [
             "## NEXT RUN",
             "",
