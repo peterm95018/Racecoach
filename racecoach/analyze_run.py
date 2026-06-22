@@ -198,7 +198,14 @@ def load_segments(event_dir: Path):
     return load_segment_config(event_dir)["segments"]
 
 def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
-    part = df[(df["distance"] >= float(seg["start_distance"])) & (df["distance"] <= float(seg["end_distance"]))].copy()
+    if "start_distance" not in seg or "end_distance" not in seg:
+        return None
+
+    part = df[
+        (df["distance"] >= float(seg["start_distance"])) &
+        (df["distance"] <= float(seg["end_distance"]))
+    ].copy()
+
     if len(part) < 5:
         return None
     n = max(3, len(part) // 10)
@@ -398,6 +405,16 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
     metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
 
+    if not metrics:
+        print("WARNING: No valid distance segments found; using default Start/Middle/Finish segments.")
+        max_d = float(df["distance"].max())
+        segments = [
+            {"name": "Start", "start_distance": 0, "end_distance": max_d * 0.25},
+            {"name": "Middle course", "start_distance": max_d * 0.25, "end_distance": max_d * 0.75},
+            {"name": "Finish section", "start_distance": max_d * 0.75, "end_distance": max_d},
+        ]
+        metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
+
     ref_path = reference_path or (event_dir / "reference.csv")
     if ref_path.exists():
         ref_df = normalize_columns(read_racechrono_csv(ref_path))
@@ -428,7 +445,9 @@ def build_findings(metrics: list[SegmentMetric]):
     for m in metrics:
         score = 0.0
         reasons = []
-        
+        if contradictory_timing_loss(m):
+            continue
+            
         if low_confidence_loss(m):
             continue
 
@@ -835,6 +854,17 @@ h2 {{
 </html>
 """
 
+
+def contradictory_timing_loss(m: SegmentMetric) -> bool:
+    return (
+        m.time_delta is not None
+        and m.time_delta > 0
+        and m.avg_speed_delta_mph is not None
+        and m.avg_speed_delta_mph > 0
+        and m.exit_speed_delta_mph is not None
+        and m.exit_speed_delta_mph > 0
+    )
+
 def driver_translation(m: SegmentMetric) -> str:
     if (
         m.exit_speed_delta_mph is not None
@@ -859,6 +889,9 @@ def driver_translation(m: SegmentMetric) -> str:
     return "Repeat the reference technique."
     
 def primary_action(m: SegmentMetric) -> str:
+    if contradictory_timing_loss(m):
+        return "Verify segment boundary or line distance before changing driving."
+
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
         return "Unwind earlier and protect exit speed."
     if (
@@ -874,6 +907,9 @@ def primary_action(m: SegmentMetric) -> str:
 
 
 def primary_cause(m: SegmentMetric) -> str:
+    if contradictory_timing_loss(m):
+        return "Timing loss with faster speed metrics"
+
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
         return f"Exit speed {m.exit_speed_delta_mph:+.1f} mph"
     if (
@@ -888,6 +924,9 @@ def primary_cause(m: SegmentMetric) -> str:
     return "No single telemetry cause"
 
 def driver_translation(m: SegmentMetric) -> str:
+    if contradictory_timing_loss(m):
+        return "Timing loss conflicts with speed metrics; treat this as low confidence."
+
     if (
         m.exit_speed_delta_mph is not None
         and m.exit_speed_delta_mph < -8
@@ -955,10 +994,15 @@ def write_grid_report(
             "",
         ]
 
+        
+        heading = "Check" if contradictory_timing_loss(m) else "Fix"
+        
+
+        
         lines += [
             "## NEXT RUN",
             "",
-            f"### Fix: {m.name}",
+            f"### {heading}: {m.name}",
             "",
             f"**Loss:** {m.time_delta:+.2f}s",
             "",
@@ -1104,6 +1148,8 @@ def write_report(
             and classify_loss(m) != "unexplained timing loss"
         ]
 
+        summary_added = False
+        
         lines += ["## Run Summary", ""]
 
         if summary_gains:
@@ -1160,6 +1206,28 @@ def write_report(
 
             lines.append("")
             lines.append("")
+
+        if not summary_gains and not summary_losses:
+            small_gains = [
+                m for m in gains
+                if m.time_delta is not None
+                and m.name not in {"Start", "Launch"}
+            ]
+
+            if small_gains:
+                g = small_gains[0]
+                lines.append("Small net improvement over reference lap.")
+                lines.append("")
+                lines.append(
+                    f"Best small gain: **{g.name}** ({g.time_delta:+.2f}s)"
+                )
+                lines.append("")
+                lines.append("No major losses detected.")
+            else:
+                lines.append("No major gains or losses detected.")
+                lines.append("")
+                lines.append("Use the segment table to check small changes.")
+                
         lines += [
             "",
             "### Next Run Focus",
