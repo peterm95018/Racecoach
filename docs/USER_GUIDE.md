@@ -8,6 +8,17 @@ The report is designed to answer one question:
 
 **What should I do differently on the next run?**
 
+## The Components
+
+RaceChrono Pro is an application for iOS and Android that is used gather telemetry and video data for track and autocross events.
+
+RaceBox GPS is used to create an accurate GPS trace that is stored in RaceChrono Pro.
+
+ODBLink is an ODBII reader that pulls information from the car and stores that data within RaceChrono Pro.
+
+FTPManager Pro is a FTP/SFTP iOS software that I use to copy exported data from RaceChrono Pro to my Ubuntu / Drupal server where a system services **watches** for incoming files to process.
+GoPro is used to capture video and is optional. 
+
 ---
 
 ## Event Workflow
@@ -41,9 +52,12 @@ RaceCoach automatically:
 
 ### 4. View Report
 
+We created an even shorter report that could be easily consumed while in a 10 minute break between runs called Grid Report. The longer report provides additional detail.
 Open:
 
 `https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html`
+or
+`https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html`
 
 ---
 

@@ -1,0 +1,20 @@
+segments:
+  - name: "Start to slalom / offset"
+    coaching_name: "Start to slalom"
+    notes: "Launch, first acceleration, first slalom/offset setup."
+
+  - name: "Right sweeper"
+    coaching_name: "Right sweeper"
+    notes: "Drops in elevation near the end, surface has dips. Protect exit speed; avoid over-slowing or pinching."
+
+  - name: "Offsets to turnaround"
+    coaching_name: "Offsets to turnaround"
+    notes: "Three offsets before the turnaround. Focus on early rotation and clean setup."
+
+  - name: "Turnaround to left sweep"
+    coaching_name: "Turnaround to left sweeper"
+    notes: "Left sweeper is not immediately after turnaround. Slight uphill and rough surface; be patient but get back to throttle cleanly."
+
+  - name: "Attack offsets to finish"
+    coaching_name: "Offsets to finish"
+    notes: "Three offset elements that appear to be good attack elements. Commit earlier and drive through finish."
