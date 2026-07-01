@@ -681,11 +681,11 @@ def coach_text(m: SegmentMetric) -> str:
 
         if throttle_late and exit_down:
             return (
-                f"{m.name} at {t}: the loss is late-throttle related. "
-                f"You lost {m.time_delta:.2f}s, picked up throttle "
-                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed."
-                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference."
-                "Commit to throttle earlier after rotation."
+                f"{m.name} at {t}: the loss is late to power. "
+                f"You lost {m.time_delta:.2f}s because you waited "
+                f"{m.throttle_commit_delay_delta_s:.2f}s too long to get back to power "
+                f"and exited {abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
+                "Commit to throttle as soon as the car is pointed."
             )
 
         if exit_down:
@@ -705,9 +705,10 @@ def coach_text(m: SegmentMetric) -> str:
 
         if throttle_late:
             return (
-                f"{m.name} at {t}: throttle pickup was "
-                f"{m.throttle_commit_delay_delta_s:.2f}s later after min speed, "
-                f"segment lost {m.time_delta:.2f}s. Focus on earlier commitment."
+                f"{m.name} at {t}: the loss is late to power. "
+                f"You waited {m.throttle_commit_delay_delta_s:.2f}s too long "
+                f"to get back to power, and the segment lost {m.time_delta:.2f}s. "
+                "Commit to throttle as soon as the car is pointed."
             )
 
         if (
@@ -749,11 +750,11 @@ def explain_delta(m: SegmentMetric) -> str:
     if m.throttle_commit_delay_delta_s is not None:
         if m.throttle_commit_delay_delta_s > 0.20:
             reasons.append(
-                f"committed to throttle {m.throttle_commit_delay_delta_s:.2f}s later after min speed"
+                f"waited {m.throttle_commit_delay_delta_s:.2f}s too long to get back to power"
             )
         elif m.throttle_commit_delay_delta_s < -0.20:
             reasons.append(
-                f"committed to throttle {abs(m.throttle_commit_delay_delta_s):.2f}s earlier after min speed"
+                f"got back to power {abs(m.throttle_commit_delay_delta_s):.2f}s sooner"
             )
 
     if (
@@ -865,28 +866,6 @@ def contradictory_timing_loss(m: SegmentMetric) -> bool:
         and m.exit_speed_delta_mph > 0
     )
 
-def driver_translation(m: SegmentMetric) -> str:
-    if (
-        m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph < -8
-        and m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.30
-    ):
-        return "You were late getting the car pointed and late getting back to power."
-
-    if (
-        m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph < -8
-    ):
-        return "You protected entry but gave away the exit."
-
-    if (
-        m.min_speed_delta_mph is not None
-        and m.min_speed_delta_mph < -3
-    ):
-        return "You over-slowed the car."
-
-    return "Repeat the reference technique."
     
 def primary_action(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
