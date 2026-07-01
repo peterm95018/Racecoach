@@ -882,7 +882,7 @@ def primary_action(m: SegmentMetric) -> str:
         return "Carry more speed without adding steering."
     if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -3:
         return "Look for excess steering, early braking, or extra distance."
-    return "Repeat the reference technique and make one clean improvement."
+    return "Drive it clean; no single telemetry fault stands out."
 
 
 def primary_cause(m: SegmentMetric) -> str:
@@ -926,7 +926,7 @@ def driver_translation(m: SegmentMetric) -> str:
     ):
         return "You over-slowed the car."
 
-    return "Repeat the reference technique."
+    return "Small loss with no clear telemetry fault. Do not chase a setup change."
 
 
 def write_grid_report(
