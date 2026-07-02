@@ -887,20 +887,22 @@ def primary_action(m: SegmentMetric) -> str:
 
 def primary_cause(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
-        return "Timing loss with faster speed metrics"
+        return "Low Confidence"
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-        return f"Exit speed {m.exit_speed_delta_mph:+.1f} mph"
+        return f"Weak Exit {m.exit_speed_delta_mph:+.1f} mph"
     if (
         m.throttle_commit_delay_delta_s is not None
         and m.throttle_commit_delay_delta_s > 0.25
     ):
-        return f"Throttle commitment {m.throttle_commit_delay_delta_s:+.2f}s"
+        return f"Late to Power {m.throttle_commit_delay_delta_s:+.2f}s"
+    
     if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-        return f"Minimum speed {m.min_speed_delta_mph:+.1f} mph"
+        return f"Over Slowing {m.min_speed_delta_mph:+.1f} mph"
     if m.avg_speed_delta_mph is not None:
-        return f"Average speed {m.avg_speed_delta_mph:+.1f} mph"
-    return "No single telemetry cause"
+        return f"Momentum Loss {m.avg_speed_delta_mph:+.1f} mph"
+    
+    return "No Clear Diagnosis"
 
 def driver_translation(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
