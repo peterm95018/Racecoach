@@ -910,8 +910,11 @@ def primary_cause(m: SegmentMetric) -> str:
     if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
         return f"Over Slowing"
     
-    if m.avg_speed_delta_mph is not None:
-        return f"Momentum Loss"
+    if (
+        m.avg_speed_delta_mph is not None
+        and m.avg_speed_delta_mph < -2.0
+    ):
+        return "Momentum Loss"
     
     return "No Clear Diagnosis"
 
@@ -956,6 +959,12 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
         confidence = "High"
         confidence_reason = (
             "Primary telemetry evidence supports the diagnosis."
+        )
+
+    if diagnosis == "No Clear Diagnosis":
+        confidence = "Low"
+        confidence_reason = (
+            "No telemetry metric clearly explains the time loss."
         )
 
     return Diagnosis(
