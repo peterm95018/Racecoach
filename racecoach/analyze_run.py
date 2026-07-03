@@ -85,6 +85,16 @@ class SegmentMetric:
     throttle_commit_delay_delta_s: Optional[float] = None
 
 
+@dataclass
+class Diagnosis:
+    name: str
+    confidence: str
+    evidence: list[str]
+    action: str
+    cue: str
+    confidence_reason: str
+
+
 def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
     lines = csv_path.read_text(errors="replace").splitlines()
     header_idx = None
@@ -928,6 +938,36 @@ def primary_evidence(m: SegmentMetric) -> str:
     return "No single telemetry cause"
 
 
+def diagnose_segment(m: SegmentMetric) -> Diagnosis:
+    diagnosis = primary_cause(m)
+    evidence = primary_evidence(m)
+    action = primary_action(m)
+    cue = driver_translation(m)
+
+    if contradictory_timing_loss(m):
+        confidence = "Low"
+        confidence_reason = "Timing loss conflicts with speed metrics."
+    elif low_confidence_loss(m):
+        confidence = "Low"
+        confidence_reason = (
+            "Telemetry is close to reference; no strong fault stands out."
+        )
+    else:
+        confidence = "High"
+        confidence_reason = (
+            "Primary telemetry evidence supports the diagnosis."
+        )
+
+    return Diagnosis(
+        name=diagnosis,
+        confidence=confidence,
+        evidence=[evidence],
+        action=action,
+        cue=cue,
+        confidence_reason=confidence_reason,
+    )
+
+
 def driver_translation(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
         return "Timing loss conflicts with speed metrics; treat this as low confidence."
@@ -991,19 +1031,17 @@ def write_grid_report(
 
     if losses:
         m = losses[0]
+        d = diagnose_segment(m)
 
         lines += [
             "## ONE THING TO REMEMBER",
             "",
-            driver_translation(m),
+            d.cue,
             "",
         ]
 
-        
         heading = "Check" if contradictory_timing_loss(m) else "Fix"
-        
 
-        
         lines += [
             "## NEXT RUN",
             "",
@@ -1011,11 +1049,15 @@ def write_grid_report(
             "",
             f"**Loss:** {m.time_delta:+.2f}s",
             "",
-            f"**Diagnosis:** {primary_cause(m)}",
+            f"**Diagnosis:** {d.name}",
             "",
-            f"**Evidence:** {primary_evidence(m)}",
+            f"**Confidence:** {d.confidence}",
             "",
-            f"**Do this:** {primary_action(m)}",
+            f"**Evidence:** {'; '.join(d.evidence)}",
+            "",
+            f"**Why confidence:** {d.confidence_reason}",
+            "",
+            f"**Do this:** {d.action}",
             "",
         ]
 
@@ -1025,6 +1067,8 @@ def write_grid_report(
             and losses[1].time_delta >= 0.25
         ):
             m2 = losses[1]
+            d2 = diagnose_segment(m2)
+
             lines += [
                 "## SECOND PRIORITY",
                 "",
@@ -1032,11 +1076,15 @@ def write_grid_report(
                 "",
                 f"**Loss:** {m2.time_delta:+.2f}s",
                 "",
-                f"**Diagnosis:** {primary_cause(m2)}",
+                f"**Diagnosis:** {d2.name}",
                 "",
-                f"**Evidence:** {primary_evidence(m2)}",
+                f"**Confidence:** {d2.confidence}",
                 "",
-                f"**Do this:** {primary_action(m2)}",
+                f"**Evidence:** {'; '.join(d2.evidence)}",
+                "",
+                f"**Why confidence:** {d2.confidence_reason}",
+                "",
+                f"**Do this:** {d2.action}",
                 "",
             ]
 
@@ -1049,6 +1097,7 @@ def write_grid_report(
             "**Do this:** Repeat the cleanest sections and avoid chasing speed.",
             "",
         ]
+
     if gains:
         g = gains[0]
         lines += [
