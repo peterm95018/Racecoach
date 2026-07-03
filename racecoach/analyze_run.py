@@ -890,19 +890,43 @@ def primary_cause(m: SegmentMetric) -> str:
         return "Low Confidence"
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-        return f"Weak Exit {m.exit_speed_delta_mph:+.1f} mph"
+        return f"Weak Exit"
     if (
         m.throttle_commit_delay_delta_s is not None
         and m.throttle_commit_delay_delta_s > 0.25
     ):
-        return f"Late to Power {m.throttle_commit_delay_delta_s:+.2f}s"
+        return f"Late to Power"
     
     if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-        return f"Over Slowing {m.min_speed_delta_mph:+.1f} mph"
+        return f"Over Slowing"
+    
     if m.avg_speed_delta_mph is not None:
-        return f"Momentum Loss {m.avg_speed_delta_mph:+.1f} mph"
+        return f"Momentum Loss"
     
     return "No Clear Diagnosis"
+
+
+def primary_evidence(m: SegmentMetric) -> str:
+    if contradictory_timing_loss(m):
+        return "Speed metrics conflict with timing loss"
+
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
+        return f"Exit speed {m.exit_speed_delta_mph:+.1f} mph"
+
+    if (
+        m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.25
+    ):
+        return f"Power commitment {m.throttle_commit_delay_delta_s:+.2f}s"
+
+    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
+        return f"Minimum speed {m.min_speed_delta_mph:+.1f} mph"
+
+    if m.avg_speed_delta_mph is not None:
+        return f"Average speed {m.avg_speed_delta_mph:+.1f} mph"
+
+    return "No single telemetry cause"
+
 
 def driver_translation(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
@@ -987,7 +1011,9 @@ def write_grid_report(
             "",
             f"**Loss:** {m.time_delta:+.2f}s",
             "",
-            f"**Why:** {primary_cause(m)}",
+            f"**Diagnosis:** {primary_cause(m)}",
+            "",
+            f"**Evidence:** {primary_evidence(m)}",
             "",
             f"**Do this:** {primary_action(m)}",
             "",
@@ -1006,7 +1032,9 @@ def write_grid_report(
                 "",
                 f"**Loss:** {m2.time_delta:+.2f}s",
                 "",
-                f"**Why:** {primary_cause(m2)}",
+                f"**Diagnosis:** {primary_cause(m2)}",
+                "",
+                f"**Evidence:** {primary_evidence(m2)}",
                 "",
                 f"**Do this:** {primary_action(m2)}",
                 "",
