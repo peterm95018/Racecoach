@@ -947,6 +947,9 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
     action = primary_action(m)
     cue = driver_translation(m)
 
+    if diagnosis == "No Clear Diagnosis":
+        evidence = "No telemetry metric clearly explains the loss"
+
     if contradictory_timing_loss(m):
         confidence = "Low"
         confidence_reason = "Timing loss conflicts with speed metrics."
