@@ -1003,6 +1003,9 @@ def driver_translation(m: SegmentMetric) -> str:
         and m.min_speed_delta_mph < -3
     ):
         return "You over-slowed the car."
+    
+    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -2:
+        return "You lost speed through the whole section. Clean up the line and keep the car flowing."
 
     return "Small loss with no clear telemetry fault. Do not chase a setup change."
 
