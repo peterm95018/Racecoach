@@ -120,3 +120,55 @@ Do not chase setup or technique based on this alone.
 
 Mental cue:
 Verify before changing.
+
+---
+
+Diagnosis Architecture
+
+Each coaching recommendation is built from five independent components.
+
+Cue
+
+A short mental reminder that the driver can remember on grid before the next run.
+
+Examples:
+
+* “You lost speed through the whole section.”
+* “You were late getting the car pointed and late getting back to power.”
+
+Diagnosis
+
+A concise classification of the primary performance issue.
+
+Current diagnoses include:
+
+* Weak Exit
+* Late to Power
+* Over Slowing
+* Momentum Loss
+* No Clear Diagnosis
+* Low Confidence
+
+Evidence
+
+The primary telemetry measurement supporting the diagnosis.
+
+Examples:
+
+* Exit speed -10.4 mph
+* Power commitment +0.32 s
+* Average speed -5.2 mph
+
+Confidence
+
+An assessment of how strongly the telemetry supports the diagnosis.
+
+High confidence indicates a clear telemetry signature.
+
+Low confidence indicates conflicting telemetry, very small differences from the reference, or no single metric that adequately explains the time loss.
+
+Action
+
+A single driving adjustment for the next run.
+
+The action should be specific, actionable, and directly connected to the diagnosis.
