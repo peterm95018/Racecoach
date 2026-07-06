@@ -99,6 +99,7 @@ class DiagnosisScore:
     name: str
     score: int
     evidence: list[str]
+    contributions: list[str]
 
 
 def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
@@ -954,73 +955,98 @@ def clamp_score(value: float) -> int:
 def score_weak_exit(m: SegmentMetric) -> DiagnosisScore:
     score = 0
     evidence = []
+    contributions = []
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
-        score += min(70, abs(m.exit_speed_delta_mph) * 8)
+        points = min(70, abs(m.exit_speed_delta_mph) * 8)
+        score += points
         evidence.append(f"Exit speed {m.exit_speed_delta_mph:+.1f} mph")
+        contributions.append(f"+{int(round(points))} exit speed down")
 
     if m.time_delta is not None and m.time_delta > 0.10:
-        score += min(20, m.time_delta * 10)
+        points = min(20, m.time_delta * 10)
+        score += points
+        contributions.append(f"+{int(round(points))} time loss")
 
     if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 0:
         score += 5
+        contributions.append("+5 minimum speed maintained")
 
-    return DiagnosisScore("Weak Exit", clamp_score(score), evidence)
+    return DiagnosisScore("Weak Exit", clamp_score(score), evidence, contributions)
 
 
 def score_late_to_power(m: SegmentMetric) -> DiagnosisScore:
     score = 0
     evidence = []
+    contributions = []
 
     if (
         m.throttle_commit_delay_delta_s is not None
         and m.throttle_commit_delay_delta_s > 0.25
     ):
         delay = m.throttle_commit_delay_delta_s
-        score += min(75, delay * 150)
+        points = min(75, delay * 150)
+        score += points
         evidence.append(f"Power commitment {delay:+.2f}s")
+        contributions.append(f"+{int(round(points))} delayed power commitment")
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
-        score += min(20, abs(m.exit_speed_delta_mph) * 2)
+        points = min(20, abs(m.exit_speed_delta_mph) * 2)
+        score += points
+        contributions.append(f"+{int(round(points))} exit speed down")
 
     if m.time_delta is not None and m.time_delta > 0.10:
-        score += min(10, m.time_delta * 5)
+        points = min(10, m.time_delta * 5)
+        score += points
+        contributions.append(f"+{int(round(points))} time loss")
 
-    return DiagnosisScore("Late to Power", clamp_score(score), evidence)
+    return DiagnosisScore("Late to Power", clamp_score(score), evidence, contributions)
 
 
 def score_over_slowing(m: SegmentMetric) -> DiagnosisScore:
     score = 0
     evidence = []
+    contributions = []
 
     if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2.0:
-        score += min(70, abs(m.min_speed_delta_mph) * 10)
+        points = min(70, abs(m.min_speed_delta_mph) * 10)
+        score += points
         evidence.append(f"Minimum speed {m.min_speed_delta_mph:+.1f} mph")
+        contributions.append(f"+{int(round(points))} minimum speed down")
 
     if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -1.0:
-        score += min(20, abs(m.avg_speed_delta_mph) * 4)
+        points = min(20, abs(m.avg_speed_delta_mph) * 4)
+        score += points
+        contributions.append(f"+{int(round(points))} average speed down")
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph > 1.0:
         score -= 10
+        contributions.append("-10 exit speed improved")
 
-    return DiagnosisScore("Over Slowing", clamp_score(score), evidence)
+    return DiagnosisScore("Over Slowing", clamp_score(score), evidence, contributions)
 
 
 def score_momentum_loss(m: SegmentMetric) -> DiagnosisScore:
     score = 0
     evidence = []
+    contributions = []
 
     if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -2.0:
-        score += min(75, abs(m.avg_speed_delta_mph) * 10)
+        points = min(75, abs(m.avg_speed_delta_mph) * 10)
+        score += points
         evidence.append(f"Average speed {m.avg_speed_delta_mph:+.1f} mph")
+        contributions.append(f"+{int(round(points))} average speed down")
 
     if m.time_delta is not None and m.time_delta > 0.25:
-        score += min(20, m.time_delta * 8)
+        points = min(20, m.time_delta * 8)
+        score += points
+        contributions.append(f"+{int(round(points))} time loss")
 
     if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
         score -= 15
+        contributions.append("-15 exit speed suggests weak exit instead")
 
-    return DiagnosisScore("Momentum Loss", clamp_score(score), evidence)
+    return DiagnosisScore("Momentum Loss", clamp_score(score), evidence, contributions)
 
 
 def score_diagnoses(m: SegmentMetric) -> list[DiagnosisScore]:
@@ -1036,7 +1062,7 @@ def score_diagnoses(m: SegmentMetric) -> list[DiagnosisScore]:
 def diagnose_segment(m: SegmentMetric) -> Diagnosis:
     scores = score_diagnoses(m)
     winner = scores[0]
-    runner_up = scores[1] if len(scores) > 1 else DiagnosisScore("None", 0, [])
+    runner_up = scores[1] if len(scores) > 1 else DiagnosisScore("None", 0, [], [])
 
     if contradictory_timing_loss(m):
         diagnosis = "Low Confidence"
@@ -1065,9 +1091,11 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
         else:
             confidence = "Low"
 
+        contribution_text = "; ".join(winner.contributions) if winner.contributions else "no scoring details"
         confidence_reason = (
             f"{winner.name} scored {winner.score}; next closest was "
-            f"{runner_up.name} at {runner_up.score}."
+            f"{runner_up.name} at {runner_up.score}. "
+            f"Scoring: {contribution_text}."
         )
 
     return Diagnosis(
