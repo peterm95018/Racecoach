@@ -94,6 +94,12 @@ class Diagnosis:
     cue: str
     confidence_reason: str
 
+@dataclass
+class DiagnosisScore:
+    name: str
+    score: int
+    evidence: list[str]
+
 
 def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
     lines = csv_path.read_text(errors="replace").splitlines()
@@ -941,41 +947,135 @@ def primary_evidence(m: SegmentMetric) -> str:
     return "No single telemetry cause"
 
 
-def diagnose_segment(m: SegmentMetric) -> Diagnosis:
-    diagnosis = primary_cause(m)
-    evidence = primary_evidence(m)
-    action = primary_action(m)
-    cue = driver_translation(m)
+def clamp_score(value: float) -> int:
+    return max(0, min(100, int(round(value))))
 
-    if diagnosis == "No Clear Diagnosis":
-        evidence = "No telemetry metric clearly explains the loss"
+
+def score_weak_exit(m: SegmentMetric) -> DiagnosisScore:
+    score = 0
+    evidence = []
+
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
+        score += min(70, abs(m.exit_speed_delta_mph) * 8)
+        evidence.append(f"Exit speed {m.exit_speed_delta_mph:+.1f} mph")
+
+    if m.time_delta is not None and m.time_delta > 0.10:
+        score += min(20, m.time_delta * 10)
+
+    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 0:
+        score += 5
+
+    return DiagnosisScore("Weak Exit", clamp_score(score), evidence)
+
+
+def score_late_to_power(m: SegmentMetric) -> DiagnosisScore:
+    score = 0
+    evidence = []
+
+    if (
+        m.throttle_commit_delay_delta_s is not None
+        and m.throttle_commit_delay_delta_s > 0.25
+    ):
+        delay = m.throttle_commit_delay_delta_s
+        score += min(75, delay * 150)
+        evidence.append(f"Power commitment {delay:+.2f}s")
+
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
+        score += min(20, abs(m.exit_speed_delta_mph) * 2)
+
+    if m.time_delta is not None and m.time_delta > 0.10:
+        score += min(10, m.time_delta * 5)
+
+    return DiagnosisScore("Late to Power", clamp_score(score), evidence)
+
+
+def score_over_slowing(m: SegmentMetric) -> DiagnosisScore:
+    score = 0
+    evidence = []
+
+    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2.0:
+        score += min(70, abs(m.min_speed_delta_mph) * 10)
+        evidence.append(f"Minimum speed {m.min_speed_delta_mph:+.1f} mph")
+
+    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -1.0:
+        score += min(20, abs(m.avg_speed_delta_mph) * 4)
+
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph > 1.0:
+        score -= 10
+
+    return DiagnosisScore("Over Slowing", clamp_score(score), evidence)
+
+
+def score_momentum_loss(m: SegmentMetric) -> DiagnosisScore:
+    score = 0
+    evidence = []
+
+    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -2.0:
+        score += min(75, abs(m.avg_speed_delta_mph) * 10)
+        evidence.append(f"Average speed {m.avg_speed_delta_mph:+.1f} mph")
+
+    if m.time_delta is not None and m.time_delta > 0.25:
+        score += min(20, m.time_delta * 8)
+
+    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2.0:
+        score -= 15
+
+    return DiagnosisScore("Momentum Loss", clamp_score(score), evidence)
+
+
+def score_diagnoses(m: SegmentMetric) -> list[DiagnosisScore]:
+    scores = [
+        score_weak_exit(m),
+        score_late_to_power(m),
+        score_over_slowing(m),
+        score_momentum_loss(m),
+    ]
+    return sorted(scores, key=lambda item: item.score, reverse=True)
+
+
+def diagnose_segment(m: SegmentMetric) -> Diagnosis:
+    scores = score_diagnoses(m)
+    winner = scores[0]
+    runner_up = scores[1] if len(scores) > 1 else DiagnosisScore("None", 0, [])
 
     if contradictory_timing_loss(m):
+        diagnosis = "Low Confidence"
+        evidence = "Speed metrics conflict with timing loss"
         confidence = "Low"
         confidence_reason = "Timing loss conflicts with speed metrics."
     elif low_confidence_loss(m):
+        diagnosis = "No Clear Diagnosis"
+        evidence = "No telemetry metric clearly explains the loss"
         confidence = "Low"
-        confidence_reason = (
-            "Telemetry is close to reference; no strong fault stands out."
-        )
+        confidence_reason = "Telemetry is close to reference; no strong fault stands out."
+    elif winner.score < 35:
+        diagnosis = "No Clear Diagnosis"
+        evidence = "No telemetry metric clearly explains the loss"
+        confidence = "Low"
+        confidence_reason = "No telemetry metric clearly explains the time loss."
     else:
-        confidence = "High"
-        confidence_reason = (
-            "Primary telemetry evidence supports the diagnosis."
-        )
+        diagnosis = winner.name
+        evidence = winner.evidence[0] if winner.evidence else primary_evidence(m)
 
-    if diagnosis == "No Clear Diagnosis":
-        confidence = "Low"
+        score_gap = winner.score - runner_up.score
+        if winner.score >= 70 and score_gap >= 25:
+            confidence = "High"
+        elif winner.score >= 50:
+            confidence = "Medium"
+        else:
+            confidence = "Low"
+
         confidence_reason = (
-            "No telemetry metric clearly explains the time loss."
+            f"{winner.name} scored {winner.score}; next closest was "
+            f"{runner_up.name} at {runner_up.score}."
         )
 
     return Diagnosis(
         name=diagnosis,
         confidence=confidence,
         evidence=[evidence],
-        action=action,
-        cue=cue,
+        action=primary_action(m),
+        cue=driver_translation(m),
         confidence_reason=confidence_reason,
     )
 
