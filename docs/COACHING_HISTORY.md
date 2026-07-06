@@ -235,3 +235,17 @@ Not
 Telemetry → Algorithm → Driver
 
 The diagnosis engine exists to translate telemetry into language that helps the driver improve, not to expose its internal implementation.
+
+
+---
+
+Notes from GGLC 11-01-2025 Laguna Seca Lakebed Event
+What was different today?
+- one hour drive, so less fatigue
+- Smaller course, less walking. Less fatigue
+- Course was all slalom and 2 180’s
+- Practiced slaloms on sim trainer in the days prior
+- Hard workout day prior
+- I was able to watch the first session and observe braking point for overlap 180. The good line had the braking done prior to turn in and on gas earlier. Best line was not too deep or shallow. Learned my lesson from last Crows date where I went too deep consistently and should have known better.
+- Didn’t get drawn into looking at data due to the pace; there was time to jot down times and a couple of thoughts and check pressure. Approximately 8 mins between runs in am.
+- I was there for fun and not actively trying to compete but to work on my performance.
