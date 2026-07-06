@@ -179,3 +179,59 @@ The July 11–12 Porsche Club Salinas events are intended to field-test RaceCoac
 The objective is not more data.
 
 The objective is one useful instruction before the next run.
+
+## July 2026 — Separation of Driver Coaching and Developer Validation
+
+### Problem
+
+As the diagnosis engine matured, the grid report began exposing internal scoring details such as diagnosis scores, competing diagnoses, and score contributions.
+
+While useful during development, these details created unnecessary cognitive load for the driver and could be mistaken for telemetry values or timing data.
+
+### Decision
+
+Separate RaceCoach into two audiences.
+
+#### Driver (Grid Report)
+
+Designed for use on grid between runs.
+
+The report should answer only:
+
+- What happened?
+- Why did it happen?
+- What should I do differently?
+
+The driver should never need to understand the diagnosis algorithm.
+
+#### Developer (Validation Report)
+
+Designed for post-event analysis and algorithm tuning.
+
+This report will include:
+
+- All diagnosis scores
+- Winning and runner-up diagnoses
+- Confidence calculations
+- Score contributions
+- Conflicting evidence
+- Threshold decisions
+- Validation against expected outcomes
+
+### Coaching Philosophy
+
+RaceCoach should coach like an experienced instructor.
+
+The driver receives a simple coaching cue.
+
+The software performs the complex reasoning behind the scenes.
+
+### Design Principle
+
+Telemetry → Diagnosis → Coaching
+
+Not
+
+Telemetry → Algorithm → Driver
+
+The diagnosis engine exists to translate telemetry into language that helps the driver improve, not to expose its internal implementation.

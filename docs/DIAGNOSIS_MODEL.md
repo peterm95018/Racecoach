@@ -184,3 +184,55 @@ The coaching engine should always reason in this order:
 5. Action
 
 Telemetry supports the diagnosis. It is not the diagnosis.
+
+## Grid Report vs Developer Validation Report
+
+RaceCoach now has two separate audiences.
+
+### Grid Report
+
+The Grid Report is for the driver between runs.
+
+It should be short, clear, and actionable.
+
+It should include:
+
+- One thing to remember
+- Diagnosis
+- Confidence
+- Evidence
+- One action
+
+It should not include internal diagnosis scores or scoring math.
+
+Reason:
+
+The driver needs a coaching cue, not an explanation of the algorithm.
+
+### Developer Validation Report
+
+A future developer validation report should include the internal reasoning details used to tune the diagnosis engine.
+
+It should include:
+
+- All diagnosis scores
+- Winner and runner-up diagnosis
+- Score gap
+- Score contributions
+- Conflicting evidence
+- Threshold behavior
+- Whether the result matched expected validation cases
+
+Reason:
+
+Scoring details are useful after the event for tuning RaceCoach, but they create too much cognitive load on grid.
+
+### Design Rule
+
+Telemetry supports the diagnosis.
+
+Diagnosis supports the coaching cue.
+
+Scoring supports development and validation.
+
+These should remain separate.
