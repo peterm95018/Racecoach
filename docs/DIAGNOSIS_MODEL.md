@@ -236,3 +236,59 @@ Diagnosis supports the coaching cue.
 Scoring supports development and validation.
 
 These should remain separate.
+
+---
+
+## Future Diagnosis: Efficient Speed / Extra Distance
+
+### Problem
+
+Sometimes a run is slower even though minimum speed and exit speed are equal or better than the reference.
+
+This can happen when the driver carries speed but drives a longer or less efficient path.
+
+### Telemetry Signature
+
+Possible indicators:
+
+- Segment time slower
+- Minimum speed equal or higher
+- Exit speed equal or higher
+- Average speed neutral or higher
+- No obvious throttle delay
+- No clear over-slowing
+
+### Likely Driving Cause
+
+The car may have been fast but inefficient.
+
+Possible causes:
+
+- Added distance
+- Wider line
+- Late apex
+- Extra steering angle
+- Floating past the ideal line
+- Setup mistake before the segment
+
+### Driver Coaching Language
+
+"You were fast, but not efficient. Higher speed did not translate into lower elapsed time."
+
+### Action
+
+Review video or GPS trace before changing braking or throttle technique.
+
+### Mental Cue
+
+Shorter and cleaner beats faster and wider.
+
+### Validation Example
+
+GGLC 2026-06-20, Run 4 → Run 5, Finish section:
+
+- Time loss: +0.32s
+- Minimum speed: +2.5 mph
+- Exit speed: +4.6 mph
+- Diagnosis should not be Weak Exit, Late to Power, or Over Slowing.
+
