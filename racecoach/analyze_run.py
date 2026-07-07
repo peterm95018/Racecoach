@@ -218,13 +218,43 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     if "start_distance" not in seg or "end_distance" not in seg:
         return None
 
+    start_distance = float(seg["start_distance"])
+    end_distance = float(seg["end_distance"])
+
     part = df[
-        (df["distance"] >= float(seg["start_distance"])) &
-        (df["distance"] <= float(seg["end_distance"]))
+        (df["distance"] >= start_distance) &
+        (df["distance"] <= end_distance)
     ].copy()
 
+    debug_segments = bool(df.attrs.get("debug_segments", False))
+    segment_name = str(seg.get("name", "Unnamed segment"))
+
+    if debug_segments:
+        print(
+            f"SEGMENT DEBUG: {segment_name}: "
+            f"range={start_distance:.1f}-{end_distance:.1f}, "
+            f"samples={len(part)}"
+        )
+
     if len(part) < 5:
+        if debug_segments:
+            print(f"SEGMENT DEBUG: {segment_name}: skipped, not enough samples")
         return None
+
+    if debug_segments:
+        duration_debug = float(part.iloc[-1]["time_s"] - part.iloc[0]["time_s"])
+        msg = (
+            f"SEGMENT DEBUG: {segment_name}: "
+            f"time={float(part.iloc[0]['time_s']):.2f}-{float(part.iloc[-1]['time_s']):.2f}s, "
+            f"duration={duration_debug:.2f}s"
+        )
+        if "ref_error_m" in part.columns:
+            msg += (
+                f", ref_error_avg={float(part['ref_error_m'].mean()):.2f}m, "
+                f"ref_error_max={float(part['ref_error_m'].max()):.2f}m"
+            )
+        print(msg)
+
     n = max(3, len(part) // 10)
     entry = part.iloc[:n]["speed_mph"].mean()
     exit_ = part.iloc[-n:]["speed_mph"].mean()
@@ -416,6 +446,9 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
         df = project_lap_to_reference(df, ref_df)
 
+        df.attrs["debug_segments"] = True
+        ref_df.attrs["debug_segments"] = True
+
         df["raw_distance"] = df["distance"]
         ref_df["raw_distance"] = ref_df["distance"]
 
@@ -445,6 +478,13 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
                         "start_distance": start,
                         "end_distance": end,
                     }
+                )
+            print("Reference path generated segment ranges:")
+            for seg in generated_segments:
+                print(
+                    f"  {seg['name']}: "
+                    f"{float(seg['start_distance']):.1f}-"
+                    f"{float(seg['end_distance']):.1f}m"
                 )
             segments = generated_segments
 
