@@ -68,26 +68,39 @@ def nearest_reference_position(
 def project_lap_to_reference(
     lap_df: pd.DataFrame,
     ref_df: pd.DataFrame,
-    downsample: int = 20,
+    downsample: int = 50,
 ) -> pd.DataFrame:
     if "gps_path_m" not in ref_df.columns:
         ref_df = add_gps_path_position(ref_df)
 
     ref_search = ref_df.iloc[::downsample].copy()
 
-    projected = []
+    ref_lats = ref_search["latitude"].astype(float).to_numpy()
+    ref_lons = ref_search["longitude"].astype(float).to_numpy()
+    ref_pos = ref_search["gps_path_m"].astype(float).to_numpy()
 
-    for _, row in lap_df.iterrows():
-        ref_pos, err = nearest_reference_position(
-            ref_search,
-            float(row["latitude"]),
-            float(row["longitude"]),
-        )
-        projected.append((ref_pos, err))
+    projected_pos = []
+    projected_err = []
+
+    for row in lap_df.itertuples(index=False):
+        lat = float(getattr(row, "latitude"))
+        lon = float(getattr(row, "longitude"))
+
+        best_i = None
+        best_dist = float("inf")
+
+        for i in range(len(ref_lats)):
+            d = haversine_m(lat, lon, ref_lats[i], ref_lons[i])
+            if d < best_dist:
+                best_i = i
+                best_dist = d
+
+        projected_pos.append(float(ref_pos[best_i]))
+        projected_err.append(float(best_dist))
 
     out = lap_df.copy()
-    out["ref_pos_m"] = [x[0] for x in projected]
-    out["ref_error_m"] = [x[1] for x in projected]
+    out["ref_pos_m"] = projected_pos
+    out["ref_error_m"] = projected_err
     return out
 
 
