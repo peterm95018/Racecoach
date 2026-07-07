@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-
+import numpy as np
 import pandas as pd
 
 
@@ -73,30 +73,41 @@ def project_lap_to_reference(
     if "gps_path_m" not in ref_df.columns:
         ref_df = add_gps_path_position(ref_df)
 
+    if downsample < 1:
+        downsample = 1
+
     ref_search = ref_df.iloc[::downsample].copy()
 
     ref_lats = ref_search["latitude"].astype(float).to_numpy()
     ref_lons = ref_search["longitude"].astype(float).to_numpy()
     ref_pos = ref_search["gps_path_m"].astype(float).to_numpy()
 
+    ref_lats_rad = np.radians(ref_lats)
+    ref_lons_rad = np.radians(ref_lons)
+
     projected_pos = []
     projected_err = []
+
+    earth_radius_m = 6371000.0
 
     for row in lap_df.itertuples(index=False):
         lat = float(getattr(row, "latitude"))
         lon = float(getattr(row, "longitude"))
 
-        best_i = None
-        best_dist = float("inf")
+        lat_rad = math.radians(lat)
+        lon_rad = math.radians(lon)
 
-        for i in range(len(ref_lats)):
-            d = haversine_m(lat, lon, ref_lats[i], ref_lons[i])
-            if d < best_dist:
-                best_i = i
-                best_dist = d
+        dlat = ref_lats_rad - lat_rad
+        dlon = ref_lons_rad - lon_rad
+        mean_lat = (ref_lats_rad + lat_rad) / 2.0
 
+        x = dlon * np.cos(mean_lat)
+        y = dlat
+        dist_m = earth_radius_m * np.sqrt((x * x) + (y * y))
+
+        best_i = int(np.argmin(dist_m))
         projected_pos.append(float(ref_pos[best_i]))
-        projected_err.append(float(best_dist))
+        projected_err.append(float(dist_m[best_i]))
 
     out = lap_df.copy()
     out["ref_pos_m"] = projected_pos
