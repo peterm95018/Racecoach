@@ -248,6 +248,10 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
             f"time={float(part.iloc[0]['time_s']):.2f}-{float(part.iloc[-1]['time_s']):.2f}s, "
             f"duration={duration_debug:.2f}s"
         )
+        msg += (
+            f", projected_range={float(part['distance'].min()):.1f}-"
+            f"{float(part['distance'].max()):.1f}m"
+        )
         if "ref_error_m" in part.columns:
             msg += (
                 f", ref_error_avg={float(part['ref_error_m'].mean()):.2f}m, "
