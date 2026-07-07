@@ -109,9 +109,14 @@ def project_lap_to_reference(
         projected_pos.append(float(ref_pos[best_i]))
         projected_err.append(float(dist_m[best_i]))
 
+    projected_pos = list(np.maximum.accumulate(projected_pos))
+
     out = lap_df.copy()
+
     out["ref_pos_m"] = projected_pos
+
     out["ref_error_m"] = projected_err
+    
     return out
 
 
