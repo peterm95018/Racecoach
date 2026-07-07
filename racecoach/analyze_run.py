@@ -403,27 +403,72 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
     print(f"Segmentation mode: {mode}")
 
-    if mode == "reference_path":
-        print("Reference path mode selected, but production metrics still use distance segments.")
-
     segments = load_segments(event_dir)
     segment_config = load_segment_config(event_dir)
 
-    start_d = float(segment_config.get("timed_start_distance", 0))
-    finish_d = float(segment_config.get("timed_finish_distance", df["distance"].max()))
+    ref_path = reference_path or (event_dir / "reference.csv")
 
-    df = df[
-        (df["distance"] >= start_d) &
-        (df["distance"] <= finish_d)
-    ].copy()
+    if mode == "reference_path" and ref_path.exists():
+        print("Using reference path segmentation.")
 
-    df["time_s"] = df["time_s"] - df["time_s"].iloc[0]
-    df["distance"] = df["distance"] - df["distance"].iloc[0]
+        ref_df = normalize_columns(read_racechrono_csv(ref_path))
+        ref_df = add_gps_path_position(ref_df)
+
+        df = project_lap_to_reference(df, ref_df)
+
+        df["raw_distance"] = df["distance"]
+        ref_df["raw_distance"] = ref_df["distance"]
+
+        df["distance"] = df["ref_pos_m"]
+        ref_df["distance"] = ref_df["gps_path_m"]
+
+        df["time_s"] = df["time_s"] - df["time_s"].iloc[0]
+        ref_df["time_s"] = ref_df["time_s"] - ref_df["time_s"].iloc[0]
+
+        max_d = float(ref_df["distance"].max())
+
+        # Reference-path v0:
+        # If segments.yaml has named segments but no distance ranges,
+        # split the reference path evenly across those named segments.
+        if segments and all(
+            "start_distance" not in seg or "end_distance" not in seg
+            for seg in segments
+        ):
+            width = max_d / len(segments)
+            generated_segments = []
+            for i, seg in enumerate(segments):
+                start = i * width
+                end = max_d if i == len(segments) - 1 else (i + 1) * width
+                generated_segments.append(
+                    {
+                        **seg,
+                        "start_distance": start,
+                        "end_distance": end,
+                    }
+                )
+            segments = generated_segments
+
+    else:
+        if mode == "reference_path":
+            print("WARNING: Reference path mode selected but no reference path was found.")
+
+        start_d = float(segment_config.get("timed_start_distance", 0))
+        finish_d = float(segment_config.get("timed_finish_distance", df["distance"].max()))
+
+        df = df[
+            (df["distance"] >= start_d) &
+            (df["distance"] <= finish_d)
+        ].copy()
+
+        df["time_s"] = df["time_s"] - df["time_s"].iloc[0]
+        df["distance"] = df["distance"] - df["distance"].iloc[0]
+
+        ref_df = None
 
     metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
 
     if not metrics:
-        print("WARNING: No valid distance segments found; using default Start/Middle/Finish segments.")
+        print("WARNING: No valid segments found; using default Start/Middle/Finish segments.")
         max_d = float(df["distance"].max())
         segments = [
             {"name": "Start", "start_distance": 0, "end_distance": max_d * 0.25},
@@ -432,17 +477,20 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
         ]
         metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
 
-    ref_path = reference_path or (event_dir / "reference.csv")
     if ref_path.exists():
-        ref_df = normalize_columns(read_racechrono_csv(ref_path))
+        if mode != "reference_path":
+            ref_df = normalize_columns(read_racechrono_csv(ref_path))
 
-        ref_df = ref_df[
-            (ref_df["distance"] >= start_d) &
-            (ref_df["distance"] <= finish_d)
-        ].copy()
+            start_d = float(segment_config.get("timed_start_distance", 0))
+            finish_d = float(segment_config.get("timed_finish_distance", ref_df["distance"].max()))
 
-        ref_df["time_s"] = ref_df["time_s"] - ref_df["time_s"].iloc[0]
-        ref_df["distance"] = ref_df["distance"] - ref_df["distance"].iloc[0]
+            ref_df = ref_df[
+                (ref_df["distance"] >= start_d) &
+                (ref_df["distance"] <= finish_d)
+            ].copy()
+
+            ref_df["time_s"] = ref_df["time_s"] - ref_df["time_s"].iloc[0]
+            ref_df["distance"] = ref_df["distance"] - ref_df["distance"].iloc[0]
 
         ref_metrics = {
             m.name: m
