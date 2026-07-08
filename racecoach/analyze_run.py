@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import argparse
 import json
 from dataclasses import dataclass, asdict
@@ -454,8 +455,10 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
         df["ref_pos_m"] = df["distance"] / max_lap_d * max_ref_d
         df["ref_error_m"] = 0.0
 
-        df.attrs["debug_segments"] = True
-        ref_df.attrs["debug_segments"] = True
+        debug_segments = os.environ.get("RACECOACH_DEBUG_SEGMENTS") == "1"
+
+        df.attrs["debug_segments"] = debug_segments
+        ref_df.attrs["debug_segments"] = debug_segments
 
         df["raw_distance"] = df["distance"]
         ref_df["raw_distance"] = ref_df["distance"]
