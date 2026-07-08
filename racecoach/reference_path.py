@@ -111,15 +111,30 @@ def project_lap_to_reference(
 
     projected_pos = list(np.maximum.accumulate(projected_pos))
 
-    max_step_m = 0.05
     clamped_pos = []
     last_pos = projected_pos[0] if projected_pos else 0.0
 
-    for pos in projected_pos:
+    raw_distances = (
+        lap_df["distance"].astype(float).to_numpy()
+        if "distance" in lap_df.columns
+        else np.arange(len(projected_pos), dtype=float)
+    )
+
+    last_raw_distance = float(raw_distances[0]) if len(raw_distances) else 0.0
+
+    for pos, raw_distance in zip(projected_pos, raw_distances):
+        raw_step = max(0.0, float(raw_distance) - last_raw_distance)
+
+        # Allow reference position to advance with actual car movement,
+        # but prevent GPS nearest-point jumps across overlapping course sections.
+        max_step_m = max(0.25, raw_step * 1.5 + 0.25)
+
         if pos > last_pos + max_step_m:
             pos = last_pos + max_step_m
+
         clamped_pos.append(pos)
         last_pos = pos
+        last_raw_distance = float(raw_distance)
 
     projected_pos = clamped_pos
 
