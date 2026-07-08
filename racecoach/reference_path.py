@@ -111,7 +111,7 @@ def project_lap_to_reference(
 
     projected_pos = list(np.maximum.accumulate(projected_pos))
 
-    max_step_m = 0.15
+    max_step_m = 0.05
     clamped_pos = []
     last_pos = projected_pos[0] if projected_pos else 0.0
 
