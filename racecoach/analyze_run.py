@@ -1247,7 +1247,12 @@ def write_grid_report(
     grid_html_path = reports_dir / "grid_report.html"
 
     losses = sorted(
-        [m for m in metrics if m.time_delta is not None and m.time_delta > 0.10],
+        [
+            m for m in metrics
+            if m.time_delta is not None
+            and m.time_delta >= 0.25
+            and diagnose_segment(m).confidence != "Low"
+        ],
         key=lambda x: x.time_delta,
         reverse=True,
     )
