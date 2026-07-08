@@ -448,7 +448,11 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
         ref_df = normalize_columns(read_racechrono_csv(ref_path))
         ref_df = add_gps_path_position(ref_df)
 
-        df = project_lap_to_reference(df, ref_df)
+        max_ref_d = float(ref_df["gps_path_m"].max())
+        max_lap_d = float(df["distance"].max())
+
+        df["ref_pos_m"] = df["distance"] / max_lap_d * max_ref_d
+        df["ref_error_m"] = 0.0
 
         df.attrs["debug_segments"] = True
         ref_df.attrs["debug_segments"] = True
