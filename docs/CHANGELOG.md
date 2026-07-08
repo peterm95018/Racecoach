@@ -1,101 +1,120 @@
-2026-06-15 — Upload Watcher Reliability Improvements
+# RaceCoach Changelog
 
-Problem
+This document records major milestones and stable recovery points for the RaceCoach project.
 
-RaceCoach event preparation had evolved to use active_event.txt, but the upload watcher service was still configured using a fixed event path created when the service was originally installed.
+---
+
+# 2026-06-16 — Event Workflow Ready
+
+**Tag:** `event-workflow-ready-v1`
+
+## Problem
+
+RaceCoach event preparation had evolved to use `active_event.txt`, but the upload watcher service was still configured using a fixed event path created when the service was originally installed.
 
 As a result:
 
-* The watcher could continue monitoring an old event directory.
-* Running prep_event did not automatically reconfigure the watcher.
-* Upload processing depended on manual service updates.
-* The watcher had drifted from the current write_report() API and could no longer generate reports.
+- The watcher could continue monitoring an old event directory.
+- Running `prep_event` did not automatically reconfigure the watcher.
+- Upload processing depended on manual service updates.
+- The watcher had drifted from the current `write_report()` API.
 
-Changes
+## Changes
 
-Upload watcher service now follows active event
+### Upload watcher follows active event
 
-Updated install_service.sh to:
+- `install_service.sh` now reads `active_event.txt`.
+- The generated service targets the active event automatically.
+- Hard-coded event paths were removed.
 
-* Read active_event.txt
-* Resolve the current event directory
-* Generate a watcher service that targets:
-    * uploads
-    * processed
-    * reports
-    * event configuration
+### Event preparation reconfigures the watcher
 
-The generated service now points to the currently active event rather than a hardcoded sample event.
+`prep_event` now:
 
-Event preparation now reconfigures watcher automatically
+- Creates event directories.
+- Updates `active_event.txt`.
+- Rebuilds the upload watcher.
+- Restarts the watcher automatically.
 
-Updated prep_event to:
+### Upload processing fixed
 
-* Create event directories
-* Update active_event.txt
-* Rebuild and restart the upload watcher service automatically
+`watch_uploads.py` was updated to match the current reporting API.
 
-This removes a manual step from event-day workflow.
+The watcher now:
 
-Fixed watcher/report API mismatch
+- Detects uploads.
+- Runs analysis.
+- Generates reports.
+- Archives processed CSV files.
 
-watch_uploads.py was updated to match the current write_report() function signature.
+## Validation
 
-The watcher now successfully:
+Successfully verified:
 
-* Detects new CSV uploads
-* Runs analysis
-* Generates reports
-* Moves processed files into the processed directory
+- `prep_event`
+- watcher restart
+- upload detection
+- automatic analysis
+- report generation
+- Drupal publication
+- processed archive creation
 
-Validation
-
-End-to-end workflow successfully tested:
-
-prep_event
-→ watcher reconfigured
-→ CSV upload detected
-→ analysis executed
-→ reports generated
-→ CSV archived to processed directory
-
-Operational Impact
+## Outcome
 
 RaceCoach now supports event switching without manual service edits.
 
-Current workflow:
+---
 
-prep_event
-→ FTP upload
-→ automatic analysis
-→ automatic report generation
-→ Drupal report publication
+# 2026-06-17 — Previous Run Comparison
 
-This significantly reduces event-day operational risk.
+**Tag:** `previous-run-comparison-v1`
 
-Tag: event-workflow-ready-v1
+## Added
 
-Verified:
+- Compare against previous run.
+- Compare against any selected run.
+- Existing reference-lap workflow preserved.
 
-- prep_event updates active event
-- watcher auto-reconfigures
-- first upload creates reference.csv
-- uploads remain available for later comparisons
-- reports generate automatically
-- Drupal report updates correctly
-- watcher survives service restart
+---
 
-Validated: 2026-06-16
+# 2026-06-24 — Stable Reference Path Segmentation
 
-## Important Recovery Tags
+**Tag:** `reference-path-stable`
 
-event-workflow-ready-v1
-- prep_event reconfigures watcher
-- reference.csv auto-created
-- uploads retained
-- Drupal report publishing validated
+## Added
 
-previous-run-comparison-v1
-- compare against previous run
-- compare against selected run
-- existing reference workflow preserved
+- Five named course segments.
+- Reference-path segmentation mode.
+- Stable named segment reporting.
+- Environment-controlled segment debug logging.
+
+## Changed
+
+- Production reference positioning now uses normalized/scaled lap distance.
+- Grid reports suppress low-confidence coaching recommendations.
+
+## Fixed
+
+- Eliminated false multi-second segment losses caused by GPS projection jumps.
+- Prevented empty or collapsed segments on overlapping autocross layouts.
+- Restored stable coaching output for production use.
+
+## Deferred
+
+Future GPS projection work remains planned:
+
+- Heading-aware nearest-point matching.
+- Forward-only search window.
+- Robust handling of overlapping course sections.
+- Turnaround validation.
+- Replacement of normalized distance with true GPS projection after validation.
+
+---
+
+# Recovery Tags
+
+| Tag | Purpose |
+|------|---------|
+| `event-workflow-ready-v1` | Stable event preparation and upload automation |
+| `previous-run-comparison-v1` | Previous-run comparison workflow |
+| `reference-path-stable` | Stable named-segment reference path baseline |
