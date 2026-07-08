@@ -111,12 +111,22 @@ def project_lap_to_reference(
 
     projected_pos = list(np.maximum.accumulate(projected_pos))
 
+    max_step_m = 3.0
+    clamped_pos = []
+    last_pos = projected_pos[0] if projected_pos else 0.0
+
+    for pos in projected_pos:
+        if pos > last_pos + max_step_m:
+            pos = last_pos + max_step_m
+        clamped_pos.append(pos)
+        last_pos = pos
+
+    projected_pos = clamped_pos
+
     out = lap_df.copy()
-
     out["ref_pos_m"] = projected_pos
-
     out["ref_error_m"] = projected_err
-    
+
     return out
 
 
