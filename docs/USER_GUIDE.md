@@ -1,3 +1,302 @@
+RaceCoach User Guide
+
+Purpose
+
+RaceCoach compares each run against a reference lap and identifies the highest-value opportunities to reduce time.
+
+The goal is simple:
+
+What is the one thing I should do differently on my next run?
+
+⸻
+
+Quick Start
+
+Before Leaving Home
+
+* Charge iPhone
+* Charge RaceBox GPS
+* Charge GoPro (if used)
+* Verify OBDLink is available
+* Confirm the correct event is active
+* Pack tire gauge, inflator, and autocross equipment
+* Verify the RaceCoach upload service is running
+* Open the Grid Report URL once to verify connectivity
+
+⸻
+
+Event Workflow
+
+1. Prepare the Event
+
+Run:
+
+./prep_event
+
+Walk the course and update segments.yaml with meaningful driving segments.
+
+⸻
+
+2. Record a Run
+
+Record telemetry using:
+
+* RaceChrono Pro
+* RaceBox GPS
+* OBDLink (recommended)
+* GoPro (optional)
+
+⸻
+
+3. Export the Run
+
+From RaceChrono:
+
+* Open the completed run
+* Export CSV
+* Share to FTPManager Pro
+
+The upload service automatically imports the run and updates the reports.
+
+⸻
+
+4. Between Runs
+
+Open the Grid Report:
+
+* https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html
+
+Spend no more than 30 seconds reviewing:
+
+* Next Run
+* Keep
+* Quick Segment Check
+
+Choose one improvement for the next run.
+
+Do not try to fix multiple things at once.
+
+⸻
+
+5. After the Event
+
+Review the Full Report:
+
+* https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
+
+Use the detailed report to understand:
+
+* Why time was gained or lost
+* Which techniques consistently worked
+* Which driving habits should become permanent
+
+⸻
+
+Understanding the Reports
+
+Grid Report
+
+Designed for the 10-minute break between runs.
+
+Provides:
+
+* One coaching objective
+* One section to repeat
+* Quick segment summary
+
+⸻
+
+Full Report
+
+Designed for post-run and post-event analysis.
+
+Provides:
+
+* Run Summary
+* Next Run Focus
+* Segment analysis
+* Telemetry metrics
+* Opportunity analysis
+* Complete segment table
+
+⸻
+
+Report Sections
+
+Run Summary
+
+Highlights:
+
+* Biggest gain
+* Biggest loss
+* Key speed differences
+
+⸻
+
+Next Run Focus
+
+The most important coaching section.
+
+Example:
+
+1. Pick up throttle earlier.
+2. Protect exit speed.
+3. Repeat what worked in the previous segment.
+
+⸻
+
+Segment Time vs Reference Lap
+
+Shows where time was gained or lost.
+
+Negative values are faster.
+
+Positive values are slower.
+
+⸻
+
+Top Opportunities
+
+Explains why time was lost.
+
+Common causes include:
+
+* Late throttle commitment
+* Weak exit speed
+* Excess coasting
+* Overslowing
+* Poor corner setup
+
+⸻
+
+Segment Table
+
+Quick comparison across all segments.
+
+Columns include:
+
+* Δ Time
+* Minimum Speed
+* Exit Speed
+* Recovery Metrics
+* Coaching Notes
+
+⸻
+
+Key Metrics
+
+Exit Speed
+
+The single most important metric for autocross.
+
+Protect exit speed whenever possible.
+
+⸻
+
+Minimum Speed
+
+Higher is not always faster.
+
+If minimum speed increases while exit speed decreases, the corner was likely over-driven.
+
+⸻
+
+Throttle Commitment
+
+Measures how quickly throttle is reapplied after rotation.
+
+Earlier throttle commitment generally produces faster segment times.
+
+⸻
+
+Brake Start Distance
+
+Shows where braking began relative to the reference lap.
+
+Useful for identifying unnecessary early braking.
+
+⸻
+
+Coast Time
+
+Measures time spent with neither brake nor throttle applied.
+
+Long coast times usually indicate lost momentum.
+
+⸻
+
+Driver Guidelines
+
+Exit Speed Down
+
+Focus on:
+
+* Earlier vision
+* Earlier rotation
+* Earlier throttle commitment
+
+⸻
+
+Minimum Speed Too Low
+
+Focus on:
+
+* Less braking
+* Earlier brake release
+* Smoother rotation
+
+⸻
+
+Throttle Commitment Late
+
+Focus on:
+
+* Finish rotation sooner
+* Commit to throttle earlier
+
+⸻
+
+Segment Shows a Gain
+
+Repeat the technique.
+
+Protect gains before searching for additional speed.
+
+⸻
+
+Current Limitations
+
+* Coaching quality depends on telemetry quality.
+* Segment definitions are event-specific.
+* Recovery metrics continue to evolve.
+* Opportunity thresholds are still being refined.
+
+⸻
+
+Related Documentation
+
+* ARCHITECTURE.md
+* METRICS.md
+* DIAGNOSIS_MODEL.md
+* COACHING_PHILOSOPHY.md
+* REPORT_INTERPRETATION.md
+
+## See Also
+
+- REPORT_INTERPRETATION.md
+- COACHING_PHILOSOPHY.md
+- OPERATIONS.md
+
+
+
+
+
+
+
+--- 
+# TBD
+
+
 # RaceCoach User Guide
 
 ## Purpose

@@ -118,3 +118,9 @@ Future GPS projection work remains planned:
 | `event-workflow-ready-v1` | Stable event preparation and upload automation |
 | `previous-run-comparison-v1` | Previous-run comparison workflow |
 | `reference-path-stable` | Stable named-segment reference path baseline |
+
+## See Also
+
+- REPORT_INTERPRETATION.md
+- COACHING_PHILOSOPHY.md
+- OPERATIONS.md
