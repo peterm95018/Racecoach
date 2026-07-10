@@ -1,6 +1,11 @@
 #!/bin/bash
 
-read -p "Event name, example salinas_2026-05-17: " EVENT_NAME
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_ROOT"
+
+read -r -p "Event name, example salinas_2026-05-17: " EVENT_NAME
 
 if [ -z "$EVENT_NAME" ]; then
     echo "Event name required."
@@ -16,27 +21,13 @@ if [ ! -f "$EVENT_DIR/segments.yaml" ]; then
     cp events/sample_event/segments.yaml "$EVENT_DIR/segments.yaml"
 fi
 
-echo "$EVENT_NAME" > active_event.txt
-./install_service.sh
+./set_active_event "$EVENT_NAME"
 
-
-DRUPAL_CURRENT="/var/www/html/drupal10/web/sites/default/files/racecoach/events/current"
-
-mkdir -p "$DRUPAL_CURRENT"
-
-ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.html" "$DRUPAL_CURRENT/latest_report.html"
-ln -sfn "$PWD/$EVENT_DIR/reports/latest_report.md" "$DRUPAL_CURRENT/latest_report.md"
-
-ln -sfn "$PWD/$EVENT_DIR/reports/grid_report.html" "$DRUPAL_CURRENT/grid_report.html"
-ln -sfn "$PWD/$EVENT_DIR/reports/grid_report.md" "$DRUPAL_CURRENT/grid_report.md"
-
-echo "Drupal report links updated:"
-echo "  $DRUPAL_CURRENT/latest_report.html"
+if [ -x ./install_service.sh ]; then
+    ./install_service.sh
+fi
 
 echo ""
-echo "Active event set to:"
-echo "  $EVENT_NAME"
-echo ""
-echo "Folders ready:"
+echo "Event folders ready:"
 echo "  $EVENT_DIR/uploads"
 echo "  $EVENT_DIR/reports"

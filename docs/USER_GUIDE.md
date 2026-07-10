@@ -188,6 +188,115 @@ Protect gains before searching for new speed.
 - Coaching quality depends on telemetry quality.
 
 ---
+Managing Events
+
+RaceCoach maintains a single active event. Analysis commands, reports, and the Drupal current report links use this active event.
+
+Creating a New Event
+
+Use:
+
+./prep_event
+
+You will be prompted for an event name, for example:
+
+gglc_2026-06-20
+
+prep_event will:
+
+* Create the event directory under events/
+* Create the uploads/ directory
+* Create the reports/ directory
+* Copy the default segments.yaml if needed
+* Set the new event as the active event
+* Update the Drupal current report links (when run on the Ubuntu server)
+* Install or refresh the RaceCoach service if install_service.sh is present
+
+Switching to an Existing Event
+
+To switch to an existing event:
+
+./set_active_event EVENT_NAME
+
+Example:
+
+./set_active_event gglc_2026-06-20
+
+This command:
+
+* Updates active_event.txt
+* Updates the Drupal current report symlinks (on the Ubuntu server)
+* Verifies the selected event exists
+* Displays the public report URLs
+
+Interactive Event Selection
+
+If no event name is supplied:
+
+./set_active_event
+
+RaceCoach displays a numbered list of available events and prompts you to choose one.
+
+Active Event File
+
+The current event is stored in:
+
+active_event.txt
+
+The active event can be verified at any time:
+
+cat active_event.txt
+
+Drupal Report Publishing
+
+On the Ubuntu server, the active event’s reports are exposed through Drupal using symbolic links located at:
+
+/var/www/html/drupal10/web/sites/default/files/racecoach/events/current/
+
+The following files are linked:
+
+* grid_report.html
+* grid_report.md
+* latest_report.html
+* latest_report.md
+
+These links always point to the reports for the currently active event.
+
+Public Report URLs
+
+Grid report:
+
+https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html
+
+Latest report:
+
+https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
+
+These URLs always display the reports for the active event.
+
+Working on Multiple Computers
+
+On development machines (such as a Mac), set_active_event updates only active_event.txt.
+
+If the Drupal report directory is not present, the script skips the symlink update and displays a reminder to run the command on the Ubuntu server after pulling the latest changes.
+
+Typical Workflow
+
+New Event
+
+./prep_event
+
+Walk the course, update segments.yaml, collect telemetry, and analyze runs.
+
+Review a Previous Event
+
+./set_active_event gglc_2026-06-20
+
+Generate reports or review previous analysis without creating a new event.
+
+
+---
+
 
 ## Support Documents
 

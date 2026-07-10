@@ -1,0 +1,101 @@
+#!/bin/bash
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EVENTS_DIR="$REPO_ROOT/events"
+ACTIVE_EVENT_FILE="$REPO_ROOT/active_event.txt"
+
+DEFAULT_DRUPAL_CURRENT="/var/www/html/drupal10/web/sites/default/files/racecoach/events/current"
+DRUPAL_CURRENT="${RACECOACH_DRUPAL_CURRENT:-$DEFAULT_DRUPAL_CURRENT}"
+
+select_event() {
+    local events=()
+    local event_dir
+    local selection
+
+    while IFS= read -r event_dir; do
+        events+=("$(basename "$event_dir")")
+    done < <(
+        find "$EVENTS_DIR" \
+            -mindepth 1 \
+            -maxdepth 1 \
+            -type d \
+            ! -name sample_event \
+            | sort
+    )
+
+    if [ "${#events[@]}" -eq 0 ]; then
+        echo "No events found in $EVENTS_DIR"
+        exit 1
+    fi
+
+    echo "Available events:"
+    select selection in "${events[@]}"; do
+        if [ -n "${selection:-}" ]; then
+            EVENT_NAME="$selection"
+            return
+        fi
+
+        echo "Invalid selection."
+    done
+}
+
+EVENT_NAME="${1:-}"
+
+if [ -z "$EVENT_NAME" ]; then
+    select_event
+fi
+
+EVENT_DIR="$EVENTS_DIR/$EVENT_NAME"
+REPORTS_DIR="$EVENT_DIR/reports"
+
+if [ ! -d "$EVENT_DIR" ]; then
+    echo "Event does not exist:"
+    echo "  $EVENT_DIR"
+    exit 1
+fi
+
+mkdir -p "$REPORTS_DIR"
+
+printf '%s\n' "$EVENT_NAME" > "$ACTIVE_EVENT_FILE"
+
+echo "Active event set to:"
+echo "  $EVENT_NAME"
+
+if [ -d "$(dirname "$DRUPAL_CURRENT")" ] || mkdir -p "$DRUPAL_CURRENT" 2>/dev/null; then
+    mkdir -p "$DRUPAL_CURRENT"
+
+    for report_name in \
+        latest_report.html \
+        latest_report.md \
+        grid_report.html \
+        grid_report.md
+    do
+        report_path="$REPORTS_DIR/$report_name"
+        link_path="$DRUPAL_CURRENT/$report_name"
+
+        ln -sfn "$report_path" "$link_path"
+
+        if [ -e "$report_path" ]; then
+            echo "Linked: $report_name"
+        else
+            echo "Linked: $report_name (report not generated yet)"
+        fi
+    done
+
+    echo ""
+    echo "Drupal report links updated:"
+    echo "  $DRUPAL_CURRENT"
+    echo ""
+    echo "Public URLs:"
+    echo "  https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html"
+    echo "  https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html"
+else
+    echo ""
+    echo "Drupal directory is not available on this computer."
+    echo "The active event file was updated, but Drupal links were not changed."
+    echo ""
+    echo "Run this command on the server after pulling the changes:"
+    echo "  ./set_active_event \"$EVENT_NAME\""
+fi
