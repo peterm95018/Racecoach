@@ -1,95 +1,182 @@
-# RaceCoach Metrics Roadmap
+RaceCoach Metrics
 
-## Current Metrics
+Purpose
 
-- Segment time delta
-- Entry speed
-- Average speed
-- Minimum speed
-- Exit speed
-- Coast time
-- Brake timing
-- Throttle pickup timing
+RaceCoach converts raw telemetry into a set of performance metrics used by the diagnosis and coaching engines.
 
----
+These metrics describe what happened during a run. They do not, by themselves, determine the coaching recommendation. Interpretation is handled by the Diagnosis Engine.
 
-### Coaching Priority
+⸻
 
-RaceCoach currently prioritizes telemetry indicators in approximately this order:
+Speed Metrics
 
-1. Segment time delta
-2. Exit speed
-3. Average speed
-4. Throttle pickup timing
-5. Brake timing
-6. Minimum speed
-7. Coast time
+Segment Time
 
-Average speed was added after analysis of GGLC 2025-11-01 data revealed several cases where significant time loss could not be explained by minimum speed, exit speed, or coast time alone. Average speed provided a better explanation of speed deficits that developed across an entire segment.
+Definition
 
-## Planned Metrics
+Elapsed time for a segment compared to the reference lap.
 
-### Momentum Recovery
+Why it matters
 
-Definition:
-Time and distance required to recover speed after a minimum-speed point.
+This is the primary measure of performance.
 
-Outputs:
-- Time to +10 mph
-- Time to +20 mph
-- Distance to +10 mph
-- Distance to +20 mph
+Interpretation
 
-Why:
-Fast autocross laps are often won by accelerating sooner after rotation.
+* Negative values indicate a faster segment.
+* Positive values indicate a slower segment.
 
----
+⸻
 
-### Path Length
+Entry Speed
 
-Definition:
-Actual driven distance through a segment.
+Definition
 
-Outputs:
-- Segment path length
-- Delta vs reference
+Vehicle speed at the beginning of the segment.
 
-Why:
-Detect inefficient lines and overdriving.
+Why it matters
 
----
+Provides context for the remainder of the segment and helps explain setup into complex course elements.
 
-### Path Efficiency
+⸻
 
-Definition:
-Time lost per extra foot traveled.
+Average Speed
 
-Outputs:
-- Extra distance
-- Estimated time impact
+Definition
 
----
+Average vehicle speed throughout the segment.
 
-### Overdriving Detection
+Why it matters
 
-Indicators:
-- Similar min speed
-- Lower exit speed
-- Later throttle
-- Longer path
+Helps identify speed losses that occur across an entire segment rather than at a single point.
 
-Outputs:
-Low / Medium / High confidence overdriving flag.
+⸻
 
-## Known Findings
+Minimum Speed
 
-### GGLC 2025-11-01
+Definition
 
-An early version of the segment definitions ended at distance 600 while laps extended beyond 609-613.
+Lowest speed reached within the segment.
 
-This caused segment deltas to overstate losses because the final portion of the course was not included in analysis.
+Why it matters
 
-Lesson:
-Segment definitions must extend through the entire timed course.
+Useful for understanding braking and rotation.
 
-- Average speed
+Higher minimum speed is not always faster.
+
+⸻
+
+Exit Speed
+
+Definition
+
+Vehicle speed at the end of the segment.
+
+Why it matters
+
+The strongest predictor of maintaining momentum into the next segment.
+
+⸻
+
+Braking Metrics
+
+Brake Start Distance
+
+Definition
+
+Distance from the segment start where braking begins.
+
+Why it matters
+
+Allows comparison of braking points between runs.
+
+⸻
+
+Brake Timing
+
+Definition
+
+Time at which braking begins relative to the reference lap.
+
+Why it matters
+
+Identifies early or late braking tendencies.
+
+⸻
+
+Peak Deceleration
+
+Definition
+
+Maximum braking force recorded during the segment.
+
+Why it matters
+
+Helps distinguish aggressive braking from gradual speed reduction.
+
+⸻
+
+Throttle Metrics
+
+Throttle Commitment
+
+Definition
+
+Time between minimum speed and meaningful throttle application.
+
+Why it matters
+
+Represents how quickly the driver commits to acceleration after rotation.
+
+⸻
+
+Momentum Metrics
+
+Coast Time
+
+Definition
+
+Time spent with neither brake nor throttle applied.
+
+Why it matters
+
+Long coast times frequently indicate lost momentum.
+
+⸻
+
+Experimental Metrics
+
+Recovery Gain (+1 s)
+
+Difference in vehicle speed one second after minimum speed.
+
+⸻
+
+Recovery Gain (+2 s)
+
+Difference in vehicle speed two seconds after minimum speed.
+
+These metrics are currently experimental and are displayed for evaluation but are not heavily weighted in coaching recommendations.
+
+⸻
+
+Coaching Priority
+
+When multiple indicators disagree, RaceCoach generally prioritizes metrics in this order:
+
+1. Segment Time
+2. Exit Speed
+3. Average Speed
+4. Throttle Commitment
+5. Brake Timing
+6. Minimum Speed
+7. Coast Time
+
+The diagnosis engine may adjust this priority based on the driving situation.
+
+⸻
+
+Related Documentation
+
+* DIAGNOSIS_MODEL.md
+* REPORT_INTERPRETATION.md
+* ARCHITECTURE.md

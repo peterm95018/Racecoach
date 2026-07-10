@@ -243,3 +243,33 @@ Output:
 - One reminder for next run
 
 Must fit on one phone screen.
+
+Long-Term Architecture Improvements
+
+Future architectural enhancements under consideration:
+
+* Automatic segment discovery.
+* GPS anchor-based segmentation.
+* Advanced path-efficiency analysis.
+* Enhanced momentum recovery metrics.
+* Machine-assisted driver diagnosis.
+* Video synchronization with coaching events.
+* Multi-event performance trending.
+* Season-long driver development analytics.
+* Permanent upload watcher that dynamically follows the active event without requiring service reconfiguration.
+
+## Planned Metrics
+
+Future metrics under consideration:
+
+- Momentum Recovery
+- Path Length
+- Path Efficiency
+- Overdriving Detection
+
+Diagnosis Engine Enhancements
+
+* Implement an Inefficient Path diagnosis using GPS path length and path-shape comparisons.
+* Create a developer validation report showing diagnosis scores, evidence contributions, conflicts, and threshold behavior.
+* Add runner-up diagnosis reporting for development and validation.
+* Build a reusable library of validated diagnosis cases from historical events.

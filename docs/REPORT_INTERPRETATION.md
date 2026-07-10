@@ -1,125 +1,195 @@
-# Report Interpretation Guide
+RaceCoach Report Interpretation Guide
 
-## Segment Time
+Purpose
 
-Most important metric.
+RaceCoach generates several reports, each designed for a different point during an autocross event.
 
-Questions:
+This guide explains how to interpret those reports and which information deserves the most attention.
 
-- Where was time gained?
-- Where was time lost?
+Detailed definitions of individual telemetry metrics are provided in METRICS.md.
 
-Everything else exists to explain segment time.
+⸻
 
----
+Report Types
 
-## Entry Speed
+Grid Report
 
-Higher is not always better.
+Purpose
 
-Low entry speed:
-- May indicate early braking
-- May indicate poor setup from previous feature
+Designed for the short break between runs.
 
-High entry speed:
-- May indicate over-driving if exit speed suffers
+Typical reading time
 
----
+Less than 30 seconds.
 
-## Average Speed
+Focus only on:
 
-Represents speed maintained through the segment.
+* Next Run
+* Keep
+* Quick Segment Check
 
-Useful when:
+Ignore the rest.
 
-- Minimum speed looks normal
-- Exit speed looks normal
-- Segment time is still slower
+The objective is to choose one improvement for the next run.
 
-Usually indicates:
+⸻
 
-- Earlier mistake
-- Poor line
-- Slow recovery
+Full Report
 
----
+Purpose
 
-## Minimum Speed
+Understand why a run was faster or slower than the reference lap.
 
-Useful primarily for:
+Read after returning to paddock or after the event.
 
-- Hairpins
-- Turnarounds
+Use the report to identify:
 
-Not a primary performance metric by itself.
+* Where time was gained.
+* Where time was lost.
+* Why those differences occurred.
+* Which techniques should be repeated.
 
-Higher minimum speed can still produce slower segment times.
+⸻
 
----
+Session Summary (under development)
 
-## Exit Speed
+Summarizes an entire event rather than a single run.
 
-One of the strongest predictors of future performance.
+Its purpose is to identify:
 
-Generally more important than minimum speed.
+* Recurring strengths.
+* Recurring weaknesses.
+* Improvement over multiple runs.
+* Coaching priorities for the next event.
 
-Questions:
+⸻
 
-- How much speed was carried onto the next straight?
-- How much speed was carried into the next feature?
+Reading the Full Report
 
----
+Run Summary
 
-## Coast Time
+Read this first.
 
-Time spent neither braking nor accelerating.
+It highlights:
 
-Small amounts are normal.
+* Biggest gain.
+* Biggest loss.
+* Overall speed differences.
 
-Large values often indicate:
+⸻
 
-- Hesitation
-- Waiting for the car
-- Uncertainty
+Next Run Focus
 
----
+The highest-priority coaching section.
 
-## Brake Timing
+The recommendations are ordered by expected benefit.
 
-Earlier:
-- More setup
-- More rotation
+Choose one improvement and apply it consistently on the next run.
 
-Later:
-- More attack
-- Higher risk of over-driving
+⸻
 
-Must be interpreted with exit speed.
+Segment Time vs Reference
 
----
+This is the primary performance comparison.
 
-## Throttle Pickup
+Everything else in the report attempts to explain why the segment time changed.
 
-Measures commitment after rotation.
+Negative values indicate faster segments.
 
-Later throttle:
-- Often indicates hesitation
+Positive values indicate slower segments.
 
-Earlier throttle:
-- Usually beneficial if exit speed improves
+⸻
 
----
+Top Opportunities
 
-## Momentum Recovery
+These sections explain why RaceCoach believes time was lost.
 
-Measures how quickly speed is rebuilt after minimum speed.
+Common causes include:
 
-Often explains:
+* Late throttle commitment.
+* Weak exit speed.
+* Excess coasting.
+* Over-driving.
+* Overslowing.
+* Early braking.
 
-Higher minimum speed
-+
-Lower exit speed
-+
-Slower segment
+Only opportunities with sufficient confidence are presented.
 
-This usually indicates over-driving.
+⸻
+
+Segment Table
+
+Provides a quick comparison of all analyzed segments.
+
+Use this table to identify patterns rather than focusing on individual numbers.
+
+⸻
+
+Interpreting the Metrics
+
+Several metrics work together and should not be interpreted in isolation.
+
+Examples include:
+
+* Exit Speed + Coast Time
+* Minimum Speed + Exit Speed
+* Brake Timing + Exit Speed
+* Throttle Commitment + Segment Time
+
+Detailed descriptions of each metric are available in METRICS.md.
+
+⸻
+
+Common Interpretation Patterns
+
+Higher Minimum Speed + Lower Exit Speed
+
+Often indicates over-driving the corner entry.
+
+⸻
+
+Lower Minimum Speed + Higher Exit Speed
+
+Often indicates a slower entry that produced a stronger exit.
+
+⸻
+
+Longer Coast Time
+
+Usually indicates hesitation or delayed commitment.
+
+⸻
+
+Earlier Brake Point + Better Exit
+
+May indicate a more effective setup for the corner.
+
+⸻
+
+Faster Segment + Similar Metrics
+
+RaceCoach may classify these as low-confidence gains or losses.
+
+Small timing differences are not always explained by measurable telemetry changes.
+
+⸻
+
+Coaching Philosophy
+
+RaceCoach emphasizes repeatable improvements rather than chasing isolated gains.
+
+When reviewing a report:
+
+* Focus on one improvement at a time.
+* Reinforce successful techniques.
+* Avoid making multiple changes between runs.
+* Trust consistent trends over single-run anomalies.
+
+⸻
+
+Related Documentation
+
+* USER_GUIDE.md
+* METRICS.md
+* DIAGNOSIS_MODEL.md
+* COACHING_PHILOSOPHY.md

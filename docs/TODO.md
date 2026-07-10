@@ -6,6 +6,43 @@ It intentionally focuses on **future work** and the current production baseline.
 
 ---
 
+Session Summary Enhancement
+
+Goal
+
+Develop session_summary into the primary end-of-day coaching report that summarizes an entire event rather than a single run.
+
+Objectives
+
+* Identify recurring strengths across all analyzed runs.
+* Identify recurring opportunities that appear in multiple runs.
+* Measure improvement by segment over the course of the day.
+* Highlight the run with the biggest improvement in each segment.
+* Detect persistent habits such as:
+    * Late throttle commitment
+    * Excess coasting
+    * Early braking
+    * Weak exit speed
+* Produce an overall driver scorecard for the event.
+
+Planned Report Sections
+
+* Session Overview
+* Driver Scorecard
+* Biggest Improvements
+* Recurring Opportunities
+* Segment Trends
+* Best Segment Performances
+* Coaching Themes
+* Next Event Focus
+
+Future Enhancements
+
+* Compare multiple events over time.
+* Track driver improvement trends across the season.
+* Build a personalized coaching history from recurring strengths and weaknesses.
+* Generate season-long performance statistics by segment type.
+
 # Current Stable Baseline
 
 **Git Tag:** `reference-path-stable`
@@ -257,3 +294,17 @@ RaceCoach development should prioritize:
 3. Improvements that provide actionable feedback between autocross runs.
 4. Maintainable architecture that supports future analytics and visualization.
 5. Validation against real event data before replacing production algorithms.
+
+
+Diagnosis Model Validation
+
+* Verify that current code produces the diagnoses documented in DIAGNOSIS_MODEL.md.
+* Confirm that Low Confidence is implemented as a confidence state rather than a driving diagnosis.
+* Add or validate the Weak Exit diagnosis.
+* Standardize terminology across reports:
+    * Throttle commitment
+    * Over-driving
+    * Over-slowing
+    * Momentum loss
+    * Weak exit
+* Confirm that Grid Reports expose only one primary diagnosis, one action, and one mental cue.

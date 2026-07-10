@@ -119,6 +119,12 @@ Future GPS projection work remains planned:
 | `previous-run-comparison-v1` | Previous-run comparison workflow |
 | `reference-path-stable` | Stable named-segment reference path baseline |
 
+### GGLC 2025-11-01
+
+Corrected segment definitions to include the entire timed course.
+
+This resolved inflated time-loss calculations caused by segment boundaries ending before the finish line.
+
 ## See Also
 
 - REPORT_INTERPRETATION.md

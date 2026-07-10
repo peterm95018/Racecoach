@@ -1,262 +1,201 @@
-# RaceCoach Architecture
+RaceCoach Architecture
 
-## Purpose
+Purpose
 
-RaceCoach analyzes RaceChrono telemetry from autocross events and produces coaching-oriented reports focused on measurable performance differences between runs.
+RaceCoach analyzes RaceChrono telemetry from autocross events and transforms measurable performance differences into actionable driver coaching.
 
-## Production Data Source
+Rather than simply reporting telemetry, RaceCoach attempts to answer:
 
-RaceCoach is designed around:
+Why was this run faster or slower, and what should the driver change next?
 
-- RaceChrono Pro
-- RaceBox GPS
-- OBDLink MX+
+⸻
 
-RaceChrono CSV exports are the canonical input format.
+System Overview
 
-## Workflow
+RaceCoach consists of five major layers:
 
-text RaceChrono CSV     ↓ uploads/     ↓ watch_uploads.py     ↓ analyze_run.py     ↓ reports/ 
+1. Telemetry Import
+2. Analysis Engine
+3. Diagnosis Engine
+4. Coaching Engine
+5. Report Generation
 
-## Event Structure
+Each layer has a single responsibility and passes structured information to the next stage.
 
-text events/<event>/ ├── uploads/ ├── processed/ ├── reports/ ├── segments.yaml └── reference.csv 
+⸻
 
-## Core Components
+Processing Pipeline
 
-### prep_event
+RaceChrono CSV
+        │
+        ▼
+Telemetry Import
+        │
+        ▼
+Reference Path Projection
+        │
+        ▼
+Segment Assignment
+        │
+        ▼
+Metric Calculation
+        │
+        ▼
+Driver Diagnosis
+        │
+        ▼
+Opportunity Ranking
+        │
+        ▼
+Report Generation
+        │
+        ▼
+HTML / Markdown / JSON
 
-Creates event structure and sets active event.
+⸻
 
-### watch_uploads.py
+Core Modules
 
-Monitors uploads folder and automatically analyzes new CSV files.
+Telemetry Import
 
-### analyze_run.py
+Imports RaceChrono CSV files and normalizes telemetry channels from GPS, OBD-II, and calculated RaceChrono values.
 
-Calculates segment metrics and compares against the reference lap.
+⸻
 
-## Current Metrics
+Reference Path
 
-- Segment time delta
-- Entry speed
-- Average speed
-- Minimum speed
-- Exit speed
-- Coast time
-- Brake timing
-- Throttle pickup timing
+Projects each analysis sample onto the reference lap.
 
-## Coaching Priority
+This allows segment boundaries to follow the actual driven path instead of relying solely on cumulative distance.
 
-RaceCoach currently prioritizes telemetry indicators in approximately this order:
+⸻
 
-1. Segment time delta
-2. Exit speed
-3. Average speed
-4. Throttle pickup timing
-5. Brake timing
-6. Minimum speed
-7. Coast time
+Metrics Engine
 
-## Current Segment Method
+Calculates performance metrics including:
 
-Segments are currently defined using:
+* Segment time
+* Entry speed
+* Average speed
+* Minimum speed
+* Exit speed
+* Brake timing
+* Brake start distance
+* Coast time
+* Throttle commitment
+* Recovery metrics
 
-yaml segments:   - name: Start     start_distance: 0     end_distance: 200 
+⸻
 
-Distance-based segmentation is currently the production method.
+Diagnosis Engine
 
-## Future Direction
+Evaluates telemetry differences to determine why a segment gained or lost time.
 
-Planned improvements:
+The diagnosis engine attempts to identify:
 
-- Momentum Recovery metric
-- GPS anchor segments
-- Reference path projection
-- Path efficiency analysis
-- Automatic segment discovery
-- Video synchronization
-- Grid coaching summaries
+* Late throttle commitment
+* Weak exit speed
+* Excess braking
+* Excess coasting
+* Overslowing
+* Over-driving
+* Low-confidence timing losses
 
-## Low-Confidence Loss Filtering
+⸻
 
-Purpose:
-Reduce false-positive coaching recommendations.
+Coaching Engine
 
-Implementation:
-- classify_loss() can return "unexplained timing loss"
-- low_confidence_loss() identifies segments with slower time but no meaningful telemetry degradation
-- Such segments are excluded from:
-  - Run Summary
-  - Next Run Focus
-  - Top Opportunities
+Converts diagnostic results into coaching recommendations.
 
-They remain visible in:
-  - Segment Time vs Reference Lap
-  - Segment Table
+The coaching engine prioritizes advice that:
 
-This prevents coaching recommendations based solely on timing differences when entry speed, minimum speed, average speed, exit speed, braking, and throttle metrics do not indicate a clear driving error.
+* is supported by telemetry,
+* has high confidence,
+* can be applied on the next run,
+* reinforces successful techniques as well as correcting mistakes.
 
-Recovery gain metrics are experimental. Initial testing showed strong sensitivity to apex timing and segment shape. Metrics are displayed for research purposes only and are not used in coaching scores.
+⸻
 
-## Driver Input Analysis
+Report Generator
 
-RaceCoach prefers the following channels in order:
+Produces:
+
+* Grid Report
+* Full Report
+* JSON Summary
+* Session Summary (under development)
+
+Reports are generated from a common analysis pipeline to ensure consistency.
+
+⸻
+
+Driver Input Selection
+
+RaceCoach automatically selects the best available throttle source.
+
+Preferred order:
 
 1. accelerator_pos
 2. relative_throttle_pos
 3. throttle_pos
 
-The selected source is displayed in the report header.
+The selected source is recorded in the generated report.
 
-Throttle coaching uses throttle commitment timing rather than raw throttle pickup timestamps.
+⸻
 
-Throttle commitment is defined as:
+Low-Confidence Filtering
 
-Throttle application time - minimum speed time
+RaceCoach intentionally suppresses coaching recommendations when telemetry does not clearly explain a time loss.
 
-This metric better represents when the driver commits to acceleration after rotation.
+Segments may still appear in timing summaries but are excluded from coaching sections when no meaningful driving difference can be identified.
 
-## Report Publishing
+This reduces false-positive coaching recommendations.
 
-RaceCoach generates:
+⸻
 
-- Markdown report
-- HTML report
-- JSON summary
+Design Principles
 
-Current mobile workflow:
+RaceCoach is built around five principles.
 
-RaceChrono -> FTP Manager -> Ubuntu -> RaceCoach -> Drupal-served HTML report
+Coach the Driver, Not the Telemetry
 
-Primary report URL:
+Telemetry exists to explain driving behavior, not simply to present numbers.
 
-https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
+Provide Actionable Advice
 
-### Upload Watcher
+Every recommendation should help improve the next run.
 
-RaceCoach uses a user-level systemd service:
+Ignore Low-Confidence Conclusions
 
-    racecoach-watch.service
+Avoid coaching when the data does not support a clear explanation.
 
-The service is generated by:
+Reinforce Success
 
-    install_service.sh
+Repeatable gains are just as valuable as identifying mistakes.
 
-When `prep_event` is executed:
+Keep the Driver Focused
 
-1. `active_event.txt` is updated
-2. Event directories are created
-3. The watcher service is regenerated
-4. The watcher service is restarted
+The Grid Report emphasizes a single improvement between runs rather than overwhelming the driver with data.
 
-The watcher monitors:
+⸻
 
-    events/<active_event>/uploads
+Current Limitations
 
-and automatically:
+Current limitations include:
 
-1. Detects new RaceChrono CSV files
-2. Runs analysis
-3. Generates reports
-4. Moves processed files into:
+* Segment definitions remain event-specific.
+* Coaching quality depends on telemetry quality.
+* Recovery metrics continue to be refined.
+* Driver diagnosis is primarily rule-based.
+* Some advanced path-analysis concepts remain under development.
 
-    events/<active_event>/processed
+⸻
 
-### Event-Day Workflow
+Related Documentation
 
-    ./prep_event
-        ↓
-    active_event.txt updated
-        ↓
-    watcher service rebuilt
-        ↓
-    FTP Manager upload
-        ↓
-    watcher detects CSV
-        ↓
-    analyze_run.py executes
-        ↓
-    reports generated
-        ↓
-    CSV moved to processed/
-
-### Validation Completed (2026-06-15)
-
-The following workflow was successfully tested:
-
-    prep_event
-        ↓
-    service reconfigured automatically
-        ↓
-    CSV uploaded
-        ↓
-    watcher detected file
-        ↓
-    report generated
-        ↓
-    CSV archived to processed
-
-### Known Future Improvement
-
-Current implementation rebuilds the watcher service when the active event changes.
-
-Future architecture:
-
-    ~/racecoach/uploads
-        ↓
-    watch_uploads.py
-        ↓
-    read active_event.txt
-        ↓
-    events/<active_event>/
-
-This would eliminate service reconfiguration and allow a single permanent watcher process.
-
-### Reference Lap Creation
-
-If reference.csv does not exist:
-
-1. First uploaded CSV is copied to reference.csv
-2. Report is generated using that lap as baseline
-3. Subsequent uploads compare against reference.csv
-
-This allows a new event to become operational without manual reference setup.
-
-
-Event directory structure
-
-events/<event>/
-├── uploads/
-├── reports/
-├── processed/
-├── reference.csv
-├── segments.yaml
-├── event.yaml
-
-Generated automatically:
-- reports/*
-- processed/*
-- reference.csv (first upload)
-
-RaceChrono CSV
-    ↓
-watch_uploads.py
-    ↓
-analyze()
-    ↓
-write_report()
-    ↓
-latest_report.md
-latest_report.html
-    ↓
-Drupal current symlink
-
-Current assumptions
-
-- First uploaded run becomes reference.csv
-- Uploaded CSVs are retained
-- Reports are regenerated from uploaded files
-- Watcher is event-specific
-- Active event controlled by active_event.txt
+* USER_GUIDE.md
+* OPERATIONS.md
+* METRICS.md
+* DIAGNOSIS_MODEL.md
+* REPORT_INTERPRETATION.md
+* COACHING_PHILOSOPHY.md

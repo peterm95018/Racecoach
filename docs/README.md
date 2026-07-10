@@ -1,62 +1,123 @@
-# RaceCoach Documentation
-Applies to RaceCoach:
-reference-path-stable and later
+RaceCoach Documentation
 
-Last major update:
-July 2026
+This directory contains the user, operational, architectural, coaching, and development documentation for RaceCoach.
 
-## Getting Started
+If you are using RaceCoach at an event, begin with USER_GUIDE.md.
 
-- USER_GUIDE.md
-  How to use RaceCoach during an autocross or track event.
+If you are maintaining, extending, or developing RaceCoach, use this page as the documentation index.
 
-- OPERATIONS.md
-  Event management, deployment, server configuration, and Drupal publishing.
+⸻
 
-## Driver Coaching
+Applies to: reference-path-stable and later
 
-- COACHING_PHILOSOPHY.md
-  Principles behind RaceCoach coaching recommendations.
+Last major update: July 2026
 
-- DIAGNOSIS_MODEL.md
-  How telemetry is converted into coaching advice.
+⸻
 
-- REPORT_INTERPRETATION.md
-  How to read Grid Reports and Full Reports.
+Where Should I Start?
 
-- SEGMENT_TYPES.md
-  Recommended segmentation strategy for different course elements.
+I want to…	Read
+Use RaceCoach at an event	USER_GUIDE.md
+Administer the server or manage events	OPERATIONS.md
+Understand telemetry metrics	METRICS.md
+Learn why RaceCoach made a recommendation	DIAGNOSIS_MODEL.md
+Understand the software architecture	ARCHITECTURE.md
+Continue development	TODO.md
 
-## Software Design
+⸻
 
-- ARCHITECTURE.md
-  High-level software architecture.
+User Documentation
 
-- ARCHITECTURE_COMPLETE.md
-  Detailed implementation notes and module interactions.
+USER_GUIDE.md
 
-- METRICS.md
-  Definitions of telemetry metrics and calculations.
+How to use RaceCoach during an autocross or track event.
 
-## Development
+OPERATIONS.md
 
-- BACKLOG.md
-  Long-term feature ideas.
+System administration, event management, deployment, server configuration, and Drupal report publishing.
 
-- TODO.md
-  Active development tasks.
+⸻
 
-- CHANGELOG.md
-  History of significant project changes.
+Event Resources
 
-- DEVELOPMENT_LOG.md
-  Notes from development sessions.
+JUNE20_CHECKLIST.md
 
-- CHECKPOINT.md
-  Stable milestones and recovery points.
+Event-day checklist and lessons learned.
 
-  ## See Also
+course_maps/
 
-- REPORT_INTERPRETATION.md
-- COACHING_PHILOSOPHY.md
-- OPERATIONS.md
+Archived course maps, segment definitions, and planning notes.
+
+⸻
+
+Driver Coaching
+
+COACHING_PHILOSOPHY.md
+
+The driving principles and coaching philosophy used throughout RaceCoach.
+
+DIAGNOSIS_MODEL.md
+
+How telemetry is interpreted and converted into coaching recommendations.
+
+REPORT_INTERPRETATION.md
+
+How to read and understand Grid Reports, Full Reports, and coaching recommendations.
+
+SEGMENT_TYPES.md
+
+Recommended segmentation strategies for common autocross course elements.
+
+⸻
+
+Software Design
+
+ARCHITECTURE.md
+
+High-level software architecture and major components.
+
+ARCHITECTURE_COMPLETE.md
+
+Detailed implementation notes, module interactions, and internal design decisions.
+
+METRICS.md
+
+Definitions and explanations of telemetry metrics and calculations.
+
+⸻
+
+Development
+
+BACKLOG.md
+
+Long-term feature ideas and future enhancements.
+
+TODO.md
+
+Current development priorities and active tasks.
+
+CHANGELOG.md
+
+History of significant project changes.
+
+DEVELOPMENT_LOG.md
+
+Chronological development notes and implementation history.
+
+CHECKPOINT.md
+
+Stable milestones, recovery points, and notable project states.
+
+KNOWN_ISSUES.md
+
+Current bugs, limitations, and documented workarounds.
+
+⸻
+
+Reports
+
+RaceCoach currently generates three primary reports:
+
+* Grid Report — A concise, between-run coaching report designed to be read in under 30 seconds while waiting on grid.
+* Full Report — A detailed run comparison including telemetry analysis, opportunities, and coaching recommendations.
+* Session Summary (under development) — An end-of-session report that identifies recurring strengths, weaknesses, and overall driver trends across multiple runs.

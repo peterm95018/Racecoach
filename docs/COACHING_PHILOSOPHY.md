@@ -1,42 +1,44 @@
-RaceCoach Vision Session
-
-Date: June 30, 2026
+RaceCoach Coaching Philosophy
 
 Purpose
 
-This discussion marked a transition in the RaceCoach project from being a telemetry analysis tool to becoming a driver development and coaching system.
+RaceCoach exists to help drivers become faster by identifying the single driving behavior that will produce the greatest improvement on the next run.
 
-The objective is no longer to produce more metrics. The objective is to produce better coaching.
+Telemetry is evidence.
+
+Coaching is the product.
 
 ⸻
 
-Mission Statement
+Mission
 
-RaceCoach exists to help the driver find the fastest next run.
-
-Telemetry is only the evidence. The output should be coaching that a driver can understand and immediately apply while sitting on grid.
-
-RaceCoach should answer three questions:
+RaceCoach should answer three questions after every run:
 
 1. What was my biggest opportunity?
 2. Why did it happen?
 3. What is the one thing I should change on the next run?
 
+Everything else exists to support those answers.
+
 ⸻
 
-Design Philosophy
+Core Philosophy
 
-RaceCoach should coach driving behaviors, not telemetry metrics.
+RaceCoach coaches driving behaviors, not telemetry metrics.
 
-Examples:
+Telemetry explains what happened.
 
-Instead of:
+Diagnosis explains why it happened.
+
+Coaching explains what to do next.
+
+For example, instead of reporting:
 
 * Minimum speed
-* Exit speed delta
-* Throttle pickup delay
+* Exit speed difference
+* Throttle delay
 
-Use:
+RaceCoach should coach:
 
 * Get back to power sooner.
 * Protect exit speed.
@@ -44,281 +46,234 @@ Use:
 * You over-drove the entry.
 * You slowed the car more than necessary.
 
-Internal telemetry should support the coaching but should rarely appear in the final recommendation.
-
-Example:
-
-Instead of:
-
-Throttle delayed 0.38 s after minimum speed.
-
-Use:
-
-You waited 0.38 s too long to get back to power, costing approximately 0.42 s before the finish.
+The driver should receive advice, not raw telemetry.
 
 ⸻
 
-Driver Behavior Categories
+Guiding Principles
 
-RaceCoach should classify opportunities into recognizable driving behaviors.
+Coach One Thing
+
+Every Grid Report should end with one primary coaching instruction.
+
+One improvement is easier to execute than several competing recommendations.
+
+⸻
+
+Coach Behaviors
+
+Recurring driving habits are more important than isolated telemetry differences.
+
+RaceCoach should identify patterns that consistently influence performance.
+
+⸻
+
+Reinforce Success
+
+The fastest way to improve is not only by correcting mistakes but also by repeating successful techniques.
+
+Every report should identify something worth repeating.
+
+⸻
+
+Prefer Confidence Over Certainty
+
+RaceCoach should avoid making recommendations unless the telemetry provides sufficient evidence.
+
+When confidence is low, the system should acknowledge uncertainty rather than invent an explanation.
+
+⸻
+
+Keep the Driver Focused
+
+The driver should spend time driving, not studying reports.
+
+Grid Reports should be concise enough to review in approximately 30 seconds.
+
+⸻
+
+Driving Behaviors
+
+RaceCoach classifies opportunities into recognizable driving behaviors.
 
 Late to Power
 
-Symptoms:
+The driver completes rotation but delays committing to throttle.
 
-* Delayed throttle commitment
-* Reduced exit speed
-* Reduced recovery speed
+Primary coaching:
 
-Coaching:
-
-Commit to throttle as soon as the car is pointed.
+Point, then power.
 
 ⸻
 
-Over Driving
+Over-Driving
 
-Symptoms:
+The driver carries excessive entry speed that reduces exit performance.
 
-* Excessive entry speed
-* Delayed rotation
-* Poor exit speed
-* Late throttle
+Primary coaching:
 
-Coaching:
-
-Slow the car earlier, rotate it, then commit to power.
+Slow hands, fast exit.
 
 ⸻
 
-Over Slowing
+Over-Slowing
 
-Symptoms:
+The driver gives away unnecessary speed before the corner.
 
-* Excessive braking
-* Lower than necessary corner speed
-* Conservative approach
+Primary coaching:
 
-Coaching:
-
-Trust the grip and preserve momentum.
+Protect momentum.
 
 ⸻
 
 Momentum Loss
 
-Symptoms:
+The driver spends excessive time coasting or hesitating between brake and throttle.
 
-* Long coasting periods
-* Multiple unnecessary lifts
-* Hesitation between brake and throttle
+Primary coaching:
 
-Coaching:
-
-Keep the car connected to either brake or throttle.
+Stay connected.
 
 ⸻
 
 Braking Opportunity
 
-Symptoms:
+The driver brakes earlier or longer than necessary.
 
-* Early braking
-* Long brake release
-* Excessive brake duration
+Primary coaching:
 
-Coaching:
-
-Brake later and finish braking sooner.
+Finish braking sooner.
 
 ⸻
 
-Poor Line (Future)
+Efficient Line (Future)
 
-Potential inputs:
+The driver maintains good speed but follows a longer or less efficient path.
 
-* GPS path length
-* Apex position
-* Steering corrections
-* Line consistency
+Primary coaching:
+
+Shorter and cleaner.
 
 ⸻
 
-Excellent Execution
+Habits Versus Mistakes
 
-RaceCoach should positively reinforce successful driving.
+RaceCoach distinguishes between recurring habits and isolated execution errors.
 
-Example:
+Recurring Habits
 
-Excellent exit.
+Examples include:
 
-Earlier throttle commitment gained 0.32 s.
-Repeat this next run.
+* Late to Power
+* Over-Driving
+* Over-Slowing
+* Momentum Loss
+
+These represent long-term development opportunities.
 
 ⸻
 
 Execution Errors
 
-Separate one-time mistakes from recurring habits.
+Examples include:
 
-Examples:
+* Lift before the finish.
+* Missed gate.
+* Cone contact.
+* One braking mistake.
+* One poor line.
 
-* Lift before finish
-* Cone contact
-* Missed gate
-* Incorrect line through one element
-
-These should not be confused with recurring driving limitations.
+Execution errors should be corrected without redefining the driver’s overall coaching priorities.
 
 ⸻
 
-Habits vs. Mistakes
+Positive Coaching
 
-RaceCoach should distinguish between:
-
-Recurring Habits
+RaceCoach should recognize successful execution as well as mistakes.
 
 Examples:
 
-* Late to power
-* Over driving
-* Over slowing
-* Momentum loss
+* Excellent exit speed.
+* Earlier throttle commitment.
+* Strong momentum preservation.
+* Cleaner line.
+* Consistent improvement.
 
-These create long-term performance plateaus.
-
-Execution Mistakes
-
-Examples:
-
-* Lift before finish
-* One missed apex
-* One braking mistake
-
-These affect an individual run but are not necessarily recurring limitations.
+The objective is to build repeatable driving habits.
 
 ⸻
 
 Confidence
 
-Every diagnosis should include an internal confidence score.
+Every diagnosis should have an internal confidence assessment.
 
-High confidence requires multiple pieces of supporting evidence.
+High confidence requires multiple independent pieces of supporting evidence.
 
-Example:
-
-Late to Power
-
-Confidence: High
-
-Reason:
-
-* Delayed throttle
-* Lower exit speed
-* Reduced recovery speed
+When confidence is low, RaceCoach should recommend observation rather than change.
 
 ⸻
 
-One Thing
-
-Every Grid Report should end with one coaching instruction.
-
-Example:
-
-NEXT RUN
-
-Commit to throttle immediately after the turnaround.
-
-One instruction is easier to remember than several competing recommendations.
-
-⸻
-
-Event Coaching Workflow
+Event Coaching Philosophy
 
 Between Runs
 
-Review the Grid Report.
+Review only the Grid Report.
 
-Answer:
+Answer two questions:
 
 * What happened?
 * What should I change?
 
 Target review time:
 
-30 seconds.
+Approximately 30 seconds.
 
 ⸻
 
-Lunch
+During Breaks
 
-Review trends:
+Look for recurring patterns across multiple runs.
 
-* Recurring behaviors
-* Tire strategy
-* Course evolution
-* Driver observations
+Examples include:
 
-This is the time for deeper discussion.
+* Repeated braking habits.
+* Tire behavior.
+* Course evolution.
+* Driver observations.
 
 ⸻
 
 After the Event
 
-Review:
+Identify:
 
-* What recurring habit limited performance?
-* What improved?
-* What becomes the next development priority?
-
-⸻
-
-July 11–12 Salinas Objectives
-
-The July Porsche Club weekend will serve as the first field validation of RaceCoach’s coaching philosophy.
-
-Objectives:
-
-* Improve coaching language.
-* Introduce behavior classification.
-* Add confidence to diagnoses.
-* Produce a concise Grid Report.
-* Compare RaceCoach’s conclusions against driver perception after each run.
-
-Each diagnosis should be evaluated as:
-
-* Correct
-* Partially Correct
-* Incorrect
-
-The goal is to refine coaching heuristics using real-world feedback.
+* The recurring habit that limited performance.
+* The strongest improvement of the day.
+* The highest-priority development objective before the next event.
 
 ⸻
 
 Long-Term Vision
 
-RaceCoach should evolve through three levels.
+RaceCoach is designed to support driver development at three levels.
 
 Grid Report
 
 Immediate coaching for the next run.
 
-Event Report
+⸻
 
-Patterns across the current event.
+Session Summary
 
-Driver Development Report
+Patterns and coaching themes across a single event.
 
-Long-term improvement across months and seasons.
+⸻
 
-Rather than only comparing lap times, RaceCoach should identify recurring habits and document driver progression over time.
+Driver Development
 
-Examples:
+Long-term improvement across multiple events and seasons.
 
-* Reduced over slowing.
-* Earlier throttle commitment.
-* Improved momentum preservation.
-* Increased consistency.
+The objective is to identify recurring habits, measure improvement over time, and guide long-term driver development.
 
 ⸻
 

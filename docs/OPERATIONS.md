@@ -243,6 +243,26 @@ Related Documentation
 * REPORT_INTERPRETATION.md — Detailed explanation of report content.
 * DEVELOPMENT_LOG.md — Development history and implementation notes.
 
+
+Upload Watcher
+
+RaceCoach uses a user-level systemd service to monitor the active event’s upload directory.
+
+The service is installed or refreshed by:
+
+./install_service.sh
+
+When a new event is created using prep_event, the watcher is reconfigured to monitor the new event’s uploads/ directory.
+
+When a new RaceChrono CSV is detected, the watcher:
+
+1. Imports the telemetry.
+2. Creates the reference lap if necessary.
+3. Runs the analysis.
+4. Generates the Grid Report and Full Report.
+5. Archives the processed CSV.
+6. Updates the public Drupal reports.
+
 ## See Also
 
 - REPORT_INTERPRETATION.md
