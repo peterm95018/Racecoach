@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import subprocess
 import time
 import traceback
 from pathlib import Path
@@ -53,8 +54,23 @@ class UploadHandler(FileSystemEventHandler):
                 self.reports_dir,
                 df.attrs.get("driver_input_source"),
             )
-                
+
+            project_dir = Path(__file__).resolve().parent.parent
+            publish_script = project_dir / "publish_reports.sh"
+
+            if not publish_script.exists():
+                raise FileNotFoundError(
+                    f"Publishing script not found: {publish_script}"
+                )
+
+            subprocess.run(
+                [str(publish_script)],
+                cwd=project_dir,
+                check=True,
+            )
+
             print(f"Report written: {md}")
+            print("Reports published to Drupal.")
             print(f"Processed file retained in uploads: {path}")
 
         except Exception as exc:
