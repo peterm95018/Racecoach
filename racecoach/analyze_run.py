@@ -1336,15 +1336,14 @@ def write_grid_report(
             ]
 
     else:
-        lines += [
+        lines = [
             "## NEXT RUN",
             "",
-            "No major losses detected.",
+            "Your gains came from executing the whole course cleanly.",
             "",
-            "**Do this:** Repeat the cleanest sections and avoid chasing speed.",
+            "Repeat the same rhythm—don't search for extra speed.",
             "",
         ]
-
     if gains:
         g = gains[0]
         lines += [
@@ -1529,7 +1528,9 @@ def write_report(
                 lines.append("")
                 lines.append("No major losses detected.")
             else:
-                lines.append("No major gains or losses detected.")
+                lines.append("Your gains came from executing the whole course cleanly.")
+                lines.append("")
+                lines.append("Repeat the same rhythm—don't search for extra speed.")
                 lines.append("")
                 lines.append("Use the segment table to check small changes.")
                 
