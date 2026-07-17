@@ -1,123 +1,117 @@
-RaceCoach Documentation
+# RaceCoach
 
-This directory contains the user, operational, architectural, coaching, and development documentation for RaceCoach.
+RaceCoach is a telemetry-driven coaching system for autocross and track drivers.
 
-If you are using RaceCoach at an event, begin with USER_GUIDE.md.
+Rather than overwhelming drivers with telemetry, RaceCoach identifies the **single driving behavior** most likely to improve the next run.
 
-If you are maintaining, extending, or developing RaceCoach, use this page as the documentation index.
+Telemetry is evidence.
 
-⸻
+Coaching is the product.
 
-Applies to: reference-path-stable and later
+---
 
-Last major update: July 2026
+# How RaceCoach Works
 
-⸻
+RaceCoach follows a simple coaching workflow:
 
-Where Should I Start?
+1. Record telemetry using RaceChrono Pro.
+2. Upload the completed run.
+3. Compare the run to a reference lap.
+4. Diagnose the largest opportunity for improvement.
+5. Generate coaching for the next run.
 
-I want to…	Read
-Use RaceCoach at an event	USER_GUIDE.md
-Administer the server or manage events	OPERATIONS.md
-Understand telemetry metrics	METRICS.md
-Learn why RaceCoach made a recommendation	DIAGNOSIS_MODEL.md
-Understand the software architecture	ARCHITECTURE.md
-Continue development	TODO.md
+As additional runs are recorded, RaceCoach also identifies recurring strengths, recurring weaknesses, and long-term development trends.
 
-⸻
+---
 
-User Documentation
+# Reports
 
-USER_GUIDE.md
+## Grid Report
 
-How to use RaceCoach during an autocross or track event.
+Designed for the short break between runs.
 
-OPERATIONS.md
+Provides:
 
-System administration, event management, deployment, server configuration, and Drupal report publishing.
+- One high-priority coaching objective
+- One behavior to repeat
+- A quick segment summary
 
-⸻
+Typical reading time is less than 30 seconds.
 
-Event Resources
+---
 
-JUNE20_CHECKLIST.md
+## Full Report
 
-Event-day checklist and lessons learned.
+Provides a detailed comparison against the reference lap, including:
 
-course_maps/
+- Run Summary
+- Next Run Focus
+- Segment analysis
+- Opportunity analysis
+- Supporting telemetry
 
-Archived course maps, segment definitions, and planning notes.
+---
 
-⸻
+## Session Summary
 
-Driver Coaching
+Summarizes an entire event rather than a single run.
 
-COACHING_PHILOSOPHY.md
+Identifies:
 
-The driving principles and coaching philosophy used throughout RaceCoach.
+- Recurring strengths
+- Recurring weaknesses
+- Biggest improvements
+- Development priorities before the next event
 
-DIAGNOSIS_MODEL.md
+---
 
-How telemetry is interpreted and converted into coaching recommendations.
+# Documentation
 
-REPORT_INTERPRETATION.md
+## New Users
 
-How to read and understand Grid Reports, Full Reports, and coaching recommendations.
+Start here:
 
-SEGMENT_TYPES.md
+- `USER_GUIDE.md` — Using RaceCoach during an event
+- `REPORT_INTERPRETATION.md` — Understanding RaceCoach reports
 
-Recommended segmentation strategies for common autocross course elements.
+---
 
-⸻
+## Driver Coaching
 
-Software Design
+- `COACHING_PHILOSOPHY.md`
+- `DIAGNOSIS_MODEL.md`
+- `METRICS.md`
 
-ARCHITECTURE.md
+---
 
-High-level software architecture and major components.
+## Developers
 
-ARCHITECTURE_COMPLETE.md
+- `ARCHITECTURE.md`
+- `OPERATIONS.md`
+- `TODO.md`
+- `BACKLOG.md`
+- `CHANGELOG.md`
 
-Detailed implementation notes, module interactions, and internal design decisions.
+---
 
-METRICS.md
+# Project Philosophy
 
-Definitions and explanations of telemetry metrics and calculations.
+RaceCoach is designed to answer one question:
 
-⸻
+> **What is the one thing I should do differently on my next run?**
 
-Development
+Every report, every diagnosis, and every metric exists to answer that question.
 
-BACKLOG.md
+---
 
-Long-term feature ideas and future enhancements.
+# Project Status
 
-TODO.md
+RaceCoach is under active development.
 
-Current development priorities and active tasks.
+Current development focuses on:
 
-CHANGELOG.md
-
-History of significant project changes.
-
-DEVELOPMENT_LOG.md
-
-Chronological development notes and implementation history.
-
-CHECKPOINT.md
-
-Stable milestones, recovery points, and notable project states.
-
-KNOWN_ISSUES.md
-
-Current bugs, limitations, and documented workarounds.
-
-⸻
-
-Reports
-
-RaceCoach currently generates three primary reports:
-
-* Grid Report — A concise, between-run coaching report designed to be read in under 30 seconds while waiting on grid.
-* Full Report — A detailed run comparison including telemetry analysis, opportunities, and coaching recommendations.
-* Session Summary (under development) — An end-of-session report that identifies recurring strengths, weaknesses, and overall driver trends across multiple runs.
+- Improving coaching quality
+- Better session-level analysis
+- Long-term driver development across multiple events
+- Clearer coaching language
+- Higher-confidence diagnoses

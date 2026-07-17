@@ -1,387 +1,425 @@
-RaceCoach Diagnosis Model
+\# RaceCoach Diagnosis Model
 
-Purpose
+## Purpose
 
-RaceCoach should diagnose driving behavior, not merely report telemetry differences.
+RaceCoach exists to diagnose driving behavior—not merely report telemetry differences.
 
-Telemetry describes what happened. The diagnosis model determines the most likely driving cause and converts it into one actionable change for the next run.
+Telemetry measures what happened.
 
-⸻
+Diagnosis explains why it happened.
 
-Diagnosis Structure
+Coaching tells the driver what to do next.
+
+The objective is not to explain every difference between two runs. The objective is to identify the highest-confidence driving behavior that, if improved, will make the driver faster on the next run.
+
+---
+
+## Diagnosis Pipeline
+
+RaceCoach follows a consistent reasoning process:
+
+```
+Telemetry
+      ↓
+Measurements
+      ↓
+Supporting Evidence
+      ↓
+Diagnosis
+      ↓
+Confidence
+      ↓
+Coaching
+      ↓
+Driver Improvement
+```
 
 Each diagnosis contains five components:
 
-1. Diagnosis — Classification of the primary driving issue.
-2. Evidence — Telemetry supporting the diagnosis.
-3. Conflicting Evidence — Telemetry that weakens or contradicts the diagnosis.
-4. Confidence — Strength of the conclusion.
-5. Action and Cue — The recommended adjustment and a short mental reminder.
+1. Diagnosis
+2. Supporting Evidence
+3. Conflicting Evidence
+4. Confidence
+5. Coaching and Mental Cue
 
-The coaching engine should reason in this order:
+Telemetry supports the diagnosis.
 
-Segment time difference
-        ↓
-Telemetry evidence
-        ↓
-Conflicting evidence
-        ↓
-Diagnosis
-        ↓
-Confidence
-        ↓
-Action
-        ↓
-Mental cue
+It is not the diagnosis.
 
-Telemetry supports the diagnosis. It is not the diagnosis.
+---
 
-⸻
+## How RaceCoach Chooses a Diagnosis
 
-Current Diagnoses
+Several diagnoses may fit the same telemetry.
 
-Late to Power
+RaceCoach selects the diagnosis that:
 
-Evidence
+- Best explains the segment time.
+- Has the strongest supporting evidence.
+- Has the least conflicting evidence.
+- Produces the clearest coaching recommendation.
 
-* Throttle commitment is later than the reference.
-* Exit speed is lower.
-* Recovery speed is lower after minimum speed.
-* Segment time loss develops after the rotation point.
+RaceCoach intentionally reports only **one primary diagnosis** to avoid overwhelming the driver.
 
-Conflicting Evidence
+---
 
-* Throttle commitment is earlier.
-* Exit speed is equal or better.
-* Recovery speed is equal or better.
+# Diagnosis Catalog
 
-Prescription
+## Late to Power
+
+### Supporting Evidence
+
+- Throttle commitment is later than the reference.
+- Exit speed is lower.
+- Recovery speed is lower after minimum speed.
+- Segment time loss develops after the rotation point.
+
+### Conflicting Evidence
+
+- Throttle commitment is earlier.
+- Exit speed is equal or better.
+- Recovery speed is equal or better.
+
+### Coaching
 
 Complete rotation sooner and commit to throttle as soon as the car is pointed.
 
-Mental Cue
+### Mental Cue
 
-Point, then power.
+> Point, then power.
 
-⸻
+---
 
-Over-Driving
+## Over-Driving
 
-Evidence
+### Supporting Evidence
 
-* Entry speed is higher than the reference.
-* Exit speed is lower.
-* Throttle commitment is delayed.
-* Average speed is lower through the segment.
-* Recovery after minimum speed is weak.
+- Entry speed is higher than the reference.
+- Exit speed is lower.
+- Throttle commitment is delayed.
+- Average speed is lower through the segment.
+- Recovery after minimum speed is weak.
 
-Conflicting Evidence
+### Conflicting Evidence
 
-* Exit speed is equal or better.
-* Recovery speed is equal or better.
-* The segment is faster despite the higher entry speed.
+- Exit speed is equal or better.
+- Recovery speed is equal or better.
+- The segment is faster despite the higher entry speed.
 
-Prescription
+### Coaching
 
 Give up a small amount of entry speed so the car can rotate and accelerate cleanly.
 
-Mental Cue
+### Mental Cue
 
-Slow hands, fast exit.
+> Slow hands, fast exit.
 
-⸻
+---
 
-Over-Slowing
+## Over-Slowing
 
-Evidence
+### Supporting Evidence
 
-* Minimum speed is lower than the reference.
-* Average speed is lower.
-* Braking begins earlier or is stronger.
-* Lower minimum speed does not produce a meaningful exit-speed benefit.
+- Minimum speed is lower than the reference.
+- Average speed is lower.
+- Braking begins earlier or is stronger.
+- Lower minimum speed does not produce a meaningful exit-speed benefit.
 
-Conflicting Evidence
+### Conflicting Evidence
 
-* Exit speed is substantially better.
-* Earlier braking produces a faster segment.
-* Lower minimum speed supports a cleaner and earlier throttle application.
+- Exit speed is substantially better.
+- Earlier braking produces a faster segment.
+- Lower minimum speed supports earlier throttle commitment.
 
-Prescription
+### Coaching
 
 Reduce unnecessary braking and preserve more speed through the element.
 
-Mental Cue
+### Mental Cue
 
-Protect momentum.
+> Protect momentum.
 
-⸻
+---
 
-Momentum Loss
+## Momentum Loss
 
-Evidence
+### Supporting Evidence
 
-* Coast time is longer.
-* Multiple throttle lifts occur.
-* Average speed is lower.
-* The loss develops gradually through the segment.
-* No single braking or throttle event fully explains the loss.
+- Coast time is longer.
+- Multiple throttle lifts occur.
+- Average speed is lower.
+- The loss develops gradually through the segment.
+- No single braking or throttle event fully explains the loss.
 
-Conflicting Evidence
+### Conflicting Evidence
 
-* Exit speed is strong.
-* Coast time is brief and intentional.
-* A clearer braking, throttle, or line-related diagnosis explains the loss.
+- Exit speed is strong.
+- Coast time is brief and intentional.
+- A clearer diagnosis better explains the segment.
 
-Prescription
+### Coaching
 
 Remain connected to either brake or throttle and reduce unnecessary neutral time.
 
-Mental Cue
+### Mental Cue
 
-Stay connected.
+> Stay connected.
 
-⸻
+---
 
-Weak Exit
+## Weak Exit
 
-Evidence
+### Supporting Evidence
 
-* Exit speed is lower than the reference.
-* Segment time is slower.
-* Recovery speed remains lower after the minimum-speed point.
+- Exit speed is lower than the reference.
+- Segment time is slower.
+- Recovery speed remains lower after the minimum-speed point.
 
-Conflicting Evidence
+### Conflicting Evidence
 
-* Exit speed is equal or better.
-* The segment is faster despite a small exit-speed deficit.
-* The exit boundary does not represent a meaningful acceleration point.
+- Exit speed is equal or better.
+- The segment is faster despite a small exit-speed deficit.
+- The exit boundary does not represent a meaningful acceleration point.
 
-Prescription
+### Coaching
 
 Prioritize rotation and acceleration before protecting entry speed.
 
-Mental Cue
+### Mental Cue
 
-Build the exit.
+> Build the exit.
 
-⸻
+---
 
-Execution Error
+## Execution Error
 
-Evidence
+### Supporting Evidence
 
-* Lift before the finish.
-* Abrupt throttle reduction near the timing lights.
-* Missed element, cone avoidance, or one-time correction.
-* Driver notes or video confirm a discrete mistake.
+- Lift before the finish.
+- Abrupt throttle reduction near the timing lights.
+- Missed element or cone avoidance.
+- Driver notes or video confirm a discrete mistake.
 
-Conflicting Evidence
+### Conflicting Evidence
 
-* The behavior appears repeatedly across multiple runs.
-* The loss reflects a broader technique problem rather than a single mistake.
+- The behavior appears repeatedly across multiple runs.
+- The loss reflects a broader technique problem.
 
-Prescription
+### Coaching
 
-Correct the isolated mistake without changing the broader driving approach.
+Correct the isolated mistake without changing the overall driving approach.
 
-Mental Cue
+### Mental Cue
 
-Finish the run.
+> Finish the run.
 
-⸻
+---
 
-No Clear Diagnosis
+## No Clear Diagnosis
 
-Evidence
+### Supporting Evidence
 
-* Segment time is slower, but telemetry differences are small.
-* No single metric adequately explains the loss.
-* Several possible causes have similar support.
+- Segment time is slower but telemetry differences are small.
+- No single metric adequately explains the loss.
+- Several diagnoses have similar support.
 
-Prescription
+### Coaching
 
-Review the segment without making a major technique change.
+Review the segment before making a significant technique change.
 
-Mental Cue
+### Mental Cue
 
-Observe before changing.
+> Observe before changing.
 
-⸻
+---
 
-Low Confidence
+# Confidence Model
 
-Low confidence is not a driving diagnosis. It is a qualification applied when the evidence is insufficient or contradictory.
+Confidence reflects how strongly the available evidence supports a diagnosis.
 
-Indicators
-
-* Segment time is slower while speed metrics are equal or better.
-* Telemetry signals conflict.
-* Differences are below meaningful thresholds.
-* Segment boundaries or GPS projection may explain the result.
-* The diagnosis score is only marginally stronger than alternatives.
-
-Prescription
-
-Do not change technique based on this result alone. Seek confirmation from another run, video, GPS trace, or driver notes.
-
-Mental Cue
-
-Verify before changing.
-
-⸻
-
-Confidence Model
-
-High Confidence
+## High Confidence
 
 A diagnosis is high confidence when:
 
-* Multiple telemetry indicators support the same explanation.
-* Conflicting evidence is minimal.
-* The metric differences exceed established thresholds.
-* The diagnosis clearly explains the segment time loss.
+- Multiple telemetry indicators support the same explanation.
+- Conflicting evidence is minimal.
+- Metric differences exceed meaningful thresholds.
+- The diagnosis clearly explains the segment time.
 
-Medium Confidence
+RaceCoach should provide direct coaching.
+
+---
+
+## Medium Confidence
 
 A diagnosis is medium confidence when:
 
-* The primary evidence is meaningful.
-* Some conflicting evidence exists.
-* More than one explanation remains plausible.
+- The primary evidence is meaningful.
+- Some conflicting evidence exists.
+- More than one explanation remains plausible.
 
-Low Confidence
+RaceCoach should coach cautiously.
+
+---
+
+## Low Confidence
 
 A diagnosis is low confidence when:
 
-* Differences are small.
-* Telemetry is contradictory.
-* GPS or segment alignment may affect the result.
-* No diagnosis clearly explains the time difference.
+- Metric differences are small.
+- Telemetry signals conflict.
+- GPS alignment or segment boundaries may affect the result.
+- No diagnosis clearly explains the time difference.
 
-Low-confidence segments may remain visible in detailed tables but should not drive the primary coaching recommendation.
+Low-confidence observations may remain visible in detailed reports but should not drive the primary coaching recommendation.
 
-⸻
+When confidence is low, RaceCoach prefers no diagnosis over an incorrect diagnosis.
 
-Coaching Output
+---
 
-Grid Report
+# Reinforcement Coaching
 
-The Grid Report is designed for the driver between runs.
+Not every report should identify a mistake.
 
-It should include:
+When no significant losses exist, RaceCoach should reinforce successful driving behavior.
 
-* One primary diagnosis.
-* One supporting piece of evidence.
-* One action.
-* One mental cue.
-* One successful technique to repeat.
+Example:
 
-It should not include:
+> Your gains came from executing the whole course cleanly.
+>
+> Repeat the same rhythm—don't search for extra speed.
 
-* Internal scores.
-* Threshold calculations.
-* Competing diagnoses.
-* Detailed confidence math.
-* Long telemetry explanations.
+Drivers improve by repeating successful habits as much as correcting mistakes.
 
-The driver needs a clear coaching instruction, not an explanation of the algorithm.
+---
 
-⸻
+# Coaching Output
 
-Full Report
+## Grid Report
 
-The Full Report may include:
+The Grid Report supports the driver between runs.
 
-* Diagnosis.
-* Supporting telemetry.
-* Conflicting evidence.
-* Confidence.
-* Detailed action.
-* Additional opportunities.
+It should contain:
 
-Its purpose is to explain why the coaching recommendation was made.
+- One primary diagnosis.
+- One supporting piece of evidence.
+- One coaching recommendation.
+- One mental cue.
+- One successful technique to repeat.
 
-⸻
+It should **not** contain:
 
-Developer Validation Report
+- Internal scores.
+- Threshold calculations.
+- Competing diagnoses.
+- Confidence math.
+- Long telemetry explanations.
 
-A future developer-focused report should expose the internal reasoning used to tune the diagnosis engine.
+The driver needs a clear coaching instruction—not an explanation of the algorithm.
 
-It should include:
+---
 
-* All diagnosis scores.
-* Winning and runner-up diagnoses.
-* Score gap.
-* Evidence contributions.
-* Conflicting evidence.
-* Threshold behavior.
-* Expected and actual validation result.
+## Full Report
 
-This information is useful for development but should remain separate from event-day coaching.
+The Full Report explains why the recommendation was made.
 
-⸻
+It may include:
 
-Design Rules
+- Diagnosis.
+- Supporting evidence.
+- Conflicting evidence.
+- Confidence.
+- Coaching recommendation.
+- Additional opportunities.
 
-* Diagnose the driving behavior, not just the telemetry symptom.
-* Prefer one strong diagnosis over several weak possibilities.
-* Do not coach from timing differences alone.
-* Use conflicting evidence to reduce confidence.
-* Reinforce gains as well as correcting losses.
-* Keep the recommended action specific and executable.
-* Keep the mental cue short enough to remember on grid.
+---
 
-⸻
+## Developer Validation
 
-Future Diagnosis: Inefficient Path
+A future developer-oriented report should expose the reasoning used to tune the diagnosis engine.
 
-Problem
+Possible contents include:
+
+- Diagnosis scores.
+- Winning and runner-up diagnoses.
+- Score gaps.
+- Evidence contributions.
+- Conflicting evidence.
+- Threshold behavior.
+- Validation results.
+
+This information is valuable for development but should remain separate from event-day coaching.
+
+---
+
+# Design Rules
+
+- Diagnose driving behavior—not telemetry symptoms.
+- Coach causes, not measurements.
+- Prefer one strong diagnosis over several weak possibilities.
+- Never coach from timing differences alone.
+- Use conflicting evidence to reduce confidence.
+- Reinforce successful driving.
+- Keep coaching specific and executable.
+- Keep mental cues short enough to remember on grid.
+- Prefer silence over speculation.
+
+---
+
+# Future Diagnosis
+
+## Inefficient Path
+
+### Problem
 
 A segment may be slower even when minimum speed and exit speed are equal or better than the reference.
 
-In these cases, the car may have been fast but traveled a longer or less efficient path.
+The driver may have maintained speed while traveling a longer or less efficient path.
 
-Possible Telemetry Signature
+### Possible Evidence
 
-* Segment time is slower.
-* Minimum speed is equal or higher.
-* Exit speed is equal or higher.
-* Average speed is neutral or higher.
-* Throttle commitment is not meaningfully delayed.
-* No clear over-slowing or weak-exit signature exists.
+- Segment time is slower.
+- Minimum speed is equal or higher.
+- Exit speed is equal or higher.
+- Average speed is neutral or higher.
+- Throttle commitment is not meaningfully delayed.
+- No clear Over-Slowing, Weak Exit, or Late to Power signature exists.
 
-Likely Causes
+### Likely Causes
 
-* Extra distance.
-* Wider line.
-* Late apex.
-* Excess steering.
-* Floating beyond the efficient path.
-* Poor setup from the preceding element.
+- Extra distance.
+- Wider line.
+- Late apex.
+- Excess steering.
+- Floating beyond the efficient path.
+- Poor setup from the previous element.
 
-Prescription
+### Coaching
 
-Review GPS trace or video before changing braking or throttle technique.
+Review the GPS trace or video before changing braking or throttle technique.
 
-Mental Cue
+### Mental Cue
 
-Shorter and cleaner.
+> Shorter and cleaner.
 
-Validation Case
+### Validation Case
 
-GGLC 2026-06-20, Run 4 compared with Run 5, Finish section:
+**GGLC 2026-06-20**
 
-* Time loss: +0.32 s
-* Minimum speed: +2.5 mph
-* Exit speed: +4.6 mph
+Run 4 compared with Run 5 — Finish section
+
+- Time loss: +0.32 s
+- Minimum speed: +2.5 mph
+- Exit speed: +4.6 mph
 
 This case should not be classified as Weak Exit, Late to Power, or Over-Slowing.
 
-⸻
+---
 
-Related Documentation
+# Related Documentation
 
-* METRICS.md
-* COACHING_PHILOSOPHY.md
-* REPORT_INTERPRETATION.md
-* ARCHITECTURE.md
+- `COACHING_PHILOSOPHY.md`
+- `REPORT_INTERPRETATION.md`
+- `METRICS.md`
+- `USER_GUIDE.md`
+- `ARCHITECTURE.md`

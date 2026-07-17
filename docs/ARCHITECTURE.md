@@ -1,31 +1,51 @@
-RaceCoach Architecture
+# RaceCoach Architecture
 
-Purpose
+## Purpose
 
-RaceCoach analyzes RaceChrono telemetry from autocross events and transforms measurable performance differences into actionable driver coaching.
+RaceCoach transforms telemetry into coaching.
 
-Rather than simply reporting telemetry, RaceCoach attempts to answer:
+Telemetry provides evidence.
 
-Why was this run faster or slower, and what should the driver change next?
+Diagnosis explains performance.
 
-⸻
+Coaching tells the driver what to improve on the next run.
 
-System Overview
+RaceCoach analyzes RaceChrono telemetry from autocross events and transforms measurable performance differences into actionable coaching. Rather than simply reporting telemetry, the system attempts to answer one question:
 
-RaceCoach consists of five major layers:
+**Why was this run faster or slower, and what should the driver change next?**
+
+---
+
+# Design Goals
+
+RaceCoach is designed around several architectural principles:
+
+- Coaching-first rather than telemetry-first.
+- Modular components with clear responsibilities.
+- Repeatable analysis using a reference lap.
+- Reproducible reports from identical input data.
+- Simple event-day operation.
+- Extensible diagnostic framework.
+
+---
+
+# System Overview
+
+RaceCoach consists of five major components:
 
 1. Telemetry Import
-2. Analysis Engine
+2. Metrics Engine
 3. Diagnosis Engine
 4. Coaching Engine
 5. Report Generation
 
-Each layer has a single responsibility and passes structured information to the next stage.
+Each component has a single responsibility and passes structured information to the next stage.
 
-⸻
+---
 
-Processing Pipeline
+# Processing Pipeline
 
+```
 RaceChrono CSV
         │
         ▼
@@ -41,161 +61,218 @@ Segment Assignment
 Metric Calculation
         │
         ▼
-Driver Diagnosis
+Diagnosis Engine
         │
         ▼
-Opportunity Ranking
+Confidence Evaluation
+        │
+        ▼
+Coaching Selection
         │
         ▼
 Report Generation
         │
         ▼
 HTML / Markdown / JSON
+```
 
-⸻
+---
 
-Core Modules
+# Data Flow
 
-Telemetry Import
+The information flowing through the system becomes progressively more meaningful.
 
-Imports RaceChrono CSV files and normalizes telemetry channels from GPS, OBD-II, and calculated RaceChrono values.
+```
+Telemetry Samples
+        ↓
+Segment Metrics
+        ↓
+Supporting Evidence
+        ↓
+Diagnosis
+        ↓
+Confidence
+        ↓
+Coaching Recommendation
+        ↓
+Reports
+```
 
-⸻
+Each stage builds upon the previous one.
 
-Reference Path
+Telemetry measures.
 
-Projects each analysis sample onto the reference lap.
+Metrics summarize.
 
-This allows segment boundaries to follow the actual driven path instead of relying solely on cumulative distance.
+Diagnosis explains.
 
-⸻
+Coaching guides improvement.
 
-Metrics Engine
+---
 
-Calculates performance metrics including:
+# Major Components
 
-* Segment time
-* Entry speed
-* Average speed
-* Minimum speed
-* Exit speed
-* Brake timing
-* Brake start distance
-* Coast time
-* Throttle commitment
-* Recovery metrics
+## Telemetry Import
 
-⸻
+Imports RaceChrono CSV files and normalizes telemetry collected from GPS, OBD-II, and RaceChrono calculated channels.
 
-Diagnosis Engine
+The output of this stage is a consistent telemetry dataset suitable for analysis.
 
-Evaluates telemetry differences to determine why a segment gained or lost time.
+---
 
-The diagnosis engine attempts to identify:
+## Reference Path Projection
 
-* Late throttle commitment
-* Weak exit speed
-* Excess braking
-* Excess coasting
-* Overslowing
-* Over-driving
-* Low-confidence timing losses
+Projects telemetry samples onto the reference lap.
 
-⸻
+Using the reference path allows segment boundaries to follow the actual driven line instead of relying solely on cumulative distance, improving repeatability when drivers take different paths through the course.
 
-Coaching Engine
+---
 
-Converts diagnostic results into coaching recommendations.
+## Metrics Engine
 
-The coaching engine prioritizes advice that:
+Calculates performance measurements for each segment, including:
 
-* is supported by telemetry,
-* has high confidence,
-* can be applied on the next run,
-* reinforces successful techniques as well as correcting mistakes.
+- Segment time
+- Entry speed
+- Average speed
+- Minimum speed
+- Exit speed
+- Brake timing
+- Brake start distance
+- Peak deceleration
+- Coast time
+- Throttle commitment
+- Recovery metrics
 
-⸻
+These measurements form the evidence used by the diagnosis engine.
 
-Report Generator
+---
 
-Produces:
+## Diagnosis Engine
 
-* Grid Report
-* Full Report
-* JSON Summary
-* Session Summary (under development)
+Evaluates telemetry differences to determine the most likely explanation for changes in segment performance.
 
-Reports are generated from a common analysis pipeline to ensure consistency.
+Possible diagnoses include:
 
-⸻
+- Late to Power
+- Over-Driving
+- Over-Slowing
+- Momentum Loss
+- Weak Exit
+- Execution Error
+- No Clear Diagnosis
 
-Driver Input Selection
+The diagnosis engine combines multiple telemetry measurements rather than relying on individual metrics.
 
-RaceCoach automatically selects the best available throttle source.
+---
 
-Preferred order:
+## Confidence Evaluation
 
-1. accelerator_pos
-2. relative_throttle_pos
-3. throttle_pos
+Every diagnosis is evaluated for confidence.
 
-The selected source is recorded in the generated report.
+Confidence reflects:
 
-⸻
+- Strength of supporting evidence.
+- Amount of conflicting evidence.
+- Magnitude of telemetry differences.
+- Ability of the diagnosis to explain the observed time difference.
 
-Low-Confidence Filtering
+Low-confidence diagnoses are intentionally filtered to reduce incorrect coaching recommendations.
 
-RaceCoach intentionally suppresses coaching recommendations when telemetry does not clearly explain a time loss.
+---
 
-Segments may still appear in timing summaries but are excluded from coaching sections when no meaningful driving difference can be identified.
+## Coaching Engine
 
-This reduces false-positive coaching recommendations.
+Converts diagnoses into driver coaching.
 
-⸻
+The coaching engine prioritizes recommendations that:
 
-Design Principles
+- Are strongly supported by telemetry.
+- Have high diagnostic confidence.
+- Can be applied on the very next run.
+- Reinforce successful techniques as well as correcting mistakes.
 
-RaceCoach is built around five principles.
+The coaching engine is responsible for transforming analysis into actionable advice.
 
-Coach the Driver, Not the Telemetry
+---
 
-Telemetry exists to explain driving behavior, not simply to present numbers.
+## Report Generation
 
-Provide Actionable Advice
+RaceCoach produces multiple views of the same analysis.
 
-Every recommendation should help improve the next run.
+These include:
 
-Ignore Low-Confidence Conclusions
+- Grid Report
+- Full Report
+- Session Summary
+- Markdown reports
+- HTML reports
+- JSON summaries
 
-Avoid coaching when the data does not support a clear explanation.
+Each report presents the same underlying analysis while varying the level of detail for its intended audience.
 
-Reinforce Success
+---
 
-Repeatable gains are just as valuable as identifying mistakes.
+# Design Principles
 
-Keep the Driver Focused
+The architecture follows several guiding principles.
 
-The Grid Report emphasizes a single improvement between runs rather than overwhelming the driver with data.
+## Coach the Driver, Not the Telemetry
 
-⸻
+Telemetry exists to explain driving behavior, not simply present numbers.
 
-Current Limitations
+---
 
-Current limitations include:
+## Diagnose Before Coaching
 
-* Segment definitions remain event-specific.
-* Coaching quality depends on telemetry quality.
-* Recovery metrics continue to be refined.
-* Driver diagnosis is primarily rule-based.
-* Some advanced path-analysis concepts remain under development.
+Metrics become evidence.
 
-⸻
+Evidence supports diagnosis.
 
-Related Documentation
+Diagnosis produces coaching.
 
-* USER_GUIDE.md
-* OPERATIONS.md
-* METRICS.md
-* DIAGNOSIS_MODEL.md
-* REPORT_INTERPRETATION.md
-* COACHING_PHILOSOPHY.md
+---
+
+## Prefer Confidence Over Certainty
+
+When telemetry does not clearly explain a result, RaceCoach intentionally suppresses coaching rather than speculate.
+
+---
+
+## Reinforce Success
+
+Repeatable gains deserve coaching attention just as much as mistakes.
+
+---
+
+## Keep the Driver Focused
+
+Between runs, drivers should receive one clear coaching priority rather than a large collection of observations.
+
+---
+
+# Future Architecture
+
+Future enhancements may include:
+
+- Richer GPS path analysis.
+- Inefficient path detection.
+- Driver-specific learning.
+- Adaptive diagnostic thresholds.
+- Multi-run trend analysis.
+- Machine-assisted diagnosis.
+- Live coaching support.
+
+These enhancements should preserve the core coaching-first philosophy while improving diagnostic accuracy.
+
+---
+
+# Related Documentation
+
+- `README.md`
+- `USER_GUIDE.md`
+- `COACHING_PHILOSOPHY.md`
+- `DIAGNOSIS_MODEL.md`
+- `METRICS.md`
+- `REPORT_INTERPRETATION.md`
+- `OPERATIONS.md`

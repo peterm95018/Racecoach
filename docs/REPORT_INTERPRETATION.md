@@ -1,195 +1,215 @@
-RaceCoach Report Interpretation Guide
+# RaceCoach Report Interpretation Guide
 
-Purpose
+RaceCoach produces several reports throughout an autocross event. Each report serves a different purpose and is intended to answer a different coaching question.
 
-RaceCoach generates several reports, each designed for a different point during an autocross event.
+This guide explains when to use each report, how to interpret the information it contains, and which sections deserve the most attention.
 
-This guide explains how to interpret those reports and which information deserves the most attention.
+Detailed descriptions of individual telemetry metrics are provided in `METRICS.md`.
 
-Detailed definitions of individual telemetry metrics are provided in METRICS.md.
+---
 
-⸻
+## Report Types
 
-Report Types
+### Grid Report
 
-Grid Report
+**Purpose**
 
-Purpose
+Provide immediate coaching for the next run.
 
-Designed for the short break between runs.
+**When to read**
 
-Typical reading time
+During the short break between runs.
+
+**Typical reading time**
 
 Less than 30 seconds.
 
-Focus only on:
+**Focus on**
 
-* Next Run
-* Keep
-* Quick Segment Check
+- Next Run
+- Keep
+- Quick Segment Check
 
-Ignore the rest.
+Ignore the remaining details unless you have additional time.
 
-The objective is to choose one improvement for the next run.
+The objective is to leave the grid with **one clear improvement** to execute on the next run.
 
-⸻
+---
 
-Full Report
+### Full Report
 
-Purpose
+**Purpose**
 
-Understand why a run was faster or slower than the reference lap.
+Explain why a run was faster or slower than the selected reference lap.
 
-Read after returning to paddock or after the event.
+**When to read**
 
-Use the report to identify:
+After returning to paddock or after the event.
 
-* Where time was gained.
-* Where time was lost.
-* Why those differences occurred.
-* Which techniques should be repeated.
+Use the report to understand:
 
-⸻
+- Where time was gained.
+- Where time was lost.
+- Why those differences occurred.
+- Which techniques should be repeated.
 
-Session Summary (under development)
+---
 
-Summarizes an entire event rather than a single run.
+### Session Summary
 
-Its purpose is to identify:
+**Purpose**
 
-* Recurring strengths.
-* Recurring weaknesses.
-* Improvement over multiple runs.
-* Coaching priorities for the next event.
+Summarize an entire event rather than a single run.
 
-⸻
+The Session Summary identifies:
 
-Reading the Full Report
+- Recurring strengths.
+- Recurring weaknesses.
+- Improvement across multiple runs.
+- Coaching priorities before the next event.
 
-Run Summary
+Unlike the Grid Report, which focuses on the next run, the Session Summary focuses on long-term improvement throughout the event.
 
-Read this first.
+---
 
-It highlights:
+## Reading the Full Report
 
-* Biggest gain.
-* Biggest loss.
-* Overall speed differences.
+### Run Summary
 
-⸻
+Read this section first.
 
-Next Run Focus
+It provides a high-level overview of the run, including:
 
-The highest-priority coaching section.
+- Biggest gain
+- Biggest loss
+- Overall performance differences
 
-The recommendations are ordered by expected benefit.
+---
 
-Choose one improvement and apply it consistently on the next run.
+### Next Run Focus
 
-⸻
+This is the most important coaching section.
 
-Segment Time vs Reference
+Recommendations are ordered by expected impact.
+
+Choose **one improvement** and commit to it during the next run.
+
+Trying to fix multiple problems simultaneously usually produces inconsistent driving.
+
+---
+
+### Segment Time vs Reference
 
 This is the primary performance comparison.
 
-Everything else in the report attempts to explain why the segment time changed.
+Everything else in the report attempts to explain why each segment became faster or slower.
 
-Negative values indicate faster segments.
+- Negative values indicate a faster segment.
+- Positive values indicate a slower segment.
 
-Positive values indicate slower segments.
+---
 
-⸻
-
-Top Opportunities
+### Top Opportunities
 
 These sections explain why RaceCoach believes time was lost.
 
-Common causes include:
+Common diagnoses include:
 
-* Late throttle commitment.
-* Weak exit speed.
-* Excess coasting.
-* Over-driving.
-* Overslowing.
-* Early braking.
+- Late throttle commitment
+- Weak exit speed
+- Excess coasting
+- Over-driving
+- Over-slowing
+- Early braking
 
-Only opportunities with sufficient confidence are presented.
+Only opportunities supported by sufficient confidence are presented.
 
-⸻
+---
 
-Segment Table
+### Segment Table
 
-Provides a quick comparison of all analyzed segments.
+The segment table provides a concise comparison of every analyzed segment.
 
-Use this table to identify patterns rather than focusing on individual numbers.
+Look for recurring patterns rather than isolated values.
 
-⸻
+Repeated losses usually deserve more attention than a single slow segment.
 
-Interpreting the Metrics
+---
 
-Several metrics work together and should not be interpreted in isolation.
+## Interpreting the Metrics
 
-Examples include:
+Telemetry metrics should never be interpreted in isolation.
 
-* Exit Speed + Coast Time
-* Minimum Speed + Exit Speed
-* Brake Timing + Exit Speed
-* Throttle Commitment + Segment Time
+RaceCoach combines multiple measurements before reaching a coaching recommendation.
 
-Detailed descriptions of each metric are available in METRICS.md.
+Common combinations include:
 
-⸻
+- Exit Speed + Coast Time
+- Minimum Speed + Exit Speed
+- Brake Timing + Exit Speed
+- Throttle Commitment + Segment Time
 
-Common Interpretation Patterns
+Detailed definitions are available in `METRICS.md`.
 
-Higher Minimum Speed + Lower Exit Speed
+---
+
+## Common Interpretation Patterns
+
+### Higher Minimum Speed + Lower Exit Speed
 
 Often indicates over-driving the corner entry.
 
-⸻
+---
 
-Lower Minimum Speed + Higher Exit Speed
+### Lower Minimum Speed + Higher Exit Speed
 
-Often indicates a slower entry that produced a stronger exit.
+Often indicates sacrificing entry speed to produce a stronger exit.
 
-⸻
+---
 
-Longer Coast Time
+### Longer Coast Time
 
-Usually indicates hesitation or delayed commitment.
+Usually indicates hesitation or delayed throttle commitment.
 
-⸻
+---
 
-Earlier Brake Point + Better Exit
+### Earlier Brake Point + Better Exit
 
-May indicate a more effective setup for the corner.
+May indicate a more effective corner setup.
 
-⸻
+---
 
-Faster Segment + Similar Metrics
+### Faster Segment + Similar Metrics
 
-RaceCoach may classify these as low-confidence gains or losses.
+Occasionally RaceCoach cannot confidently explain a time difference.
 
-Small timing differences are not always explained by measurable telemetry changes.
+Small gains and losses are not always accompanied by measurable telemetry changes.
 
-⸻
+Low-confidence conclusions are intentionally filtered to avoid speculative coaching.
 
-Coaching Philosophy
+---
 
-RaceCoach emphasizes repeatable improvements rather than chasing isolated gains.
+## Coaching Philosophy
+
+RaceCoach is designed to improve the driver's next run—not simply explain the previous one.
 
 When reviewing a report:
 
-* Focus on one improvement at a time.
-* Reinforce successful techniques.
-* Avoid making multiple changes between runs.
-* Trust consistent trends over single-run anomalies.
+- Focus on one improvement at a time.
+- Reinforce successful techniques.
+- Repeat what worked.
+- Trust consistent trends over isolated laps.
+- Favor high-confidence coaching over speculative analysis.
 
-⸻
+Telemetry is evidence.
 
-Related Documentation
+Coaching is the product.
 
-* USER_GUIDE.md
-* METRICS.md
-* DIAGNOSIS_MODEL.md
-* COACHING_PHILOSOPHY.md
+---
+
+## Related Documentation
+
+- `USER_GUIDE.md`
+- `COACHING_PHILOSOPHY.md`
+- `DIAGNOSIS_MODEL.md`
+- `METRICS.md`

@@ -1,644 +1,166 @@
-RaceCoach User Guide
-
-Purpose
-
-RaceCoach compares each run against a reference lap and identifies the highest-value opportunities to reduce time.
-
-The goal is simple:
-
-What is the one thing I should do differently on my next run?
-
-⸻
-
-Quick Start
-
-Before Leaving Home
-
-* Charge iPhone
-* Charge RaceBox GPS
-* Charge GoPro (if used)
-* Verify OBDLink is available
-* Confirm the correct event is active
-* Pack tire gauge, inflator, and autocross equipment
-* Verify the RaceCoach upload service is running
-* Open the Grid Report URL once to verify connectivity
-
-⸻
-
-Event Workflow
-
-1. Prepare the Event
-
-Run:
-
-./prep_event
-
-Walk the course and update segments.yaml with meaningful driving segments.
-
-⸻
-
-2. Record a Run
-
-Record telemetry using:
-
-* RaceChrono Pro
-* RaceBox GPS
-* OBDLink (recommended)
-* GoPro (optional)
-
-⸻
-
-3. Export the Run
-
-From RaceChrono:
-
-* Open the completed run
-* Export CSV
-* Share to FTPManager Pro
-
-The upload service automatically imports the run and updates the reports.
-
-⸻
-
-4. Between Runs
-
-Open the Grid Report:
-
-* https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html
-
-Spend no more than 30 seconds reviewing:
-
-* Next Run
-* Keep
-* Quick Segment Check
-
-Choose one improvement for the next run.
-
-Do not try to fix multiple things at once.
-
-⸻
-
-5. After the Event
-
-Review the Full Report:
-
-* https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
-
-Use the detailed report to understand:
-
-* Why time was gained or lost
-* Which techniques consistently worked
-* Which driving habits should become permanent
-
-⸻
-
-Understanding the Reports
-
-Grid Report
-
-Designed for the 10-minute break between runs.
-
-Provides:
-
-* One coaching objective
-* One section to repeat
-* Quick segment summary
-
-⸻
-
-Full Report
-
-Designed for post-run and post-event analysis.
-
-Provides:
-
-* Run Summary
-* Next Run Focus
-* Segment analysis
-* Telemetry metrics
-* Opportunity analysis
-* Complete segment table
-
-⸻
-
-Report Sections
-
-Run Summary
-
-Highlights:
-
-* Biggest gain
-* Biggest loss
-* Key speed differences
-
-⸻
-
-Next Run Focus
-
-The most important coaching section.
-
-Example:
-
-1. Pick up throttle earlier.
-2. Protect exit speed.
-3. Repeat what worked in the previous segment.
-
-⸻
-
-Segment Time vs Reference Lap
-
-Shows where time was gained or lost.
-
-Negative values are faster.
-
-Positive values are slower.
-
-⸻
-
-Top Opportunities
-
-Explains why time was lost.
-
-Common causes include:
-
-* Late throttle commitment
-* Weak exit speed
-* Excess coasting
-* Overslowing
-* Poor corner setup
-
-⸻
-
-Segment Table
-
-Quick comparison across all segments.
-
-Columns include:
-
-* Δ Time
-* Minimum Speed
-* Exit Speed
-* Recovery Metrics
-* Coaching Notes
-
-⸻
-
-Key Metrics
-
-Exit Speed
-
-The single most important metric for autocross.
-
-Protect exit speed whenever possible.
-
-⸻
-
-Minimum Speed
-
-Higher is not always faster.
-
-If minimum speed increases while exit speed decreases, the corner was likely over-driven.
-
-⸻
-
-Throttle Commitment
-
-Measures how quickly throttle is reapplied after rotation.
-
-Earlier throttle commitment generally produces faster segment times.
-
-⸻
-
-Brake Start Distance
-
-Shows where braking began relative to the reference lap.
-
-Useful for identifying unnecessary early braking.
-
-⸻
-
-Coast Time
-
-Measures time spent with neither brake nor throttle applied.
-
-Long coast times usually indicate lost momentum.
-
-⸻
-
-Driver Guidelines
-
-Exit Speed Down
-
-Focus on:
-
-* Earlier vision
-* Earlier rotation
-* Earlier throttle commitment
-
-⸻
-
-Minimum Speed Too Low
-
-Focus on:
-
-* Less braking
-* Earlier brake release
-* Smoother rotation
-
-⸻
-
-Throttle Commitment Late
-
-Focus on:
-
-* Finish rotation sooner
-* Commit to throttle earlier
-
-⸻
-
-Segment Shows a Gain
-
-Repeat the technique.
-
-Protect gains before searching for additional speed.
-
-⸻
-
-Current Limitations
-
-* Coaching quality depends on telemetry quality.
-* Segment definitions are event-specific.
-* Recovery metrics continue to evolve.
-* Opportunity thresholds are still being refined.
-
-⸻
-
-Related Documentation
-
-* ARCHITECTURE.md
-* METRICS.md
-* DIAGNOSIS_MODEL.md
-* COACHING_PHILOSOPHY.md
-* REPORT_INTERPRETATION.md
-
-## See Also
-
-- REPORT_INTERPRETATION.md
-- COACHING_PHILOSOPHY.md
-- OPERATIONS.md
-
-
-
-
-
-
-
---- 
-# TBD
-
-
 # RaceCoach User Guide
 
-## Purpose
+RaceCoach is a driver coaching system that analyzes telemetry from each run and identifies the single driving behavior most likely to improve your next run.
 
-RaceCoach compares a run against a reference lap and identifies the biggest opportunities to reduce time.
+Its purpose is simple:
 
-The report is designed to answer one question:
+> **What is the one thing I should do differently on my next run?**
 
-**What should I do differently on the next run?**
-
-## The Components
-
-RaceChrono Pro is an application for iOS and Android that is used gather telemetry and video data for track and autocross events.
-
-RaceBox GPS is used to create an accurate GPS trace that is stored in RaceChrono Pro.
-
-ODBLink is an ODBII reader that pulls information from the car and stores that data within RaceChrono Pro.
-
-FTPManager Pro is a FTP/SFTP iOS software that I use to copy exported data from RaceChrono Pro to my Ubuntu / Drupal server where a system services **watches** for incoming files to process.
-GoPro is used to capture video and is optional. 
+RaceCoach is designed around the rhythm of an autocross day—from course walk to final results.
 
 ---
 
-## Event Workflow
+# Event Workflow
 
-### 1. Complete a run
+## Before Leaving Home
+
+Prepare your equipment before arriving at the event.
+
+### Equipment Checklist
+
+- Charge iPhone
+- Charge RaceBox GPS
+- Charge GoPro (if used)
+- Charge OBDLink (if required)
+- Pack tire gauge and inflator
+- Pack helmet and autocross equipment
+
+### RaceCoach Checklist
+
+- Verify the correct event is active.
+- Confirm the upload service is running.
+- Open the Grid Report URL once to verify connectivity.
+
+---
+
+## At the Event
+
+### 1. Prepare the Event
+
+Create a new RaceCoach event if necessary.
+
+Walk the course carefully and divide it into meaningful driving segments.
+
+Good segment definitions produce better coaching.
+
+---
+
+### 2. Record a Run
 
 Record telemetry using:
 
 - RaceChrono Pro
 - RaceBox GPS
-- OBDLink (optional)
+- OBDLink (recommended)
 - GoPro (optional)
 
-### 2. Export CSV
+Complete the run as normal.
 
-From RaceChrono:
+---
 
-- Open the run
-- Export CSV
-- Share to FTP Manager
+### 3. Upload the Run
 
-### 3. Upload
+Export the completed run from RaceChrono.
 
-Upload the CSV to the RaceCoach Ubuntu server.
+Upload the CSV to the RaceCoach server.
 
 RaceCoach automatically:
 
-- Detects the upload
-- Runs analysis
-- Updates the latest report
+- Imports the run
+- Compares it to the reference lap
+- Updates the Grid Report
+- Updates the Full Report
 
-### 4. View Report
-
-We created an even shorter report that could be easily consumed while in a 10 minute break between runs called Grid Report. The longer report provides additional detail.
-Open:
-
-`https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html`
-or
-`https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html`
+No additional analysis is normally required.
 
 ---
 
-## Understanding the Report
+### 4. Review the Grid Report
 
-### Run Summary
+During the break between runs, open the Grid Report.
 
-Highlights:
+Spend no more than **30 seconds** reviewing it.
 
-- Biggest gain
-- Biggest loss
-- Key speed differences
+Focus only on:
 
-### Next Run Focus
+- Next Run
+- Keep
+- Quick Segment Check
 
-The most important section.
+Ignore the remaining details unless additional time is available.
 
-Read this before your next run.
+The objective is to leave the grid with **one clear improvement** for the next run.
 
-Example:
-
-1. Middle course: pick up throttle earlier
-2. Protect exit speed
-3. Repeat what worked in Finish section
-
-### Segment Time vs Reference Lap
-
-Shows where time was gained or lost compared to the reference lap.
-
-Example:
-
-- Middle course: +0.73s
-- Finish section: -1.45s
-
-Positive values are slower.
-
-Negative values are faster.
-
-### Top Opportunities
-
-Explains why time was lost.
-
-Typical causes:
-
-- Over-driving entry
-- Late throttle commitment
-- Weak exit speed
-- Overslowing
-- Excess coasting
-
-### Segment Table
-
-Quick comparison of all segments.
-
-Columns:
-
-- Δ Time = time difference vs reference
-- Min Δ = minimum speed difference
-- Exit Δ = exit speed difference
-- Rec+1 = recovery gain 1 second after minimum speed (experimental)
-- Rec+2 = recovery gain 2 seconds after minimum speed (experimental)
-- Notes = key observations
+Do not attempt to fix multiple problems simultaneously.
 
 ---
 
-## Key Metrics
+### 5. Drive the Next Run
 
-### Exit Speed
+Trust the coaching.
 
-Most important metric in autocross.
+Commit to the selected improvement.
 
-Higher exit speed usually produces lower segment times.
+Avoid changing driving style in multiple places on the course.
 
-### Throttle Commitment
-
-Measures how long after minimum speed the throttle is reapplied.
-
-Smaller values are generally better.
-
-### Minimum Speed
-
-Useful diagnostic.
-
-Higher minimum speed is not always faster.
-
-A higher minimum speed combined with a lower exit speed usually indicates over-driving the entry.
+Repeat successful techniques while applying one new adjustment.
 
 ---
 
-## Driver Guidelines
+## After the Event
 
-### When Exit Speed Is Down
+Review the Full Report after returning to paddock or at home.
 
-Focus on:
+Use it to understand:
 
-- Earlier vision
-- Earlier rotation
-- Earlier throttle commitment
+- Where time was gained
+- Where time was lost
+- Why those differences occurred
+- Which techniques consistently worked
+- Which habits should become permanent
 
-### When Minimum Speed Is Too Low
-
-Focus on:
-
-- Less braking
-- Earlier brake release
-- Smoother rotation
-
-### When Throttle Commitment Is Late
-
-Focus on:
-
-- Finishing rotation sooner
-- Committing to throttle earlier
-
-### When A Segment Shows A Gain
-
-Repeat the technique.
-
-Protect gains before searching for new speed.
+If available, review the Session Summary to identify patterns across the entire event rather than individual runs.
 
 ---
 
-## Current Limitations
+# Best Practices
 
-- Recovery metrics are experimental.
-- Segment boundaries are event-specific.
-- Reference-path segmentation is not yet active.
-- Coaching quality depends on telemetry quality.
+RaceCoach is most effective when used consistently.
 
----
-Managing Events
+Follow these principles:
 
-RaceCoach maintains a single active event. Analysis commands, reports, and the Drupal current report links use this active event.
+- Focus on one improvement per run.
+- Reinforce successful techniques.
+- Trust repeated patterns over isolated laps.
+- Do not chase small timing differences.
+- Let confidence determine how much weight to give each recommendation.
 
-Creating a New Event
+Remember:
 
-Use:
+> The objective is not to drive a perfect run.
 
-./prep_event
-
-You will be prompted for an event name, for example:
-
-gglc_2026-06-20
-
-prep_event will:
-
-* Create the event directory under events/
-* Create the uploads/ directory
-* Create the reports/ directory
-* Copy the default segments.yaml if needed
-* Set the new event as the active event
-* Update the Drupal current report links (when run on the Ubuntu server)
-* Install or refresh the RaceCoach service if install_service.sh is present
-
-Switching to an Existing Event
-
-To switch to an existing event:
-
-./set_active_event EVENT_NAME
-
-Example:
-
-./set_active_event gglc_2026-06-20
-
-This command:
-
-* Updates active_event.txt
-* Updates the Drupal current report symlinks (on the Ubuntu server)
-* Verifies the selected event exists
-* Displays the public report URLs
-
-Interactive Event Selection
-
-If no event name is supplied:
-
-./set_active_event
-
-RaceCoach displays a numbered list of available events and prompts you to choose one.
-
-Active Event File
-
-The current event is stored in:
-
-active_event.txt
-
-The active event can be verified at any time:
-
-cat active_event.txt
-
-Drupal Report Publishing
-
-On the Ubuntu server, the active event’s reports are exposed through Drupal using symbolic links located at:
-
-/var/www/html/drupal10/web/sites/default/files/racecoach/events/current/
-
-The following files are linked:
-
-* grid_report.html
-* grid_report.md
-* latest_report.html
-* latest_report.md
-
-These links always point to the reports for the currently active event.
-
-Public Report URLs
-
-Grid report:
-
-https://petermcmillan.com/sites/default/files/racecoach/events/current/grid_report.html
-
-Latest report:
-
-https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
-
-These URLs always display the reports for the active event.
-
-Working on Multiple Computers
-
-On development machines (such as a Mac), set_active_event updates only active_event.txt.
-
-If the Drupal report directory is not present, the script skips the symlink update and displays a reminder to run the command on the Ubuntu server after pulling the latest changes.
-
-Typical Workflow
-
-New Event
-
-./prep_event
-
-Walk the course, update segments.yaml, collect telemetry, and analyze runs.
-
-Review a Previous Event
-
-./set_active_event gglc_2026-06-20
-
-Generate reports or review previous analysis without creating a new event.
-
+> The objective is to drive a better run than the previous one.
 
 ---
 
+# Typical Event Timeline
 
-## Support Documents
+1. Prepare the event.
+2. Walk the course.
+3. Record a run.
+4. Upload telemetry.
+5. Review the Grid Report.
+6. Drive the next run.
+7. Repeat throughout the event.
+8. Review the Full Report and Session Summary after the event.
 
-- ARCHITECTURE.md — engineering details
-- Event segment definitions
-- RaceChrono setup documentation
+---
 
-## Event-Day Workflow
+# Related Documentation
 
-1. Run:
-
-    ./prep_event
-
-2. Upload RaceChrono CSV files to:
-
-    events/<event>/uploads/
-
-3. Watcher automatically:
-
-    - creates reference.csv if needed
-    - analyzes uploaded run
-    - updates reports
-    - updates Drupal report page
-
-4. Open RaceCoach report URL
-
-5. Use run_analysis for custom comparisons
-
-
-Known failure modes:
-
-- Empty report:
-  Usually reference.csv missing.
-
-- Uploads disappear:
-  Watcher accidentally moving CSVs to processed.
-
-- Drupal shows old report:
-  current symlink points to previous event.
-
-- Watcher running but not processing:
-  File already existed before watcher started.
-  Watchdog only triggers on new file creation events.
-
-- write_report TypeError:
-  watch_uploads.py out of sync with analyze_run.py API.
+- `REPORT_INTERPRETATION.md` — Understanding RaceCoach reports
+- `COACHING_PHILOSOPHY.md` — Coaching principles and design philosophy
+- `METRICS.md` — Definitions of telemetry metrics
+- `DIAGNOSIS_MODEL.md` — How RaceCoach forms coaching recommendations
+- `OPERATIONS.md` — Installation, event management, and system administration
+- `ARCHITECTURE.md` — Software architecture and implementation
