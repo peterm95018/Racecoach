@@ -12,254 +12,131 @@ Coaching is the product.
 
 Mission
 
-RaceCoach should answer three questions after every run:
+RaceCoach exists to improve the driver’s next run—not simply explain the previous one.
 
-1. What was my biggest opportunity?
-2. Why did it happen?
-3. What is the one thing I should change on the next run?
+Every recommendation should answer one question:
 
-Everything else exists to support those answers.
+What is the one thing this driver should think about before leaving the grid?
 
-⸻
-
-Core Philosophy
-
-RaceCoach coaches driving behaviors, not telemetry metrics.
-
-Telemetry explains what happened.
-
-Diagnosis explains why it happened.
-
-Coaching explains what to do next.
-
-For example, instead of reporting:
-
-* Minimum speed
-* Exit speed difference
-* Throttle delay
-
-RaceCoach should coach:
-
-* Get back to power sooner.
-* Protect exit speed.
-* You coasted too long.
-* You over-drove the entry.
-* You slowed the car more than necessary.
-
-The driver should receive advice, not raw telemetry.
+If that answer cannot be stated confidently, RaceCoach should say so.
 
 ⸻
 
-Guiding Principles
+Core Principles
 
-Coach One Thing
+1. Coach causes, not symptoms
 
-Every Grid Report should end with one primary coaching instruction.
+Drivers cannot act on telemetry.
 
-One improvement is easier to execute than several competing recommendations.
+They can act on braking, vision, rotation, line selection, patience, and throttle timing.
 
-⸻
-
-Coach Behaviors
-
-Recurring driving habits are more important than isolated telemetry differences.
-
-RaceCoach should identify patterns that consistently influence performance.
+Every recommendation should translate telemetry into an actionable driving behavior.
 
 ⸻
 
-Reinforce Success
+2. Confidence over completeness
 
-The fastest way to improve is not only by correcting mistakes but also by repeating successful techniques.
+A single high-confidence recommendation is more valuable than five speculative observations.
 
-Every report should identify something worth repeating.
-
-⸻
-
-Prefer Confidence Over Certainty
-
-RaceCoach should avoid making recommendations unless the telemetry provides sufficient evidence.
-
-When confidence is low, the system should acknowledge uncertainty rather than invent an explanation.
+If confidence is low, RaceCoach should reduce its certainty or remain silent rather than invent an explanation.
 
 ⸻
 
-Keep the Driver Focused
+3. Reinforce success
 
-The driver should spend time driving, not studying reports.
+Drivers improve by repeating successful behaviors just as much as correcting mistakes.
 
-Grid Reports should be concise enough to review in approximately 30 seconds.
-
-⸻
-
-Driving Behaviors
-
-RaceCoach classifies opportunities into recognizable driving behaviors.
-
-Late to Power
-
-The driver completes rotation but delays committing to throttle.
-
-Primary coaching:
-
-Point, then power.
+When no major losses exist, RaceCoach should identify why the run was successful and encourage repeating that rhythm.
 
 ⸻
 
-Over-Driving
+4. Separate analysis from coaching
 
-The driver carries excessive entry speed that reduces exit performance.
+Analysis describes what happened.
 
-Primary coaching:
+Coaching tells the driver what to do next.
 
-Slow hands, fast exit.
-
-⸻
-
-Over-Slowing
-
-The driver gives away unnecessary speed before the corner.
-
-Primary coaching:
-
-Protect momentum.
+Telemetry exists to support coaching—not replace it.
 
 ⸻
 
-Momentum Loss
+5. Never invent conclusions
 
-The driver spends excessive time coasting or hesitating between brake and throttle.
+RaceCoach may infer driver behavior only when supported by telemetry.
 
-Primary coaching:
-
-Stay connected.
+It must never speculate about competitors, unseen portions of a run, or causes that are not supported by the available evidence.
 
 ⸻
 
-Braking Opportunity
+6. Optimize for the next run
 
-The driver brakes earlier or longer than necessary.
+Grid Mode is not a post-session analysis.
 
-Primary coaching:
+Every sentence should help the driver execute the next run better.
 
-Finish braking sooner.
-
-⸻
-
-Efficient Line (Future)
-
-The driver maintains good speed but follows a longer or less efficient path.
-
-Primary coaching:
-
-Shorter and cleaner.
+If information does not change the driver’s behavior, it probably does not belong in Grid Mode.
 
 ⸻
 
-Habits Versus Mistakes
+Decision Hierarchy
 
-RaceCoach distinguishes between recurring habits and isolated execution errors.
+When generating coaching, RaceCoach should prioritize:
 
-Recurring Habits
-
-Examples include:
-
-* Late to Power
-* Over-Driving
-* Over-Slowing
-* Momentum Loss
-
-These represent long-term development opportunities.
+1. Safety
+2. High-confidence time loss
+3. Reinforcement of successful behavior
+4. Supporting telemetry
+5. Everything else
 
 ⸻
 
-Execution Errors
+Writing Style
 
-Examples include:
+Use concise coaching language.
 
-* Lift before the finish.
-* Missed gate.
-* Cone contact.
-* One braking mistake.
-* One poor line.
+Prefer:
 
-Execution errors should be corrected without redefining the driver’s overall coaching priorities.
+You over-slowed the car.
 
-⸻
+instead of:
 
-Positive Coaching
-
-RaceCoach should recognize successful execution as well as mistakes.
-
-Examples:
-
-* Excellent exit speed.
-* Earlier throttle commitment.
-* Strong momentum preservation.
-* Cleaner line.
-* Consistent improvement.
-
-The objective is to build repeatable driving habits.
+Minimum speed was 5.8 mph below reference.
 
 ⸻
 
-Confidence
+Prefer:
 
-Every diagnosis should have an internal confidence assessment.
+Waited too long to get back to power.
 
-High confidence requires multiple independent pieces of supporting evidence.
+instead of:
 
-When confidence is low, RaceCoach should recommend observation rather than change.
-
-⸻
-
-Event Coaching Philosophy
-
-Between Runs
-
-Review only the Grid Report.
-
-Answer two questions:
-
-* What happened?
-* What should I change?
-
-Target review time:
-
-Approximately 30 seconds.
+Throttle pickup was delayed by 0.32 seconds.
 
 ⸻
 
-During Breaks
+Prefer:
 
-Look for recurring patterns across multiple runs.
+Your gains came from executing the whole course cleanly. Repeat the same rhythm.
 
-Examples include:
+instead of:
 
-* Repeated braking habits.
-* Tire behavior.
-* Course evolution.
-* Driver observations.
+No major losses detected.
 
-⸻
-
-After the Event
-
-Identify:
-
-* The recurring habit that limited performance.
-* The strongest improvement of the day.
-* The highest-priority development objective before the next event.
+Every sentence should sound like an experienced instructor talking to a driver on grid.
 
 ⸻
 
-Long-Term Vision
-
-RaceCoach is designed to support driver development at three levels.
+Three Levels of Coaching
 
 Grid Report
 
 Immediate coaching for the next run.
+
+The Grid Report should identify:
+
+* The one highest-priority improvement.
+* The one behavior to repeat.
+* The one thought the driver should carry to the start line.
 
 ⸻
 
@@ -267,13 +144,29 @@ Session Summary
 
 Patterns and coaching themes across a single event.
 
+The Session Summary should identify:
+
+* The recurring habit that limited performance.
+* The strongest improvement of the day.
+* The highest-priority development objective before the next event.
+
 ⸻
 
 Driver Development
 
 Long-term improvement across multiple events and seasons.
 
-The objective is to identify recurring habits, measure improvement over time, and guide long-term driver development.
+The objective is to identify recurring habits, measure improvement over time, reinforce strengths, and guide long-term driver development.
+
+Every event becomes another data point in understanding how the driver learns—not just how the car was driven.
+
+⸻
+
+Guiding Principle
+
+The measure of a successful RaceCoach report is not whether it explains the lap—it is whether the driver produces a better next run because of it.
+
+Telemetry exists to support coaching, not to become the coaching itself. Every recommendation should increase the driver’s confidence, focus, and ability to execute the next run.
 
 ⸻
 
@@ -283,4 +176,4 @@ RaceCoach does not exist to analyze telemetry.
 
 RaceCoach exists to identify the one driving behavior that, if improved, will make the driver faster on the next run.
 
-Everything else is supporting evidence.
+Everything else is evidence in service of that goal.
