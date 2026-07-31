@@ -10,6 +10,7 @@ fi
 EVENT_DIR="events/$ACTIVE_EVENT"
 UPLOAD_DIR="$EVENT_DIR/uploads"
 REPORTS_DIR="$EVENT_DIR/reports"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ ! -d "$EVENT_DIR" ]; then
     echo "Active event not found: $EVENT_DIR"
@@ -118,3 +119,11 @@ echo "Latest report:"
 ls -t "$REPORTS_DIR"/*_report.md | head -1
 echo ""
 cat "$(ls -t "$REPORTS_DIR"/*_report.md | head -1)"
+
+echo ""
+echo "Publishing reports..."
+
+if ! "$PROJECT_DIR/publish_reports.sh"; then
+    echo "ERROR: Analysis completed, but publishing failed."
+    exit 1
+fi
