@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import statistics
 from collections import defaultdict
 from pathlib import Path
 
@@ -10,172 +11,419 @@ def fmt(value, suffix=""):
         return ""
     return f"{value:+.2f}{suffix}"
 
+
 def short_run_name(source: str) -> str:
     stem = Path(source).stem
     parts = stem.split("_")
+
     for part in parts:
         if part.startswith("lap"):
             return part
+
     return stem
-    
+
+
+def analyzed_duration(data: dict) -> float | None:
+    """
+    Return the analyzed duration for a run.
+
+    New summary files store this in run.analyzed_duration_s.
+    Older summary files fall back to the end time of the final segment.
+    """
+    run = data.get("run") or {}
+    duration = run.get("analyzed_duration_s")
+
+    if duration is not None:
+        return float(duration)
+
+    metrics = data.get("metrics", [])
+
+    if metrics:
+        end_time = metrics[-1].get("end_time")
+
+        if end_time is not None:
+            return float(end_time)
+
+    return None
+
+
+def consistency_interpretation(
+    best_repeat_gap: float | None,
+    top_three_spread: float | None,
+) -> str:
+    if best_repeat_gap is None:
+        return "Not enough analyzed runs to assess repeatability."
+
+    if (
+        best_repeat_gap <= 0.20
+        and (top_three_spread is None or top_three_spread <= 0.50)
+    ):
+        return "Strong repeatability near the session best."
+
+    if (
+        best_repeat_gap <= 0.50
+        and (top_three_spread is None or top_three_spread <= 1.00)
+    ):
+        return (
+            "Good repeatability, with some remaining variation between "
+            "the quickest runs."
+        )
+
+    return (
+        "The session best was not yet repeatable; prioritize reproducing "
+        "the fastest run before adding more pace."
+    )
+
+
 def load_summaries(reports_dir: Path):
     summaries = []
+
     for path in sorted(reports_dir.glob("*_summary.json")):
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         summaries.append((path, data))
+
     return summaries
 
 
 def main():
-    event_dir = Path("events") / Path("active_event.txt").read_text().strip()
+    active_event_file = Path("active_event.txt")
+
+    if not active_event_file.exists():
+        raise SystemExit("active_event.txt not found")
+
+    active_event = active_event_file.read_text(encoding="utf-8").strip()
+
+    if not active_event:
+        raise SystemExit("active_event.txt is empty")
+
+    event_dir = Path("events") / active_event
     reports_dir = event_dir / "reports"
 
+    if not reports_dir.exists():
+        raise SystemExit(f"Reports directory not found: {reports_dir}")
+
     summaries = load_summaries(reports_dir)
+
+    if not summaries:
+        raise SystemExit(f"No summary JSON files found in {reports_dir}")
+
+    run_times = []
+
+    for path, data in summaries:
+        source = data.get("source", path.name)
+        duration = analyzed_duration(data)
+
+        if duration is not None:
+            run_times.append(
+                {
+                    "run": short_run_name(source),
+                    "duration": duration,
+                }
+            )
+
+    run_times.sort(key=lambda item: item["duration"])
+
+    fastest_run = run_times[0] if run_times else None
+    best_repeat = run_times[1] if len(run_times) >= 2 else None
+
+    best_repeat_gap = (
+        best_repeat["duration"] - fastest_run["duration"]
+        if fastest_run and best_repeat
+        else None
+    )
+
+    top_three_spread = None
+
+    if len(run_times) >= 3:
+        top_three_spread = (
+            run_times[2]["duration"] - run_times[0]["duration"]
+        )
+
+    duration_stddev = (
+        statistics.pstdev(item["duration"] for item in run_times)
+        if len(run_times) >= 2
+        else None
+    )
+
+    consistency_text = consistency_interpretation(
+        best_repeat_gap,
+        top_three_spread,
+    )
 
     rows = []
     by_segment = defaultdict(list)
 
     for path, data in summaries:
         source = data.get("source", path.name)
-        for m in data.get("metrics", []):
+
+        for metric in data.get("metrics", []):
+            segment = metric.get("name")
+
+            if not segment:
+                continue
+
             row = {
                 "run": short_run_name(source),
-                "segment": m.get("name"),
-                "time_delta": m.get("time_delta"),
-                "exit_delta": m.get("exit_speed_delta_mph"),
-                "min_delta": m.get("min_speed_delta_mph"),
-                "avg_delta": m.get("avg_speed_delta_mph"),
-                "throttle_delta": m.get("throttle_commit_delay_delta_s"),
-                "brake_delta": m.get("brake_start_delta_s"),
+                "segment": segment,
+                "time_delta": metric.get("time_delta"),
+                "exit_delta": metric.get("exit_speed_delta_mph"),
+                "min_delta": metric.get("min_speed_delta_mph"),
+                "avg_delta": metric.get("avg_speed_delta_mph"),
+                "throttle_delta": metric.get(
+                    "throttle_commit_delay_delta_s"
+                ),
+                "brake_delta": metric.get("brake_start_delta_s"),
             }
+
             rows.append(row)
-            by_segment[row["segment"]].append(row)
+            by_segment[segment].append(row)
 
     gains = sorted(
-        [r for r in rows if r["time_delta"] is not None and r["time_delta"] < -0.15],
-        key=lambda r: r["time_delta"],
+        [
+            row
+            for row in rows
+            if row["time_delta"] is not None
+            and row["time_delta"] < -0.15
+        ],
+        key=lambda row: row["time_delta"],
     )[:5]
 
     losses = sorted(
-        [r for r in rows if r["time_delta"] is not None and r["time_delta"] > 0.25],
-        key=lambda r: r["time_delta"],
+        [
+            row
+            for row in rows
+            if row["time_delta"] is not None
+            and row["time_delta"] > 0.25
+        ],
+        key=lambda row: row["time_delta"],
         reverse=True,
     )[:5]
 
     best_gain = gains[0] if gains else None
     best_loss = losses[0] if losses else None
-    
+
     recurring_losses = []
-    for segment, seg_rows in by_segment.items():
+
+    for segment, segment_rows in by_segment.items():
         loss_rows = [
-            r for r in seg_rows
-            if r["time_delta"] is not None and r["time_delta"] > 0.15
+            row
+            for row in segment_rows
+            if row["time_delta"] is not None
+            and row["time_delta"] > 0.15
         ]
+
         if len(loss_rows) >= 2:
-            avg_loss = sum(r["time_delta"] for r in loss_rows) / len(loss_rows)
-            recurring_losses.append((segment, len(loss_rows), avg_loss))
+            avg_loss = (
+                sum(row["time_delta"] for row in loss_rows)
+                / len(loss_rows)
+            )
 
-    recurring_losses.sort(key=lambda x: (x[1], x[2]), reverse=True)
+            recurring_losses.append(
+                {
+                    "segment": segment,
+                    "count": len(loss_rows),
+                    "avg_loss": avg_loss,
+                }
+            )
 
-    lines = []
-    lines.append("# Session Summary")
-    lines.append("")
-    lines.append(f"Event: `{event_dir.name}`")
-    lines.append(f"Runs analyzed: {len(summaries)}")
+    recurring_losses.sort(
+        key=lambda item: (item["count"], item["avg_loss"]),
+        reverse=True,
+    )
+
+    lines = [
+        "# Session Summary",
+        "",
+        f"Event: `{event_dir.name}`",
+        f"Runs analyzed: {len(summaries)}",
+    ]
+
     lap_list = ", ".join(
         short_run_name(data.get("source", path.name))
         for path, data in summaries
     )
 
-    lines.append(f"Runs included: {lap_list}")
-    lines.append("")
+    lines.extend(
+        [
+            f"Runs included: {lap_list}",
+            "",
+            "## Session Scorecard",
+            "",
+        ]
+    )
 
-    lines.append("")
-    lines.append("## Session Scorecard")
-    lines.append("")
+    if fastest_run:
+        lines.append(
+            f"- Fastest analyzed run: **{fastest_run['run']}** "
+            f"({fastest_run['duration']:.3f}s)"
+        )
+    else:
+        lines.append("- Fastest analyzed run: Not available")
+
+    if best_repeat and best_repeat_gap is not None:
+        lines.append(
+            f"- Best repeat: **{best_repeat['run']}** "
+            f"({best_repeat['duration']:.3f}s, "
+            f"+{best_repeat_gap:.3f}s)"
+        )
+    else:
+        lines.append("- Best repeat: Not enough analyzed runs")
+
+    if top_three_spread is not None:
+        lines.append(f"- Top-3 spread: {top_three_spread:.3f}s")
+    else:
+        lines.append("- Top-3 spread: Not enough analyzed runs")
+
+    if duration_stddev is not None:
+        lines.append(
+            f"- Run-time standard deviation: {duration_stddev:.3f}s"
+        )
+    else:
+        lines.append(
+            "- Run-time standard deviation: Not enough analyzed runs"
+        )
+
+    lines.append(
+        "- Clean-run percentage: Not available from current run metadata"
+    )
+    lines.append(
+        f"- Consistency interpretation: {consistency_text}"
+    )
+
+    lines.extend(
+        [
+            "",
+            "## Session Findings",
+            "",
+        ]
+    )
 
     if best_gain:
         lines.append(
-            f"- Biggest improvement: **{best_gain['segment']}** "
-            f"({best_gain['time_delta']:+.2f}s, {best_gain['run']})"
+            f"- Biggest segment gain vs. reference: "
+            f"**{best_gain['segment']}** "
+            f"({best_gain['time_delta']:+.2f}s, "
+            f"{best_gain['run']})"
         )
     else:
-        lines.append("- Biggest improvement: None detected")
+        lines.append(
+            "- Biggest segment gain vs. reference: None detected"
+        )
 
     if best_loss:
         lines.append(
-            f"- Biggest loss: **{best_loss['segment']}** "
-            f"({best_loss['time_delta']:+.2f}s, {best_loss['run']})"
+            f"- Biggest segment loss vs. reference: "
+            f"**{best_loss['segment']}** "
+            f"({best_loss['time_delta']:+.2f}s, "
+            f"{best_loss['run']})"
         )
     else:
-        lines.append("- Biggest loss: None detected")
+        lines.append(
+            "- Biggest segment loss vs. reference: None detected"
+        )
 
     if recurring_losses:
-        segment, count, avg_loss = recurring_losses[0]
+        recurring = recurring_losses[0]
+
         lines.append(
-            f"- Recurring loss: **{segment}** "
-            f"({count} times, avg {avg_loss:+.2f}s)"
+            f"- Recurring loss: **{recurring['segment']}** "
+            f"({recurring['count']} times, "
+            f"avg {recurring['avg_loss']:+.2f}s)"
         )
     else:
         lines.append("- Recurring loss: None detected")
 
-    lines.append("")
-    lines.append("## Biggest Segment Gains")
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Biggest Segment Gains",
+            "",
+        ]
+    )
+
     if gains:
-        for r in gains:
+        for row in gains:
             lines.append(
-                f"- **{r['segment']}**: {fmt(r['time_delta'], 's')} "
-                f"({r['run']})"
+                f"- **{row['segment']}**: "
+                f"{fmt(row['time_delta'], 's')} "
+                f"({row['run']})"
             )
     else:
         lines.append("No segment gains above threshold.")
-    lines.append("")
 
-    lines.append("## Biggest Segment Losses")
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Biggest Segment Losses",
+            "",
+        ]
+    )
+
     if losses:
-        for r in losses:
+        for row in losses:
             lines.append(
-                f"- **{r['segment']}**: {fmt(r['time_delta'], 's')}, "
-                f"exit {fmt(r['exit_delta'], ' mph')} "
-                f"({r['run']})"
+                f"- **{row['segment']}**: "
+                f"{fmt(row['time_delta'], 's')}, "
+                f"exit {fmt(row['exit_delta'], ' mph')} "
+                f"({row['run']})"
             )
     else:
         lines.append("No major segment losses above threshold.")
-    lines.append("")
 
-    lines.append("## Recurring Loss Segments")
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Recurring Loss Segments",
+            "",
+        ]
+    )
+
     if recurring_losses:
-        for segment, count, avg_loss in recurring_losses:
+        for recurring in recurring_losses:
             lines.append(
-                f"- **{segment}**: {count} losses, avg {avg_loss:+.2f}s"
+                f"- **{recurring['segment']}**: "
+                f"{recurring['count']} losses, "
+                f"avg {recurring['avg_loss']:+.2f}s"
             )
     else:
         lines.append("No recurring loss segment detected.")
-    lines.append("")
 
-    lines.append("## Driver Trend")
-    lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Driver Trend",
+            "",
+        ]
+    )
+
     if recurring_losses:
-        segment, count, avg_loss = recurring_losses[0]
+        recurring = recurring_losses[0]
+
         lines.append(
-            f"Most repeated opportunity: **{segment}** "
-            f"({count} times, avg {avg_loss:+.2f}s)."
+            f"Most repeated opportunity: "
+            f"**{recurring['segment']}** "
+            f"({recurring['count']} times, "
+            f"avg {recurring['avg_loss']:+.2f}s)."
         )
     elif gains:
         lines.append(
-            f"Session trend: strongest repeatable gain appears in "
+            "Session trend: strongest repeatable gain appears in "
             f"**{gains[0]['segment']}**."
         )
     else:
-        lines.append("Session was consistent with no major repeated weakness.")
+        lines.append(
+            "Session was consistent with no major repeated weakness."
+        )
+
     lines.append("")
 
-    out = reports_dir / "session_summary.md"
-    out.write_text("\n".join(lines) + "\n")
-    print(f"Wrote: {out}")
+    output_path = reports_dir / "session_summary.md"
+    output_path.write_text(
+        "\n".join(lines) + "\n",
+        encoding="utf-8",
+    )
+
+    print(f"Wrote: {output_path}")
 
 
 if __name__ == "__main__":
