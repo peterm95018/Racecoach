@@ -1385,6 +1385,13 @@ def write_grid_report(
 
     return grid_md_path, grid_html_path
 
+def short_run_name(source: str) -> str:
+    stem = Path(source).stem
+    for part in stem.split("_"):
+        if part.startswith("lap"):
+            return part
+    return stem
+
 
 def write_report(
     csv_path: Path,
@@ -1393,6 +1400,8 @@ def write_report(
     findings: list[dict],
     reports_dir: Path,
     driver_input_source: str | None = None,
+    analyzed_duration_s: float | None = None,
+    sample_count: int | None = None,
 ):
     reports_dir.mkdir(parents=True, exist_ok=True)
     stem = csv_path.stem
@@ -1817,7 +1826,28 @@ def write_report(
     latest_html_path = reports_dir / "latest_report.html"
     latest_html_path.write_text(markdown_to_html(report_text))
 
-    summary = {"source": csv_path.name, "metrics": [asdict(m) for m in metrics], "findings": [{"score": f["score"], "segment": f["segment"].name, "reasons": f["reasons"], "coaching": f["coaching"]} for f in findings]}
+    summary = {
+        "source": csv_path.name,
+        "run": {
+            "name": short_run_name(csv_path.name),
+            "analyzed_duration_s": analyzed_duration_s,
+            "sample_count": sample_count,
+            "driver_input_source": driver_input_source,
+            "status": "unknown",
+            "is_clean": None,
+        },
+        "metrics": [asdict(m) for m in metrics],
+        "findings": [
+            {
+                "score": f["score"],
+                "segment": f["segment"].name,
+                "reasons": f["reasons"],
+                "coaching": f["coaching"],
+            }
+            for f in findings
+        ],
+    }
+
     json_path.write_text(json.dumps(summary, indent=2))
 
     write_grid_report(
@@ -1839,6 +1869,10 @@ def main():
     args = parser.parse_args()
     df, metrics, findings = analyze(args.csv, args.event, args.reference)
 
+    analyzed_duration_s = None
+    if not df.empty and "time_s" in df.columns:
+        analyzed_duration_s = float(df["time_s"].iloc[-1])
+
     md, js = write_report(
         args.csv,
         args.reference,
@@ -1846,6 +1880,8 @@ def main():
         findings,
         args.reports,
         driver_input_source=df.attrs.get("driver_input_source"),
+        analyzed_duration_s=analyzed_duration_s,
+        sample_count=len(df),
     )
     print(md.read_text())
     print(f"\nWrote: {md}")
