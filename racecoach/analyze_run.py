@@ -215,6 +215,47 @@ def load_segment_config(event_dir: Path):
 def load_segments(event_dir: Path):
     return load_segment_config(event_dir)["segments"]
 
+
+VALID_RUN_STATUSES = {
+    "clean",
+    "cone",
+    "dnf",
+    "off_course",
+    "unknown",
+}
+
+
+def load_run_status(
+    event_dir: Path,
+    run_name: str,
+) -> tuple[str, bool | None]:
+    status_file = event_dir / "run_status.yaml"
+
+    if not status_file.exists():
+        return "unknown", None
+
+    data = yaml.safe_load(
+        status_file.read_text(encoding="utf-8")
+    ) or {}
+
+    run_data = (data.get("runs") or {}).get(run_name) or {}
+    status = str(run_data.get("status", "unknown")).strip().lower()
+
+    if status not in VALID_RUN_STATUSES:
+        raise ValueError(
+            f"Invalid run status {status!r} for {run_name} "
+            f"in {status_file}"
+        )
+
+    if status == "clean":
+        return status, True
+
+    if status in {"cone", "dnf", "off_course"}:
+        return status, False
+
+    return "unknown", None
+
+
 def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     if "start_distance" not in seg or "end_distance" not in seg:
         return None
@@ -1399,6 +1440,7 @@ def write_report(
     metrics: list[SegmentMetric],
     findings: list[dict],
     reports_dir: Path,
+    event_dir: Path,
     driver_input_source: str | None = None,
     analyzed_duration_s: float | None = None,
     sample_count: int | None = None,
@@ -1826,15 +1868,18 @@ def write_report(
     latest_html_path = reports_dir / "latest_report.html"
     latest_html_path.write_text(markdown_to_html(report_text))
 
+    run_name = short_run_name(csv_path.name)
+    run_status, is_clean = load_run_status(event_dir, run_name)
+
     summary = {
         "source": csv_path.name,
         "run": {
-            "name": short_run_name(csv_path.name),
+            "name": run_name,
             "analyzed_duration_s": analyzed_duration_s,
             "sample_count": sample_count,
             "driver_input_source": driver_input_source,
-            "status": "unknown",
-            "is_clean": None,
+            "status": run_status,
+            "is_clean": is_clean,
         },
         "metrics": [asdict(m) for m in metrics],
         "findings": [
@@ -1879,6 +1924,7 @@ def main():
         metrics,
         findings,
         args.reports,
+        args.event,
         driver_input_source=df.attrs.get("driver_input_source"),
         analyzed_duration_s=analyzed_duration_s,
         sample_count=len(df),
