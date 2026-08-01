@@ -119,6 +119,7 @@ def main():
     for path, data in summaries:
         source = data.get("source", path.name)
         duration = analyzed_duration(data)
+        run = data.get("run") or {}
 
         if duration is not None:
             run_times.append(
@@ -126,13 +127,26 @@ def main():
                     "run": short_run_name(source),
                     "duration": duration,
                     "segments": segment_durations(data),
+                    "is_clean": run.get("is_clean"),
                 }
             )
 
     run_times.sort(key=lambda item: item["duration"])
 
-    fastest_run = run_times[0] if run_times else None
-    best_repeat = run_times[1] if len(run_times) >= 2 else None
+    clean_run_times = [
+        item
+        for item in run_times
+        if item["is_clean"] is True
+    ]
+
+    consistency_runs = clean_run_times or run_times
+
+    fastest_run = consistency_runs[0] if consistency_runs else None
+    best_repeat = (
+        consistency_runs[1]
+        if len(consistency_runs) >= 2
+        else None
+    )
 
     best_repeat_gap = (
         best_repeat["duration"] - fastest_run["duration"]
@@ -169,14 +183,17 @@ def main():
 
     top_three_spread = None
 
-    if len(run_times) >= 3:
+    if len(consistency_runs) >= 3:
         top_three_spread = (
-            run_times[2]["duration"] - run_times[0]["duration"]
+            consistency_runs[2]["duration"]
+            - consistency_runs[0]["duration"]
         )
 
     duration_stddev = (
-        statistics.pstdev(item["duration"] for item in run_times)
-        if len(run_times) >= 2
+        statistics.pstdev(
+            item["duration"] for item in consistency_runs
+        )
+        if len(consistency_runs) >= 2
         else None
     )
 
