@@ -24,18 +24,6 @@ def short_run_name(source: str) -> str:
 
 
 def analyzed_duration(data: dict) -> float | None:
-    """
-    Return the analyzed duration for a run.
-
-    New summary files store this in run.analyzed_duration_s.
-    Older summary files fall back to the end time of the final segment.
-    """
-    run = data.get("run") or {}
-    duration = run.get("analyzed_duration_s")
-
-    if duration is not None:
-        return float(duration)
-
     metrics = data.get("metrics", [])
 
     if metrics:
@@ -43,6 +31,12 @@ def analyzed_duration(data: dict) -> float | None:
 
         if end_time is not None:
             return float(end_time)
+
+    run = data.get("run") or {}
+    duration = run.get("analyzed_duration_s")
+
+    if duration is not None:
+        return float(duration)
 
     return None
 
