@@ -191,6 +191,24 @@ def main():
         top_three_spread,
     )
 
+    classified_runs = []
+
+    for _, data in summaries:
+        run = data.get("run") or {}
+        is_clean = run.get("is_clean")
+
+        if isinstance(is_clean, bool):
+            classified_runs.append(is_clean)
+
+    clean_run_count = sum(classified_runs)
+    classified_run_count = len(classified_runs)
+
+    clean_run_percentage = (
+        clean_run_count / classified_run_count * 100.0
+        if classified_run_count
+        else None
+    )
+
     rows = []
     by_segment = defaultdict(list)
 
@@ -324,9 +342,16 @@ def main():
             "- Analyzed-run standard deviation: Not enough analyzed runs"
         )
 
-    lines.append(
-        "- Clean-run percentage: Not available from current run metadata"
-    )
+    if clean_run_percentage is not None:
+        lines.append(
+            f"- Clean-run percentage: {clean_run_percentage:.1f}% "
+            f"({clean_run_count} of {classified_run_count} classified runs)"
+        )
+    else:
+        lines.append(
+            "- Clean-run percentage: Not available; no runs classified"
+        )
+
     lines.append(
         f"- Consistency interpretation: {consistency_text}"
     )
