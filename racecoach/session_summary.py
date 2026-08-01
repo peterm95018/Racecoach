@@ -47,6 +47,19 @@ def analyzed_duration(data: dict) -> float | None:
     return None
 
 
+def segment_durations(data: dict) -> dict[str, float]:
+    durations = {}
+
+    for metric in data.get("metrics", []):
+        name = metric.get("name")
+        duration = metric.get("duration")
+
+        if name and duration is not None:
+            durations[name] = float(duration)
+
+    return durations
+
+
 def consistency_interpretation(
     best_repeat_gap: float | None,
     top_three_spread: float | None,
@@ -118,6 +131,7 @@ def main():
                 {
                     "run": short_run_name(source),
                     "duration": duration,
+                    "segments": segment_durations(data),
                 }
             )
 
@@ -130,6 +144,33 @@ def main():
         best_repeat["duration"] - fastest_run["duration"]
         if fastest_run and best_repeat
         else None
+    )
+
+    repeatability_gaps = []
+
+    if fastest_run and best_repeat:
+        fastest_segments = fastest_run["segments"]
+        repeat_segments = best_repeat["segments"]
+
+        for segment, repeat_duration in repeat_segments.items():
+            fastest_duration = fastest_segments.get(segment)
+
+            if fastest_duration is None:
+                continue
+
+            gap = repeat_duration - fastest_duration
+
+            if gap > 0:
+                repeatability_gaps.append(
+                    {
+                        "segment": segment,
+                        "gap": gap,
+                    }
+                )
+
+    repeatability_gaps.sort(
+        key=lambda item: item["gap"],
+        reverse=True,
     )
 
     top_three_spread = None
@@ -276,11 +317,11 @@ def main():
 
     if duration_stddev is not None:
         lines.append(
-            f"- Run-time standard deviation: {duration_stddev:.3f}s"
+            f"- Analyzed-run standard deviation: {duration_stddev:.3f}s"
         )
     else:
         lines.append(
-            "- Run-time standard deviation: Not enough analyzed runs"
+            "- Analyzed-run standard deviation: Not enough analyzed runs"
         )
 
     lines.append(
@@ -289,6 +330,23 @@ def main():
     lines.append(
         f"- Consistency interpretation: {consistency_text}"
     )
+
+    if repeatability_gaps:
+        top_gaps = repeatability_gaps[:2]
+
+        gap_text = " and ".join(
+            f"**{item['segment']}** ({item['gap']:.2f}s)"
+            for item in top_gaps
+        )
+
+        lines.append(
+            f"- Repeatability gap: {best_repeat['run']} lost the most "
+            f"to {fastest_run['run']} in {gap_text}."
+        )
+    else:
+        lines.append(
+            "- Repeatability gap: No comparable segment-duration gaps available."
+        )
 
     lines.extend(
         [
