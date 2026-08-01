@@ -66,6 +66,99 @@ RaceCoach places significant weight on exit speed when diagnosing performance.
 
 ---
 
+## Session Scorecard Metrics Updated
+
+The Session Scorecard has been improved so that consistency metrics now reflect **only clean runs** when run classifications are available.
+
+### Previous Behavior
+
+All analyzed runs were included in consistency calculations, including:
+
+- DNF runs
+- Cone runs
+- Off-course runs
+
+This could distort:
+
+- Best Repeat
+- Top-3 Spread
+- Run Standard Deviation
+
+For example, a DNF run would artificially inflate the standard deviation and make repeatability appear worse than the driver's actual clean performance.
+
+---
+
+### New Behavior
+
+Each run now carries metadata:
+
+```json
+"run": {
+  "status": "clean",
+  "is_clean": true
+}
+```
+
+When at least one clean run exists:
+
+- Fastest analyzed run is selected from clean runs.
+- Best repeat is selected from clean runs.
+- Top-3 spread is calculated from clean runs.
+- Run standard deviation is calculated from clean runs.
+
+If no clean classifications are available, RaceCoach automatically falls back to using all analyzed runs.
+
+---
+
+### New Session Metric
+
+The Session Scorecard now reports:
+
+- Clean-run percentage
+
+Example:
+
+```
+Clean-run percentage: 75.0% (3 of 4 classified runs)
+```
+
+This measures execution quality across the session and separates driving consistency from outright pace.
+
+---
+
+### Example
+
+Before:
+
+```
+Fastest analyzed run: lap4 (27.488s)
+Best repeat: lap2 (+1.906s)
+Standard deviation: 1.005s
+```
+
+With run classifications:
+
+- lap1 = DNF
+- lap2 = Clean
+- lap3 = Clean
+- lap4 = Clean
+
+Now:
+
+```
+Fastest analyzed run: lap4 (27.488s)
+Best repeat: lap3 (+0.508s)
+Top-3 spread: 1.906s
+Analyzed-run standard deviation: 0.806s
+Clean-run percentage: 75.0% (3 of 4 classified runs)
+```
+
+The revised metrics better represent repeatable driving performance by excluding non-representative runs while still reporting the driver's overall execution rate.
+
+
+
+---
+
 # Supporting Speed Metrics
 
 ## Entry Speed

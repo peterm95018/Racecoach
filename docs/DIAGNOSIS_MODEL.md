@@ -1,4 +1,4 @@
-\# RaceCoach Diagnosis Model
+# RaceCoach Diagnosis Model
 
 ## Purpose
 
@@ -241,6 +241,7 @@ Confidence reflects how strongly the available evidence supports a diagnosis.
 
 A diagnosis is high confidence when:
 
+- The same diagnosis appears across multiple clean runs.
 - Multiple telemetry indicators support the same explanation.
 - Conflicting evidence is minimal.
 - Metric differences exceed meaningful thresholds.
@@ -266,6 +267,7 @@ RaceCoach should coach cautiously.
 
 A diagnosis is low confidence when:
 
+- The behavior appears only once and cannot be reproduced.
 - Metric differences are small.
 - Telemetry signals conflict.
 - GPS alignment or segment boundaries may affect the result.
@@ -290,6 +292,52 @@ Example:
 > Repeat the same rhythm—don't search for extra speed.
 
 Drivers improve by repeating successful habits as much as correcting mistakes.
+
+---
+
+# Session-Level Coaching
+
+RaceCoach evaluates two complementary questions:
+
+1. Why was this run faster or slower?
+2. Can the driver repeat the performance?
+
+Single-run diagnosis identifies technique improvements.
+
+Session-level coaching evaluates driver consistency across an entire session.
+
+Current session metrics include:
+
+- Fastest analyzed clean run
+- Best repeat
+- Top-three spread
+- Run-time standard deviation
+- Clean-run percentage
+- Repeatability gap
+
+These metrics measure execution quality rather than raw pace.
+
+A driver who is 0.5 seconds slower but highly repeatable often has a stronger foundation than a driver with one exceptional run and several inconsistent runs.
+
+Session coaching should therefore prioritize repeatability before additional pace.
+
+---
+
+## Run Classification
+
+Each analyzed run may be classified as:
+
+- Clean
+- Cone
+- DNF
+- Off-course
+- Unknown
+
+Clean runs are preferred for consistency calculations.
+
+When at least one clean run exists, RaceCoach computes repeatability metrics using only clean runs.
+
+If no runs are classified, RaceCoach falls back to all analyzed runs while reporting that clean-run information is unavailable.
 
 ---
 
@@ -363,6 +411,7 @@ This information is valuable for development but should remain separate from eve
 - Keep coaching specific and executable.
 - Keep mental cues short enough to remember on grid.
 - Prefer silence over speculation.
+- Reinforce successful driving.
 
 ---
 
