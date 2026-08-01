@@ -46,13 +46,23 @@ class UploadHandler(FileSystemEventHandler):
                 reference_path,
             )
 
+            analyzed_duration_s = None
+
+            if not df.empty and "time_s" in df.columns:
+                analyzed_duration_s = float(df["time_s"].iloc[-1])
+
             md, js = write_report(
                 path,
                 reference_path,
                 metrics,
                 findings,
                 self.reports_dir,
-                df.attrs.get("driver_input_source"),
+                self.event_dir,
+                driver_input_source=df.attrs.get(
+                    "driver_input_source"
+                ),
+                analyzed_duration_s=analyzed_duration_s,
+                sample_count=len(df),
             )
 
             project_dir = Path(__file__).resolve().parent.parent
