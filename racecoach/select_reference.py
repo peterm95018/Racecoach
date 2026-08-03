@@ -4,6 +4,7 @@ import argparse
 import json
 import shutil
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -109,6 +110,29 @@ def promote_reference(
     return reference_path
 
 
+def write_selection_metadata(
+    event_dir: Path,
+    selected: ReferenceCandidate,
+    selection_rule: str,
+) -> Path:
+    metadata_path = event_dir / "reference_selection.json"
+
+    metadata = {
+        "run": selected.run_name,
+        "source": selected.source,
+        "duration_s": selected.duration_s,
+        "selection_rule": selection_rule,
+        "selected_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    metadata_path.write_text(
+        json.dumps(metadata, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    return metadata_path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path, required=True)
@@ -129,7 +153,14 @@ def main() -> None:
 
     if args.promote:
         reference_path = promote_reference(args.event, selected)
+        metadata_path = write_selection_metadata(
+            args.event,
+            selected,
+            selection_rule,
+        )
+
         print(f"Updated reference: {reference_path}")
+        print(f"Wrote selection metadata: {metadata_path}")
     else:
         print("Dry run only; reference.csv was not changed.")
 
