@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -133,6 +135,52 @@ def write_selection_metadata(
     return metadata_path
 
 
+def rebuild_event(event_dir: Path, reference_path: Path) -> None:
+    uploads_dir = event_dir / "uploads"
+    reports_dir = event_dir / "reports"
+
+    csv_paths = sorted(uploads_dir.glob("*.csv"))
+
+    if not csv_paths:
+        raise FileNotFoundError(
+            f"No uploaded CSV files found in {uploads_dir}"
+        )
+
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    for csv_path in csv_paths:
+        print(f"Rebuilding report: {csv_path.name}")
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "racecoach.analyze_run",
+                str(csv_path),
+                "--event",
+                str(event_dir),
+                "--reference",
+                str(reference_path),
+                "--reports",
+                str(reports_dir),
+            ],
+            check=True,
+        )
+
+    print("Regenerating session summary...")
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "racecoach.session_summary",
+            "--event",
+            str(event_dir),
+        ],
+        check=True,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path, required=True)
@@ -141,7 +189,18 @@ def main() -> None:
         action="store_true",
         help="Copy the selected run to event/reference.csv",
     )
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help=(
+            "Reanalyze all uploaded runs and regenerate the session "
+            "summary after promoting the reference."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.rebuild and not args.promote:
+        parser.error("--rebuild requires --promote")
 
     candidates = load_candidates(args.event)
     selected, selection_rule = select_reference(candidates)
@@ -161,6 +220,10 @@ def main() -> None:
 
         print(f"Updated reference: {reference_path}")
         print(f"Wrote selection metadata: {metadata_path}")
+
+        if args.rebuild:
+            rebuild_event(args.event, reference_path)
+            print("Event rebuild complete.")
     else:
         print("Dry run only; reference.csv was not changed.")
 
