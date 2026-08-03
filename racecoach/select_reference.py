@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -99,10 +100,23 @@ def select_reference(
     )
     return selected, "fastest_analyzed_fallback"
 
+def promote_reference(
+    event_dir: Path,
+    selected: ReferenceCandidate,
+) -> Path:
+    reference_path = event_dir / "reference.csv"
+    shutil.copy2(selected.csv_path, reference_path)
+    return reference_path
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path, required=True)
+    parser.add_argument(
+        "--promote",
+        action="store_true",
+        help="Copy the selected run to event/reference.csv",
+    )
     args = parser.parse_args()
 
     candidates = load_candidates(args.event)
@@ -113,7 +127,13 @@ def main() -> None:
     print(f"Duration: {selected.duration_s:.3f}s")
     print(f"Selection rule: {selection_rule}")
 
+    if args.promote:
+        reference_path = promote_reference(args.event, selected)
+        print(f"Updated reference: {reference_path}")
+    else:
+        print("Dry run only; reference.csv was not changed.")
+
 
 if __name__ == "__main__":
     main()
-    
+
