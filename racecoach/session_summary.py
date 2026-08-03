@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import statistics
 from collections import defaultdict
@@ -93,17 +94,34 @@ def load_summaries(reports_dir: Path):
 
 
 def main():
-    active_event_file = Path("active_event.txt")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--event",
+        type=Path,
+        help=(
+            "Event directory. If omitted, use the event named "
+            "in active_event.txt."
+        ),
+    )
+    args = parser.parse_args()
 
-    if not active_event_file.exists():
-        raise SystemExit("active_event.txt not found")
+    if args.event is not None:
+        event_dir = args.event
+    else:
+        active_event_file = Path("active_event.txt")
 
-    active_event = active_event_file.read_text(encoding="utf-8").strip()
+        if not active_event_file.exists():
+            raise SystemExit("active_event.txt not found")
 
-    if not active_event:
-        raise SystemExit("active_event.txt is empty")
+        active_event = active_event_file.read_text(
+            encoding="utf-8"
+        ).strip()
 
-    event_dir = Path("events") / active_event
+        if not active_event:
+            raise SystemExit("active_event.txt is empty")
+
+        event_dir = Path("events") / active_event
+
     reports_dir = event_dir / "reports"
 
     if not reports_dir.exists():
@@ -381,7 +399,8 @@ def main():
         )
     else:
         lines.append(
-            "- Repeatability gap: No comparable segment-duration gaps available."
+            "- Repeatability gap: "
+            "No comparable segment-duration gaps available."
         )
 
     lines.extend(
