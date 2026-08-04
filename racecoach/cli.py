@@ -86,6 +86,21 @@ def status_command(event_dir: Path) -> None:
     )
 
 
+def finalize_command(event_dir: Path) -> None:
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "racecoach.select_reference",
+            "--event",
+            str(event_dir),
+            "--promote",
+            "--rebuild",
+        ],
+        check=True,
+    )
+
+
 def reference_command(
     event_dir: Path,
     promote: bool,
@@ -166,6 +181,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Regenerate the session summary",
     )
 
+    subparsers.add_parser(
+        "finalize",
+        help=(
+            "Promote the best reference and rebuild the entire event"
+        ),
+    )
+
     return parser
 
 
@@ -192,6 +214,8 @@ def main() -> None:
         )
     elif args.command == "summary":
         summary_command(event_dir)
+    elif args.command == "finalize":
+        finalize_command(event_dir)
 
 
 if __name__ == "__main__":
