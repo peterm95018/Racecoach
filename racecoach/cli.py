@@ -40,49 +40,128 @@ def status_command(event_dir: Path) -> None:
     uploads_dir = event_dir / "uploads"
     reference_metadata = event_dir / "reference_selection.json"
 
-    upload_count = len(list(uploads_dir.glob("*.csv")))
-    summary_count = len(list(reports_dir.glob("*_summary.json")))
+    uploads = sorted(
+        uploads_dir.glob("*.csv"),
+        key=lambda path: path.stat().st_mtime,
+    )
+    summaries = sorted(reports_dir.glob("*_summary.json"))
+
+    status_counts = {
+        "clean": 0,
+        "cone": 0,
+        "dnf": 0,
+        "off_course": 0,
+        "unknown": 0,
+    }
+
+    for summary_path in summaries:
+        try:
+            data = json.loads(
+                summary_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            status_counts["unknown"] += 1
+            continue
+
+        run = data.get("run") or {}
+        status = str(run.get("status", "unknown")).lower()
+
+        if status not in status_counts:
+            status = "unknown"
+
+        status_counts[status] += 1
+
+    latest_upload = uploads[-1].name if uploads else None
 
     print("RaceCoach Status")
     print()
     print(f"Event: {event_dir.name}")
-    print(f"Uploads: {upload_count}")
-    print(f"Analyzed runs: {summary_count}")
+    print(
+        f"Runs: {len(uploads)} uploaded / "
+        f"{len(summaries)} analyzed"
+    )
+
+    classified_parts = []
+
+    for status in ("clean", "cone", "dnf", "off_course", "unknown"):
+        count = status_counts[status]
+
+        if count:
+            label = status.replace("_", " ")
+            classified_parts.append(f"{count} {label}")
+
+    print(
+        "Status: "
+        + (", ".join(classified_parts) if classified_parts else "none")
+    )
 
     if reference_metadata.exists():
-        data = json.loads(
-            reference_metadata.read_text(encoding="utf-8")
-        )
+        try:
+            data = json.loads(
+                reference_metadata.read_text(encoding="utf-8")
+            )
+            run_name = data.get("run", "unknown")
+            duration = data.get("duration_s")
+            rule = data.get("selection_rule", "unknown")
 
-        print(
-            "Reference: "
-            f"{data.get('run', 'unknown')} "
-            f"({data.get('duration_s', 0):.3f}s)"
-        )
-        print(
-            "Selection rule: "
-            f"{data.get('selection_rule', 'unknown')}"
-        )
+            if isinstance(duration, (int, float)):
+                print(
+                    f"Reference: {run_name} — "
+                    f"{duration:.3f}s ({rule})"
+                )
+            else:
+                print(f"Reference: {run_name} ({rule})")
+        except (OSError, json.JSONDecodeError):
+            print("Reference: metadata unreadable")
     elif (event_dir / "reference.csv").exists():
-        print("Reference: reference.csv (selection metadata unavailable)")
+        print("Reference: reference.csv (metadata unavailable)")
     else:
         print("Reference: not established")
+
+    print(
+        "Latest upload: "
+        + (latest_upload if latest_upload else "none")
+    )
 
     latest_report = reports_dir / "latest_report.md"
     grid_report = reports_dir / "grid_report.md"
     session_summary = reports_dir / "session_summary.md"
 
+    print()
+    print("Reports:")
     print(
-        "Latest report: "
-        + ("available" if latest_report.exists() else "missing")
+        "  Latest: "
+        + ("OK" if latest_report.exists() else "MISSING")
     )
     print(
-        "Grid report: "
-        + ("available" if grid_report.exists() else "missing")
+        "  Grid: "
+        + ("OK" if grid_report.exists() else "MISSING")
     )
     print(
-        "Session summary: "
-        + ("available" if session_summary.exists() else "missing")
+        "  Session summary: "
+        + ("OK" if session_summary.exists() else "MISSING")
+    )
+
+    problems = []
+
+    if len(uploads) != len(summaries):
+        problems.append(
+            f"{len(uploads) - len(summaries):+d} upload/summary difference"
+        )
+
+    if not (event_dir / "reference.csv").exists():
+        problems.append("reference.csv missing")
+
+    if not latest_report.exists():
+        problems.append("latest report missing")
+
+    if not grid_report.exists():
+        problems.append("grid report missing")
+
+    print()
+    print(
+        "Health: "
+        + ("OK" if not problems else "; ".join(problems))
     )
 
 
