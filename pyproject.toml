@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "racecoach"
+version = "0.1.0"
+description = "Telemetry-based autocross coaching"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+racecoach = "racecoach.cli:main"
+
+[tool.setuptools]
+packages = ["racecoach"]
