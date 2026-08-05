@@ -278,6 +278,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Preview or promote the best reference run",
     )
 
+    subparsers.add_parser(
+        "today",
+        help="Show the active event dashboard",
+    )
+
     reference_parser.add_argument(
         "--promote",
         action="store_true",
@@ -303,6 +308,182 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+def today_command(event_dir: Path) -> None:
+    uploads_dir = event_dir / "uploads"
+    reports_dir = event_dir / "reports"
+    reference_metadata = event_dir / "reference_selection.json"
+    session_summary = reports_dir / "session_summary.md"
+
+    uploads = sorted(
+        uploads_dir.glob("*.csv"),
+        key=lambda path: path.stat().st_mtime,
+    )
+    summaries = sorted(reports_dir.glob("*_summary.json"))
+
+    status_counts = {
+        "clean": 0,
+        "cone": 0,
+        "dnf": 0,
+        "off_course": 0,
+        "unknown": 0,
+    }
+
+    for summary_path in summaries:
+        try:
+            data = json.loads(
+                summary_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            status_counts["unknown"] += 1
+            continue
+
+        run = data.get("run") or {}
+        status = str(run.get("status", "unknown")).lower()
+
+        if status not in status_counts:
+            status = "unknown"
+
+        status_counts[status] += 1
+
+    scorecard = {}
+
+    if session_summary.exists():
+        lines = session_summary.read_text(
+            encoding="utf-8"
+        ).splitlines()
+
+        for line in lines:
+            if line.startswith("- Best repeat:"):
+                scorecard["best_repeat"] = line.removeprefix(
+                    "- Best repeat:"
+                ).strip().replace("**", "")
+            elif line.startswith("- Clean-run percentage:"):
+                scorecard["clean_percentage"] = line.removeprefix(
+                    "- Clean-run percentage:"
+                ).strip().replace("**", "")
+            elif line.startswith("- Consistency interpretation:"):
+                scorecard["focus"] = line.removeprefix(
+                    "- Consistency interpretation:"
+                ).strip().replace("**", "")
+
+    print("RaceCoach Today")
+    print()
+
+    print("Event")
+    print("-----")
+    print(event_dir.name)
+    print()
+
+    print("Runs")
+    print("----")
+    print(
+        f"{len(uploads)} uploaded / "
+        f"{len(summaries)} analyzed"
+    )
+
+    classified_parts = []
+
+    for status in ("clean", "cone", "dnf", "off_course", "unknown"):
+        count = status_counts[status]
+
+        if count:
+            classified_parts.append(
+                f"{count} {status.replace('_', ' ')}"
+            )
+
+    print(
+        ", ".join(classified_parts)
+        if classified_parts
+        else "No classified runs"
+    )
+    print()
+
+    print("Reference")
+    print("---------")
+
+    if reference_metadata.exists():
+        try:
+            metadata = json.loads(
+                reference_metadata.read_text(encoding="utf-8")
+            )
+            run_name = metadata.get("run", "unknown")
+            duration = metadata.get("duration_s")
+            rule = metadata.get("selection_rule", "unknown")
+
+            if isinstance(duration, (int, float)):
+                print(f"{run_name} — {duration:.3f}s")
+            else:
+                print(run_name)
+
+            print(rule)
+        except (OSError, json.JSONDecodeError):
+            print("Metadata unreadable")
+    elif (event_dir / "reference.csv").exists():
+        print("reference.csv")
+        print("Selection metadata unavailable")
+    else:
+        print("Not established")
+
+    print()
+    print("Consistency")
+    print("-----------")
+    print(
+        "Best repeat: "
+        + scorecard.get("best_repeat", "Not available")
+    )
+    print(
+        "Clean runs: "
+        + scorecard.get("clean_percentage", "Not available")
+    )
+
+    print()
+    print("Current Focus")
+    print("-------------")
+    print(
+        scorecard.get(
+            "focus",
+            "No session-level coaching focus available.",
+        )
+    )
+
+    latest_report = reports_dir / "latest_report.md"
+    grid_report = reports_dir / "grid_report.md"
+
+    print()
+    print("Reports")
+    print("-------")
+    print(
+        "Latest: "
+        + ("OK" if latest_report.exists() else "MISSING")
+    )
+    print(
+        "Grid: "
+        + ("OK" if grid_report.exists() else "MISSING")
+    )
+    print(
+        "Session summary: "
+        + ("OK" if session_summary.exists() else "MISSING")
+    )
+
+    problems = []
+
+    if len(uploads) != len(summaries):
+        problems.append("upload/summary mismatch")
+
+    if not (event_dir / "reference.csv").exists():
+        problems.append("reference missing")
+
+    if not latest_report.exists():
+        problems.append("latest report missing")
+
+    if not grid_report.exists():
+        problems.append("grid report missing")
+
+    print()
+    print("Health")
+    print("------")
+    print("OK" if not problems else "; ".join(problems))
 
 
 def run_module(*args: str) -> None:
@@ -473,7 +654,8 @@ def main() -> None:
         publish_command(event_dir)
     elif args.command == "doctor":
         doctor_command(event_dir)
-
+    elif args.command == "today":
+        today_command(event_dir)
 
 if __name__ == "__main__":
     main()
