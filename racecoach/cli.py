@@ -357,6 +357,86 @@ def doctor_command(event_dir: Path) -> None:
 
     print()
 
+    uploads_dir = event_dir / "uploads"
+    reports_dir = event_dir / "reports"
+
+    uploads = sorted(uploads_dir.glob("*.csv"))
+    summaries = sorted(reports_dir.glob("*_summary.json"))
+
+    print("Consistency")
+
+    if not uploads and not summaries:
+        print("○ no uploaded or analyzed runs yet")
+    elif len(uploads) == len(summaries):
+        print(
+            f"✓ uploads and summaries match "
+            f"({len(uploads)} run(s))"
+        )
+    else:
+        difference = len(uploads) - len(summaries)
+        print(
+            f"✗ uploads and summaries differ "
+            f"({len(uploads)} uploaded / "
+            f"{len(summaries)} analyzed)"
+        )
+        failures.append(
+            f"{difference:+d} upload/summary difference"
+        )
+
+    unreadable_summaries = []
+
+    for summary_path in summaries:
+        try:
+            json.loads(
+                summary_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            unreadable_summaries.append(summary_path.name)
+
+    if unreadable_summaries:
+        print(
+            f"✗ unreadable summary JSON "
+            f"({len(unreadable_summaries)})"
+        )
+        failures.append(
+            f"{len(unreadable_summaries)} unreadable summary file(s)"
+        )
+    elif summaries:
+        print(
+            f"✓ summary JSON readable "
+            f"({len(summaries)} file(s))"
+        )
+
+    reference_path = event_dir / "reference.csv"
+    reference_metadata = event_dir / "reference_selection.json"
+
+    if reference_metadata.exists():
+        try:
+            metadata = json.loads(
+                reference_metadata.read_text(encoding="utf-8")
+            )
+            source = metadata.get("source")
+
+            if source and (uploads_dir / source).exists():
+                print("✓ reference source CSV exists")
+            elif source:
+                print("✗ reference source CSV missing")
+                failures.append("reference source CSV missing")
+            else:
+                print("✗ reference metadata missing source")
+                failures.append("reference metadata missing source")
+        except (OSError, json.JSONDecodeError):
+            print("✗ reference metadata unreadable")
+            failures.append("reference metadata unreadable")
+
+    if summaries and not reference_path.exists():
+        print("✗ analyzed runs exist but reference.csv is missing")
+        failures.append(
+            "analyzed runs exist but reference.csv is missing"
+        )
+
+    print()
+
     if failures:
         print(f"FAILED ({len(failures)} issue(s))")
         raise SystemExit(1)
