@@ -103,6 +103,7 @@ RaceCoach is designed to answer one question:
 
 Every report, every diagnosis, and every metric exists to answer that question.
 
+
 ---
 
 # Project Status
