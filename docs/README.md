@@ -87,8 +87,8 @@ Start here:
 ## Developers
 
 - `ARCHITECTURE.md`
-- `OPERATIONS.md`
-- `CLI.md` -- RaceCoach command-line interface
+- `OPERATIONS.md` -- Event-day operational procedures
+- `CLI.md` -- Command reference and event workflow
 - `TODO.md`
 - `BACKLOG.md`
 - `CHANGELOG.md`

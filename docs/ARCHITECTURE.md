@@ -89,6 +89,10 @@ RaceCoach has two architectural layers.
 
 **Operational orchestration**
 
+The RaceCoach command-line interface serves as the primary operational interface for event management. Rather than implementing telemetry analysis directly, each command orchestrates existing modules responsible for status reporting, reference management, report publishing, session summarization, and operational validation.
+
+This separation allows the CLI to remain a thin orchestration layer while the underlying analysis modules retain responsibility for telemetry processing and coaching logic.
+
 - Upload Processing
 - Reference Selection
 - Event Rebuild

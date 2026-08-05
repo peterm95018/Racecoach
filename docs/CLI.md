@@ -28,6 +28,22 @@ Examples in this document use the shorter `rc` alias.
 
 ---
 
+## Operational CLI
+
+rc doctor
+↓
+rc today
+↓
+Upload runs
+↓
+rc status (between runs)
+↓
+rc publish (optional)
+↓
+rc finalize (end of session)
+
+---
+
 # Command Overview
 
 | Command | Purpose |
