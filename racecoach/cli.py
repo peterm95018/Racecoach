@@ -501,67 +501,173 @@ def doctor_command(event_dir: Path) -> None:
     print("RaceCoach Doctor")
     print()
 
-    failures = []
+    failures: list[str] = []
+    warnings: list[str] = []
 
-    def check(path: Path, label: str) -> None:
-        if path.exists():
-            print(f"✓ {label}")
-        else:
-            print(f"✗ {label}")
-            failures.append(label)
+    def pass_check(label: str) -> None:
+        print(f"✓ {label}")
 
-    check(event_dir, "Event directory")
-    check(event_dir / "uploads", "uploads/")
-    check(event_dir / "reports", "reports/")
-    check(event_dir / "segments.yaml", "segments.yaml")
-    check(event_dir / "reference.csv", "reference.csv")
-    check(
-        event_dir / "reference_selection.json",
-        "reference_selection.json",
+    def fail_check(label: str) -> None:
+        print(f"✗ {label}")
+        failures.append(label)
+
+    def warn_check(label: str) -> None:
+        print(f"⚠ {label}")
+        warnings.append(label)
+
+    def skip_check(label: str) -> None:
+        print(f"○ {label}")
+
+    project_dir = project_root()
+    uploads_dir = event_dir / "uploads"
+    reports_dir = event_dir / "reports"
+    reference_path = event_dir / "reference.csv"
+    reference_metadata = event_dir / "reference_selection.json"
+
+    print("Environment")
+    print("-----------")
+
+    pass_check(
+        f"Python "
+        f"{sys.version_info.major}."
+        f"{sys.version_info.minor}."
+        f"{sys.version_info.micro}"
     )
-    check(
-        event_dir / "reports/latest_report.md",
-        "latest_report.md",
+
+    if sys.prefix != sys.base_prefix:
+        pass_check("Virtual environment active")
+    else:
+        warn_check("Virtual environment not active")
+
+    if project_dir.exists():
+        pass_check(f"Project root: {project_dir}")
+    else:
+        fail_check(f"Project root missing: {project_dir}")
+
+    publish_script = project_dir / "publish_reports.sh"
+
+    if publish_script.exists():
+        pass_check("publish_reports.sh")
+    else:
+        fail_check("publish_reports.sh missing")
+
+    print()
+    print("Event")
+    print("-----")
+
+    if event_dir.exists():
+        pass_check(f"Event directory: {event_dir.name}")
+    else:
+        fail_check(f"Event directory missing: {event_dir}")
+
+    if uploads_dir.is_dir():
+        pass_check("uploads/")
+    else:
+        fail_check("uploads/ missing")
+
+    if reports_dir.is_dir():
+        pass_check("reports/")
+    else:
+        fail_check("reports/ missing")
+
+    segments_path = event_dir / "segments.yaml"
+
+    if segments_path.exists():
+        pass_check("segments.yaml")
+    else:
+        fail_check("segments.yaml missing")
+
+    uploads = (
+        sorted(uploads_dir.glob("*.csv"))
+        if uploads_dir.is_dir()
+        else []
     )
-    check(
-        event_dir / "reports/grid_report.md",
-        "grid_report.md",
-    )
-    check(
-        event_dir / "reports/session_summary.md",
-        "session_summary.md",
-    )
-    check(
-        project_root() / "publish_reports.sh",
-        "publish_reports.sh",
+    summaries = (
+        sorted(reports_dir.glob("*_summary.json"))
+        if reports_dir.is_dir()
+        else []
     )
 
     print()
+    print("Reference")
+    print("---------")
 
-    uploads_dir = event_dir / "uploads"
-    reports_dir = event_dir / "reports"
+    if reference_path.exists():
+        pass_check("reference.csv")
+    elif uploads or summaries:
+        fail_check("reference.csv missing")
+    else:
+        warn_check("reference.csv not established yet")
 
-    uploads = sorted(uploads_dir.glob("*.csv"))
-    summaries = sorted(reports_dir.glob("*_summary.json"))
+    if reference_metadata.exists():
+        try:
+            metadata = json.loads(
+                reference_metadata.read_text(encoding="utf-8")
+            )
+            source = metadata.get("source")
 
+            pass_check("reference_selection.json readable")
+
+            if source and (uploads_dir / source).exists():
+                pass_check("Reference source CSV exists")
+            elif source:
+                fail_check("Reference source CSV missing")
+            else:
+                fail_check("Reference metadata missing source")
+        except (OSError, json.JSONDecodeError):
+            fail_check("reference_selection.json unreadable")
+    elif uploads or summaries:
+        warn_check("reference_selection.json missing")
+    else:
+        skip_check("reference selection metadata not expected yet")
+
+    print()
+    print("Reports")
+    print("-------")
+
+    latest_report = reports_dir / "latest_report.md"
+    grid_report = reports_dir / "grid_report.md"
+    session_summary = reports_dir / "session_summary.md"
+
+    if latest_report.exists():
+        pass_check("latest_report.md")
+    elif summaries:
+        warn_check("latest_report.md missing")
+    else:
+        skip_check("latest report not expected yet")
+
+    if grid_report.exists():
+        pass_check("grid_report.md")
+    elif summaries:
+        warn_check("grid_report.md missing")
+    else:
+        skip_check("grid report not expected yet")
+
+    if session_summary.exists():
+        pass_check("session_summary.md")
+    elif summaries:
+        warn_check("session_summary.md missing")
+    else:
+        skip_check("session summary not expected yet")
+
+    print()
     print("Consistency")
+    print("-----------")
 
     if not uploads and not summaries:
-        print("○ no uploaded or analyzed runs yet")
+        skip_check("No uploaded or analyzed runs yet")
     elif len(uploads) == len(summaries):
-        print(
-            f"✓ uploads and summaries match "
+        pass_check(
+            f"Uploads and summaries match "
             f"({len(uploads)} run(s))"
         )
     else:
         difference = len(uploads) - len(summaries)
-        print(
-            f"✗ uploads and summaries differ "
+        fail_check(
+            f"Uploads and summaries differ "
             f"({len(uploads)} uploaded / "
-            f"{len(summaries)} analyzed)"
-        )
-        failures.append(
-            f"{difference:+d} upload/summary difference"
+            f"{len(summaries)} analyzed; "
+            f"{difference:+d} difference)"
         )
 
     unreadable_summaries = []
@@ -575,54 +681,75 @@ def doctor_command(event_dir: Path) -> None:
             unreadable_summaries.append(summary_path.name)
 
     if unreadable_summaries:
-        print(
-            f"✗ unreadable summary JSON "
-            f"({len(unreadable_summaries)})"
-        )
-        failures.append(
-            f"{len(unreadable_summaries)} unreadable summary file(s)"
+        fail_check(
+            f"Unreadable summary JSON "
+            f"({len(unreadable_summaries)} file(s))"
         )
     elif summaries:
-        print(
-            f"✓ summary JSON readable "
+        pass_check(
+            f"Summary JSON readable "
             f"({len(summaries)} file(s))"
         )
 
-    reference_path = event_dir / "reference.csv"
-    reference_metadata = event_dir / "reference_selection.json"
+    print()
+    print("Services")
+    print("--------")
 
-    if reference_metadata.exists():
-        try:
-            metadata = json.loads(
-                reference_metadata.read_text(encoding="utf-8")
-            )
-            source = metadata.get("source")
-
-            if source and (uploads_dir / source).exists():
-                print("✓ reference source CSV exists")
-            elif source:
-                print("✗ reference source CSV missing")
-                failures.append("reference source CSV missing")
-            else:
-                print("✗ reference metadata missing source")
-                failures.append("reference metadata missing source")
-        except (OSError, json.JSONDecodeError):
-            print("✗ reference metadata unreadable")
-            failures.append("reference metadata unreadable")
-
-    if summaries and not reference_path.exists():
-        print("✗ analyzed runs exist but reference.csv is missing")
-        failures.append(
-            "analyzed runs exist but reference.csv is missing"
+    if sys.platform.startswith("linux"):
+        service_result = subprocess.run(
+            [
+                "systemctl",
+                "--user",
+                "is-active",
+                "racecoach-watch.service",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
         )
 
+        service_status = service_result.stdout.strip()
+
+        if service_result.returncode == 0:
+            pass_check(
+                f"Watcher service active "
+                f"({service_status or 'active'})"
+            )
+        else:
+            fail_check(
+                f"RaceCoach upload watcher inactive  "
+                f"({service_status or 'unknown'})"
+            )
+
+        drupal_parent = Path(
+            "/var/www/html/drupal10/web/sites/default/files/"
+            "racecoach/events"
+        )
+
+        if drupal_parent.is_dir():
+            pass_check("Drupal publishing destination available")
+        else:
+            warn_check("Drupal publishing destination unavailable")
+    else:
+        skip_check("Watcher service check skipped on macOS")
+        skip_check("Drupal publishing check skipped on macOS")
+
     print()
+    print("Result")
+    print("------")
 
     if failures:
-        print(f"FAILED ({len(failures)} issue(s))")
+        print(
+            f"FAIL — {len(failures)} failure(s), "
+            f"{len(warnings)} warning(s)"
+        )
         raise SystemExit(1)
 
-    print("PASS")
+    if warnings:
+        print(f"WARN — {len(warnings)} warning(s)")
+        return
+
+    print("PASS — no problems found")
 
 
 def main() -> None:
