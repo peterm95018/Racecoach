@@ -7,6 +7,9 @@ import sys
 from pathlib import Path
 
 
+def project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
 
 def resolve_event(event_arg: Path | None) -> Path:
     if event_arg is not None:
@@ -265,6 +268,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Publish the selected event's latest reports",
     )
 
+    subparsers.add_parser(
+        "doctor",
+        help="Validate the RaceCoach installation and event",
+    )
+
     reference_parser = subparsers.add_parser(
         "reference",
         help="Preview or promote the best reference run",
@@ -297,6 +305,65 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def run_module(*args: str) -> None:
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            *args,
+        ],
+        check=True,
+    )
+
+
+def doctor_command(event_dir: Path) -> None:
+    print("RaceCoach Doctor")
+    print()
+
+    failures = []
+
+    def check(path: Path, label: str) -> None:
+        if path.exists():
+            print(f"✓ {label}")
+        else:
+            print(f"✗ {label}")
+            failures.append(label)
+
+    check(event_dir, "Event directory")
+    check(event_dir / "uploads", "uploads/")
+    check(event_dir / "reports", "reports/")
+    check(event_dir / "segments.yaml", "segments.yaml")
+    check(event_dir / "reference.csv", "reference.csv")
+    check(
+        event_dir / "reference_selection.json",
+        "reference_selection.json",
+    )
+    check(
+        event_dir / "reports/latest_report.md",
+        "latest_report.md",
+    )
+    check(
+        event_dir / "reports/grid_report.md",
+        "grid_report.md",
+    )
+    check(
+        event_dir / "reports/session_summary.md",
+        "session_summary.md",
+    )
+    check(
+        project_root() / "publish_reports.sh",
+        "publish_reports.sh",
+    )
+
+    print()
+
+    if failures:
+        print(f"FAILED ({len(failures)} issue(s))")
+        raise SystemExit(1)
+
+    print("PASS")
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
@@ -324,6 +391,8 @@ def main() -> None:
         finalize_command(event_dir)
     elif args.command == "publish":
         publish_command(event_dir)
+    elif args.command == "doctor":
+        doctor_command(event_dir)
 
 
 if __name__ == "__main__":
