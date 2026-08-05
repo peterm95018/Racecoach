@@ -215,6 +215,26 @@ def summary_command(event_dir: Path) -> None:
     )
 
 
+def publish_command(event_dir: Path) -> None:
+    project_dir = Path(__file__).resolve().parent.parent
+    publish_script = project_dir / "publish_reports.sh"
+
+    if not publish_script.exists():
+        raise SystemExit(
+            f"Publishing script not found: {publish_script}"
+        )
+
+    subprocess.run(
+    [
+        "bash",
+        str(publish_script),
+        str(event_dir),
+    ],
+    cwd=project_dir,
+    check=True,
+)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="racecoach",
@@ -240,15 +260,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show event and report status",
     )
 
+    subparsers.add_parser(
+        "publish",
+        help="Publish the selected event's latest reports",
+    )
+
     reference_parser = subparsers.add_parser(
         "reference",
         help="Preview or promote the best reference run",
     )
+
     reference_parser.add_argument(
         "--promote",
         action="store_true",
         help="Promote the selected run to reference.csv",
     )
+
     reference_parser.add_argument(
         "--rebuild",
         action="store_true",
@@ -295,6 +322,8 @@ def main() -> None:
         summary_command(event_dir)
     elif args.command == "finalize":
         finalize_command(event_dir)
+    elif args.command == "publish":
+        publish_command(event_dir)
 
 
 if __name__ == "__main__":
