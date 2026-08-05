@@ -88,6 +88,7 @@ Start here:
 
 - `ARCHITECTURE.md`
 - `OPERATIONS.md`
+- `CLI.md` -- RaceCoach command-line interface
 - `TODO.md`
 - `BACKLOG.md`
 - `CHANGELOG.md`
