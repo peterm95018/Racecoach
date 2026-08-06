@@ -596,39 +596,73 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
 def build_findings(metrics: list[SegmentMetric]):
     findings = []
-    MIN_OPPORTUNITY_DELTA = 0.05
-
 
     for m in metrics:
-        score = 0.0
-        reasons = []
-        if contradictory_timing_loss(m):
-            continue
-            
-        if low_confidence_loss(m):
+        diagnosis = diagnose_segment(m)
+
+        if diagnosis.confidence == "Low":
             continue
 
-        if classify_loss(m) == "unexplained timing loss":
-            continue
+        score = 0.0
+        reasons = []
 
         if m.coast_time_s > 0.45:
             score += min(3.0, m.coast_time_s * 2.0)
             reasons.append(f"coasted {m.coast_time_s:.2f}s")
-        if m.type in {"hairpin", "turnaround", "sweeper"} and m.peak_decel_g > -0.55:
+
+        if (
+            m.type in {"hairpin", "turnaround", "sweeper"}
+            and m.peak_decel_g > -0.55
+        ):
             score += 1.5
-            reasons.append(f"peak braking only {m.peak_decel_g:.2f}G")
-        if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -3:
+            reasons.append(
+                f"peak braking only {m.peak_decel_g:.2f}G"
+            )
+
+        if (
+            m.min_speed_delta_mph is not None
+            and m.min_speed_delta_mph < -3
+        ):
             score += abs(m.min_speed_delta_mph) * 0.4
-            reasons.append(f"minimum speed {(abs(m.min_speed_delta_mph) if m.min_speed_delta_mph is not None else 0):.1f} mph below reference")
-        if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -3:
+            reasons.append(
+                f"minimum speed "
+                f"{abs(m.min_speed_delta_mph):.1f} mph "
+                f"below reference"
+            )
+
+        if (
+            m.exit_speed_delta_mph is not None
+            and m.exit_speed_delta_mph < -3
+        ):
             score += abs(m.exit_speed_delta_mph) * 0.35
-            reasons.append(f"exit speed {(abs(m.exit_speed_delta_mph) if m.exit_speed_delta_mph is not None else 0):.1f} mph below reference")
+            reasons.append(
+                f"exit speed "
+                f"{abs(m.exit_speed_delta_mph):.1f} mph "
+                f"below reference"
+            )
+
         if m.time_delta is not None and m.time_delta > 0.10:
             score += m.time_delta * 4.0
-            reasons.append(f"{m.time_delta:.2f}s slower than reference")
+            reasons.append(
+                f"{m.time_delta:.2f}s slower than reference"
+            )
+
         if score > 0:
-            findings.append({"score": score, "segment": m, "reasons": reasons, "coaching": coach_text(m)})
-    return sorted(findings, key=lambda x: x["score"], reverse=True)
+            findings.append(
+                {
+                    "score": score,
+                    "segment": m,
+                    "reasons": reasons,
+                    "coaching": coach_text(m),
+                    "diagnosis": diagnosis,
+                }
+            )
+
+    return sorted(
+        findings,
+        key=lambda item: item["score"],
+        reverse=True,
+    )
 
 def low_confidence_loss(m: SegmentMetric) -> bool:
     if m.time_delta is None or m.time_delta <= 0.10:
@@ -1709,11 +1743,11 @@ def write_report(
     lines += ["## Top Opportunities", ""]
 
     opportunities = [
-        f for f in findings
-        if f["segment"].time_delta is not None
-        and f["segment"].time_delta > 0
-        and f["segment"].name not in {"Launch", "Start"}
-        and classify_loss(f["segment"]) != "unexplained timing loss"
+        finding
+        for finding in findings
+        if finding["segment"].time_delta is not None
+        and finding["segment"].time_delta > 0
+        and finding["segment"].name not in {"Launch", "Start"}
     ]
     
     if not opportunities:
