@@ -1276,9 +1276,42 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
         name=diagnosis,
         confidence=confidence,
         evidence=[evidence],
-        action=primary_action(m),
+        action=action_for_diagnosis(diagnosis),
         cue=driver_translation(m),
         confidence_reason=confidence_reason,
+    )
+
+
+def action_for_diagnosis(diagnosis: str) -> str:
+    actions = {
+        "Weak Exit": (
+            "Complete rotation sooner, unwind the wheel, "
+            "and protect exit speed."
+        ),
+        "Late to Power": (
+            "Finish rotation sooner and commit to throttle earlier."
+        ),
+        "Over Slowing": (
+            "Reduce unnecessary speed loss and carry more momentum "
+            "through the center of the segment."
+        ),
+        "Momentum Loss": (
+            "Reduce excess steering, braking, or neutral time and "
+            "keep the car flowing through the section."
+        ),
+        "Low Confidence": (
+            "Verify segment boundaries or line distance before "
+            "changing your driving."
+        ),
+        "No Clear Diagnosis": (
+            "Drive the segment cleanly; no single telemetry fault "
+            "stands out."
+        ),
+    }
+
+    return actions.get(
+        diagnosis,
+        "Drive the segment cleanly and review the telemetry.",
     )
 
 
