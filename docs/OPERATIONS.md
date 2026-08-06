@@ -24,7 +24,7 @@ It does not explain how to interpret reports or use RaceCoach during competition
 For driver-facing documentation, see USER_GUIDE.md.
 
 
-⸻
+⸻--
 
 ## RaceCoach Command-Line Interface
 
@@ -39,7 +39,7 @@ rc status
 rc reference
 rc summary
 rc finalize
-
+```
 
 ---
 
@@ -84,7 +84,7 @@ This command:
 * Verifies that the selected event exists.
 * Displays the public report URLs.
 
-⸻
+⸻--
 
 ### Interactive Event Selection
 
@@ -94,7 +94,7 @@ Run:
 
 RaceCoach displays a numbered list of available events and prompts you to choose one.
 
-⸻
+⸻--
 
 ### Active Event
 
@@ -106,7 +106,7 @@ Verify the active event:
 
 cat active_event.txt
 
-⸻
+⸻--
 
 ### Event Directory Structure
 
@@ -122,7 +122,7 @@ events/
 * reports/ — Generated Grid Reports, Full Reports, HTML, Markdown, and summary files.
 * segments.yaml — Event-specific segment definitions.
 
-⸻
+⸻--
 
 # Event Processing Pipeline
 
