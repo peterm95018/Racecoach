@@ -653,7 +653,7 @@ def build_findings(metrics: list[SegmentMetric]):
                     "score": score,
                     "segment": m,
                     "reasons": reasons,
-                    "coaching": coach_text(m),
+                    "coaching": coach_text(m, diagnosis),
                     "diagnosis": diagnosis,
                 }
             )
@@ -752,9 +752,11 @@ def classify_loss(m: SegmentMetric) -> Optional[str]:
     return "unclear"
 
 
-def coach_text(m: SegmentMetric) -> str:
+def coach_text(
+    m: SegmentMetric,
+    diagnosis: Diagnosis,
+) -> str:
     t = fmt_time(m.start_time)
-    cause = classify_loss(m)
 
     if m.time_delta is not None and m.time_delta < -0.10:
         if (
@@ -783,7 +785,10 @@ def coach_text(m: SegmentMetric) -> str:
                 f"and gained {abs(m.time_delta):.2f}s vs reference."
             )
 
-        if m.min_speed_delta_mph is not None and m.min_speed_delta_mph > 1:
+        if (
+            m.min_speed_delta_mph is not None
+            and m.min_speed_delta_mph > 1
+        ):
             return (
                 f"{m.name} at {t}: this was a gain. You carried "
                 f"{m.min_speed_delta_mph:+.1f} mph more minimum speed and gained "
@@ -796,132 +801,24 @@ def coach_text(m: SegmentMetric) -> str:
         )
 
     if m.time_delta is not None and m.time_delta > 0.10:
-        if low_confidence_loss(m):
-            return (
-                f"{m.name} at {t}: this was {m.time_delta:.2f}s slower, "
-                "but entry speed, minimum speed, exit speed, throttle timing, "
-                "and braking were all close to reference. Treat this as normal variation."
-            )
-        if cause == "unexplained timing loss":
-            return (
-                f"{m.name} at {t}: the segment was slower, but entry speed, "
-                "minimum speed, and exit speed were all as good or better than reference. "
-                "Review trace alignment or segment boundaries before changing driving technique."
-            )
-        if cause == "over-attacked entry":
-            return (
-                f"{m.name} at {t}: entered faster but carried less average speed through the segment. "
-                "Back up the entry, reduce the initial attack, and keep the car flowing."
-            )
-
-        if cause == "overslowed middle":
-            return (
-                f"{m.name} at {t}: the main loss came from overslowing the middle of the segment. "
-                "Carry more speed through the center without adding steering correction."
-            )
-
-        if cause == "weak exit":
-            return (
-                f"{m.name} at {t}: the loss is exit-speed related. "
-                "Prioritize the exit line and unwind earlier."
-            )
-
-        if cause == "late throttle":
-            return (
-                f"{m.name} at {t}: throttle pickup was later than reference. "
-                "Finish rotation sooner and commit to throttle earlier."
-            )
-
-        if cause == "early braking":
-            return (
-                f"{m.name} at {t}: braking started earlier than reference and average speed suffered. "
-                "Brake later or release sooner; do not slow the car before it needs it."
-            )
-
-        if cause == "low average speed":
-            return (
-                f"{m.name} at {t}: average speed was lower through the segment. "
-                "Look for excess steering, early braking, or a line that adds distance."
-            )
-
-        exit_down = (
-            m.exit_speed_delta_mph is not None
-            and m.exit_speed_delta_mph < -2
+        evidence = (
+            diagnosis.evidence[0]
+            if diagnosis.evidence
+            else "No single telemetry metric"
         )
-        min_down = (
-            m.min_speed_delta_mph is not None
-            and m.min_speed_delta_mph < -2
-        )
-        min_up = (
-            m.min_speed_delta_mph is not None
-            and m.min_speed_delta_mph > 1
-        )
-        throttle_late = (
-            m.throttle_commit_delay_delta_s is not None
-            and m.throttle_commit_delay_delta_s > 0.20
-        )
-
-        if min_up and exit_down:
-            return (
-                f"{m.name} at {t}: the loss looks like over-driving entry. "
-                f"You lost {m.time_delta:.2f}s, carried "
-                f"{m.min_speed_delta_mph:+.1f} mph more minimum speed, but exited "
-                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
-                "Give up a little entry speed, rotate once, and protect the exit."
-            )
-
-        if throttle_late and exit_down:
-            return (
-                f"{m.name} at {t}: the loss is late to power. "
-                f"You lost {m.time_delta:.2f}s because you waited "
-                f"{m.throttle_commit_delay_delta_s:.2f}s too long to get back to power "
-                f"and exited {abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
-                "Commit to throttle as soon as the car is pointed."
-            )
-
-        if exit_down:
-            return (
-                f"{m.name} at {t}: the loss is exit-speed related. You lost "
-                f"{m.time_delta:.2f}s and exited "
-                f"{abs(m.exit_speed_delta_mph):.1f} mph slower than reference. "
-                "Prioritize the exit line and throttle commitment."
-            )
-
-        if min_down:
-            return (
-                f"{m.name} at {t}: you lost {m.time_delta:.2f}s and carried "
-                f"{abs(m.min_speed_delta_mph):.1f} mph less minimum speed. "
-                "Focus on the setup that lets the car rotate without over-slowing."
-            )
-
-        if throttle_late:
-            return (
-                f"{m.name} at {t}: the loss is late to power. "
-                f"You waited {m.throttle_commit_delay_delta_s:.2f}s too long "
-                f"to get back to power, and the segment lost {m.time_delta:.2f}s. "
-                "Commit to throttle as soon as the car is pointed."
-            )
-
-        if (
-            m.avg_speed_delta_mph is not None
-            and m.avg_speed_delta_mph < -3
-        ):
-            return (
-                f"{m.name} at {t}: average speed was "
-                f"{abs(m.avg_speed_delta_mph):.1f} mph below reference. "
-                "The loss developed through the segment rather than at the apex. "
-                "Look earlier in the course for the mistake that carried into this section."
-            )
 
         return (
-            f"{m.name} at {t}: this was {m.time_delta:.2f}s slower than reference. "
-            "Check whether the loss came from setup, exit speed, or throttle delay."
+            f"{m.name} at {t}: {diagnosis.cue} "
+            f"You lost {m.time_delta:.2f}s versus reference. "
+            f"Evidence: {evidence}. "
+            f"{diagnosis.action}"
         )
 
     return (
-        f"{m.name} at {t}: no strong coaching conclusion. Review the deltas before "
-        "changing the driving approach."
+        f"{m.name} at {t}: no strong coaching conclusion. "
+        "Review the deltas before changing the driving approach."
     )
+
 
 def explain_delta(m: SegmentMetric) -> str:
     reasons = []
