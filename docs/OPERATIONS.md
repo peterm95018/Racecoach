@@ -24,7 +24,7 @@ It does not explain how to interpret reports or use RaceCoach during competition
 For driver-facing documentation, see USER_GUIDE.md.
 
 
-⸻--
+---
 
 ## RaceCoach Command-Line Interface
 
@@ -66,7 +66,6 @@ This command:
 
 ---
 
-
 ### Switch to an Existing Event
 
 Run:
@@ -84,7 +83,7 @@ This command:
 * Verifies that the selected event exists.
 * Displays the public report URLs.
 
-⸻--
+---
 
 ### Interactive Event Selection
 
@@ -94,7 +93,7 @@ Run:
 
 RaceCoach displays a numbered list of available events and prompts you to choose one.
 
-⸻--
+---
 
 ### Active Event
 
@@ -106,7 +105,7 @@ Verify the active event:
 
 cat active_event.txt
 
-⸻--
+---
 
 ### Event Directory Structure
 
@@ -122,7 +121,7 @@ events/
 * reports/ — Generated Grid Reports, Full Reports, HTML, Markdown, and summary files.
 * segments.yaml — Event-specific segment definitions.
 
-⸻--
+---
 
 # Event Processing Pipeline
 
@@ -286,10 +285,12 @@ The upload watcher does not automatically change the session reference. The curr
 
 After a session has been completed and run classifications have been reviewed, the reference can be optimized using:
 
+```
 python3 -m racecoach.select_reference \
     --event events/<event-name> \
     --promote \
     --rebuild
+```
 
 This workflow:
 
@@ -316,7 +317,7 @@ The following files are linked:
 
 These links always point to the reports for the currently active event.
 
-⸻
+---
 
 ## Public Report URLs
 
@@ -328,7 +329,7 @@ Latest Report:
 
 https://petermcmillan.com/sites/default/files/racecoach/events/current/latest_report.html
 
-⸻
+---
 
 ## Working on Multiple Computers
 
@@ -340,7 +341,7 @@ active_event.txt
 
 Because Drupal is not installed, the script skips the symbolic-link update and reminds you to run the same command on the Ubuntu server after pulling the latest changes.
 
-⸻
+---
 
 Ubuntu Server
 
@@ -351,7 +352,7 @@ set_active_event updates both:
 
 This immediately changes the reports served through Drupal.
 
-⸻
+---
 
 Upload Processing
 
@@ -366,7 +367,7 @@ When a new CSV is detected, the processing pipeline:
 5. Generates the Grid Report.
 6. Updates the Drupal current links.
 
-⸻
+---
 
 ## Troubleshooting
 
@@ -380,7 +381,7 @@ Verify:
 * The CSV imported successfully.
 * The analysis completed without errors.
 
-⸻
+---
 
 Drupal Shows an Old Report
 
@@ -392,7 +393,7 @@ Verify the symbolic links:
 
 ls -l /var/www/html/drupal10/web/sites/default/files/racecoach/events/current
 
-⸻
+---
 
 Uploads Are Not Processed
 
@@ -402,7 +403,7 @@ Verify:
 * New CSV files are appearing in the event’s uploads/ directory.
 * File permissions allow the watcher to read the uploads.
 
-⸻
+---
 
 Watcher Does Not Trigger
 
@@ -410,7 +411,7 @@ The watcher responds only to newly created files.
 
 If a CSV existed before the watcher started, re-copy or re-export the file to trigger processing.
 
-⸻
+--
 
 Report Generation Errors
 
@@ -420,7 +421,7 @@ If report generation fails:
 * Confirm prep_event and set_active_event are current.
 * Check the console output for Python exceptions or missing telemetry channels.
 
-⸻
+---
 
 ## Typical Workflows
 
@@ -433,7 +434,7 @@ If report generation fails:
 * Update segments.yaml.
 * Begin collecting telemetry.
 
-⸻
+---
 
 Review a Previous Event
 
@@ -443,7 +444,7 @@ Review a Previous Event
 * Verify the public report URLs.
 * Review historical Grid and Full Reports.
 
-⸻
+---
 
 Related Documentation
 
