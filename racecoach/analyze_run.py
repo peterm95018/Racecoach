@@ -1922,6 +1922,14 @@ def write_report(
                 "segment": f["segment"].name,
                 "reasons": f["reasons"],
                 "coaching": f["coaching"],
+                "diagnosis": f["diagnosis"].name,
+                "confidence": f["diagnosis"].confidence,
+                "evidence": f["diagnosis"].evidence,
+                "action": f["diagnosis"].action,
+                "cue": f["diagnosis"].cue,
+                "confidence_reason": (
+                    f["diagnosis"].confidence_reason
+                ),
             }
             for f in findings
         ],
