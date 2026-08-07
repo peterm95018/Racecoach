@@ -51,6 +51,11 @@ The `session_summary` module provides RaceCoach's session-level analysis. Rather
 
 The report publishing layer makes RaceCoach analysis available to the driver without participating in telemetry analysis. After each run is analyzed, the latest Grid Report and Full Report are converted into the published artifacts used during the event, while completed event reports remain preserved in the event directory. By separating publishing from analysis, RaceCoach can regenerate, republish, or switch between events without changing the underlying telemetry, diagnostics, or coaching results.
 
+## Telemetry Preprocessing
+
+Before segmentation and metric extraction, RaceCoach performs a preprocessing pass to normalize RaceChrono telemetry. This stage corrects known recording artifacts while preserving valid data. Current preprocessing includes automatic detection and removal of extended pre-start staging periods found in some RaceChrono exports. When a qualifying staging sequence is detected, the telemetry is trimmed to the competitive launch and time and distance are re-zeroed. Normal recordings bypass this step unchanged, ensuring that downstream segment metrics, timing comparisons, braking analysis, and diagnosis operate on a consistent telemetry timeline.
+
+---
 
 ## Reference Selection
 
@@ -65,8 +70,6 @@ Responsibilities:
 - Optionally rebuild the entire event.
 
 This module operates independently of the upload watcher, allowing reference optimization to occur after all runs have been classified.
-
-
 
 ---
 

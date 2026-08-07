@@ -31,6 +31,12 @@ The diagnosis engine may adjust this order depending on the driving situation.
 
 ---
 
+# Telemetry Preprocessing
+
+Segment metrics are computed from normalized telemetry rather than directly from the raw RaceChrono export. Before any segment boundaries are applied, RaceCoach performs a preprocessing step that detects and removes abnormal pre-start staging periods when present. After trimming, time and distance are re-zeroed so that segment durations, throttle timing, brake timing, recovery metrics, and reference-lap comparisons are calculated relative to the competitive run rather than any pre-grid movement. This preprocessing is conservative: recordings without qualifying staging periods are left unchanged, ensuring historical metrics remain directly comparable.
+
+---
+
 # Primary Performance Metrics
 
 ## Segment Time
