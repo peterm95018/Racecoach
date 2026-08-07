@@ -896,28 +896,6 @@ def contradictory_timing_loss(m: SegmentMetric) -> bool:
     )
 
 
-def primary_evidence(m: SegmentMetric) -> str:
-    if contradictory_timing_loss(m):
-        return "Speed metrics conflict with timing loss"
-
-    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-        return f"Exit speed {m.exit_speed_delta_mph:+.1f} mph"
-
-    if (
-        m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.25
-    ):
-        return f"Power commitment {m.throttle_commit_delay_delta_s:+.2f}s"
-
-    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-        return f"Minimum speed {m.min_speed_delta_mph:+.1f} mph"
-
-    if m.avg_speed_delta_mph is not None:
-        return f"Average speed {m.avg_speed_delta_mph:+.1f} mph"
-
-    return "No single telemetry cause"
-
-
 def clamp_score(value: float) -> int:
     return max(0, min(100, int(round(value))))
 
@@ -1051,7 +1029,11 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
         confidence_reason = "No telemetry metric clearly explains the time loss."
     else:
         diagnosis = winner.name
-        evidence = winner.evidence[0] if winner.evidence else primary_evidence(m)
+        evidence = (
+            winner.evidence[0]
+            if winner.evidence
+            else "Scored diagnosis has no primary evidence"
+        )
 
         score_gap = winner.score - runner_up.score
         if winner.score >= 70 and score_gap >= 25:
