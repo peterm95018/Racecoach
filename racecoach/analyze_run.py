@@ -256,6 +256,84 @@ def load_run_status(
     return "unknown", None
 
 
+def trim_prestart_staging(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove abnormal pre-start staging from RaceChrono exports.
+
+    Normal run exports begin close to the competitive launch. Some exports
+    include extended grid/staging movement and long stationary periods before
+    the actual run. When detected, trim through the final long staging stop
+    before the competitive launch and reset time and distance to zero.
+    """
+    if len(df) < 5:
+        return df
+
+    slow = df["speed_mph"] < 1.0
+
+    stop_groups = []
+    start = None
+
+    for i, is_slow in enumerate(slow):
+        if is_slow and start is None:
+            start = i
+        elif not is_slow and start is not None:
+            stop_groups.append((start, i - 1))
+            start = None
+
+    if start is not None:
+        stop_groups.append((start, len(df) - 1))
+
+    candidates = []
+
+    max_distance = float(df["distance"].max())
+
+    for start_i, end_i in stop_groups:
+        start_time = float(df.iloc[start_i]["time_s"])
+        end_time = float(df.iloc[end_i]["time_s"])
+        duration = end_time - start_time
+        end_distance = float(df.iloc[end_i]["distance"])
+
+        # Require a substantial staging stop and restrict detection
+        # to the early portion of the logged distance so stops after
+        # the finish are never treated as pre-start staging.
+        if (
+            duration >= 20.0
+            and end_distance <= max_distance * 0.20
+        ):
+            candidates.append(end_i)
+
+    if not candidates:
+        return df
+
+    stop_end_i = candidates[-1]
+
+    # Find sustained movement after the staging stop.
+    sustained_samples = 5
+    launch_i = None
+
+    for i in range(
+        stop_end_i + 1,
+        len(df) - sustained_samples + 1,
+    ):
+        window = df.iloc[i : i + sustained_samples]
+
+        if (window["speed_mph"] >= 1.0).all():
+            launch_i = i
+            break
+
+    if launch_i is None:
+        return df
+
+    trimmed = df.iloc[launch_i:].copy()
+
+    start_time = float(trimmed.iloc[0]["time_s"])
+    start_distance = float(trimmed.iloc[0]["distance"])
+
+    trimmed["time_s"] = trimmed["time_s"] - start_time
+    trimmed["distance"] = trimmed["distance"] - start_distance
+
+    return trimmed.reset_index(drop=True)
+
 def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
     if "start_distance" not in seg or "end_distance" not in seg:
         return None
@@ -364,12 +442,11 @@ def metrics_for_segment(df: pd.DataFrame, seg: dict) -> Optional[SegmentMetric]:
 
     if len(braking):
         segment_start = float(part.iloc[0]["time_s"])
+
         brake_start_time = (
             float(braking.iloc[0]["time_s"]) - segment_start
         )
         brake_start_distance = float(braking.iloc[0]["distance"])
-
-
 
 
     throttle_commit_delay_s = None
@@ -476,6 +553,8 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
     df = normalize_columns(read_racechrono_csv(csv_path))
+
+    df = trim_prestart_staging(df)
 
     config = load_event_config(event_dir)
     mode = config.get("segmentation_mode", "distance")
