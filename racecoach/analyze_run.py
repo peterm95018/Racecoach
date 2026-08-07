@@ -1171,7 +1171,11 @@ def write_grid_report(
             "",
         ]
 
-        heading = "Check" if contradictory_timing_loss(m) else "Fix"
+        heading = (
+            "Check"
+            if d.name in {"Low Confidence", "No Clear Diagnosis"}
+            else "Fix"
+        )
 
         lines += [
             "## NEXT RUN",
