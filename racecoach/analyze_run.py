@@ -1073,7 +1073,7 @@ def diagnose_segment(m: SegmentMetric) -> Diagnosis:
         confidence=confidence,
         evidence=[evidence],
         action=action_for_diagnosis(diagnosis),
-        cue=driver_translation(m),
+        cue=cue_for_diagnosis(diagnosis),
         confidence_reason=confidence_reason,
     )
 
@@ -1111,34 +1111,32 @@ def action_for_diagnosis(diagnosis: str) -> str:
     )
 
 
-def driver_translation(m: SegmentMetric) -> str:
-    if contradictory_timing_loss(m):
-        return "Timing loss conflicts with speed metrics; treat this as low confidence."
+def cue_for_diagnosis(diagnosis: str) -> str:
+    cues = {
+        "Weak Exit": (
+            "You gave away speed on the exit."
+        ),
+        "Late to Power": (
+            "You waited too long to get back to power."
+        ),
+        "Over Slowing": (
+            "You over-slowed the car."
+        ),
+        "Momentum Loss": (
+            "You lost speed through the whole section."
+        ),
+        "Low Confidence": (
+            "The telemetry does not support a reliable coaching conclusion."
+        ),
+        "No Clear Diagnosis": (
+            "No single driving fault clearly explains the loss."
+        ),
+    }
 
-    if (
-        m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph < -8
-        and m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.30
-    ):
-        return "You were late getting the car pointed and late getting back to power."
-
-    if (
-        m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph < -8
-    ):
-        return "You protected entry but gave away the exit."
-
-    if (
-        m.min_speed_delta_mph is not None
-        and m.min_speed_delta_mph < -3
-    ):
-        return "You over-slowed the car."
-    
-    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -2:
-        return "You lost speed through the whole section. Clean up the line and keep the car flowing."
-
-    return "Small loss with no clear telemetry fault. Do not chase a setup change."
+    return cues.get(
+        diagnosis,
+        "No clear coaching cue is available.",
+    )
 
 
 def write_grid_report(
