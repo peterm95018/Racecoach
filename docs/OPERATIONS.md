@@ -411,7 +411,7 @@ The watcher responds only to newly created files.
 
 If a CSV existed before the watcher started, re-copy or re-export the file to trigger processing.
 
---
+---
 
 Report Generation Errors
 
