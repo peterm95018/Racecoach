@@ -693,65 +693,6 @@ def low_confidence_loss(m: SegmentMetric) -> bool:
     )
 
 
-def classify_loss(m: SegmentMetric) -> Optional[str]:
-    if m.time_delta is None or m.time_delta <= 0.05:
-        return None
-
-    if (
-        m.time_delta is not None
-        and m.time_delta > 0.30
-        and m.entry_speed_delta_mph is not None
-        and m.entry_speed_delta_mph > 1.0
-        and m.min_speed_delta_mph is not None
-        and m.min_speed_delta_mph > 1.0
-        and m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph > 1.0
-        and m.avg_speed_delta_mph is not None
-        and abs(m.avg_speed_delta_mph) < 1.0
-    ):
-        return "unexplained timing loss"
-
-    if (
-        m.entry_speed_delta_mph is not None
-        and m.entry_speed_delta_mph > 2.0
-        and m.avg_speed_delta_mph is not None
-        and m.avg_speed_delta_mph < -2.0
-    ):
-        return "over-attacked entry"
-
-    if (
-        m.min_speed_delta_mph is not None
-        and m.min_speed_delta_mph < -2.0
-    ):
-        return "overslowed middle"
-
-    if (
-        m.exit_speed_delta_mph is not None
-        and m.exit_speed_delta_mph < -2.0
-    ):
-        return "weak exit"
-
-    if (
-        m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.25
-    ):
-        return "late throttle"
-
-    if (
-        m.brake_start_distance_delta is not None
-        and m.brake_start_distance_delta < -15
-    ):
-        return "early braking"
-
-    if (
-        m.avg_speed_delta_mph is not None
-        and m.avg_speed_delta_mph < -2.0
-    ):
-        return "low average speed"
-
-    return "unclear"
-
-
 def coach_text(
     m: SegmentMetric,
     diagnosis: Diagnosis,
@@ -1417,12 +1358,12 @@ def write_report(
         ]
 
         summary_losses = [
-            m for m in losses
+            m
+            for m in losses
             if m.name not in {"Start", "Launch"}
             and m.time_delta is not None
             and m.time_delta >= 0.10
-            and not low_confidence_loss(m)
-            and classify_loss(m) != "unexplained timing loss"
+            and diagnose_segment(m).confidence != "Low"
         ]
 
         summary_added = False
@@ -1743,8 +1684,10 @@ def write_report(
 
         if m.time_delta is not None:
             if m.time_delta > 0.15:
-                if classify_loss(m) == "unexplained timing loss":
-                    notes.append("timing loss unexplained")
+                diagnosis = diagnose_segment(m)
+
+                if diagnosis.confidence == "Low":
+                    notes.append("low-confidence loss")
                 else:
                     notes.append("loss")
             elif m.time_delta < -0.15:
