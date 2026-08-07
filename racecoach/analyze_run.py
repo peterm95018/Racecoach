@@ -954,48 +954,6 @@ def contradictory_timing_loss(m: SegmentMetric) -> bool:
         and m.exit_speed_delta_mph > 0
     )
 
-    
-def primary_action(m: SegmentMetric) -> str:
-    if contradictory_timing_loss(m):
-        return "Verify segment boundary or line distance before changing driving."
-
-    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-        return "Unwind earlier and protect exit speed."
-    if (
-        m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.25
-    ):
-        return "Finish rotation sooner and commit to throttle earlier."
-    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-        return "Carry more speed without adding steering."
-    if m.avg_speed_delta_mph is not None and m.avg_speed_delta_mph < -3:
-        return "Look for excess steering, early braking, or extra distance."
-    return "Drive it clean; no single telemetry fault stands out."
-
-
-def primary_cause(m: SegmentMetric) -> str:
-    if contradictory_timing_loss(m):
-        return "Low Confidence"
-
-    if m.exit_speed_delta_mph is not None and m.exit_speed_delta_mph < -2:
-        return f"Weak Exit"
-    if (
-        m.throttle_commit_delay_delta_s is not None
-        and m.throttle_commit_delay_delta_s > 0.25
-    ):
-        return f"Late to Power"
-    
-    if m.min_speed_delta_mph is not None and m.min_speed_delta_mph < -2:
-        return f"Over Slowing"
-    
-    if (
-        m.avg_speed_delta_mph is not None
-        and m.avg_speed_delta_mph < -2.0
-    ):
-        return "Momentum Loss"
-    
-    return "No Clear Diagnosis"
-
 
 def primary_evidence(m: SegmentMetric) -> str:
     if contradictory_timing_loss(m):
