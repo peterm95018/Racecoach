@@ -1,0 +1,17 @@
+{
+  "name": "Distributed momentum loss",
+  "metric": {
+    "name": "Flowing section",
+    "time_delta": 0.50,
+    "entry_speed_delta_mph": -1.0,
+    "min_speed_delta_mph": -1.0,
+    "exit_speed_delta_mph": 0.0,
+    "avg_speed_delta_mph": -5.2
+  },
+  "expected": {
+    "diagnosis": "Momentum Loss",
+    "confidence": "Medium",
+    "evidence_contains": "Average speed",
+    "cue": "You lost speed through the whole section."
+  }
+}

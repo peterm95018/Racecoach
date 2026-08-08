@@ -1,0 +1,17 @@
+{
+  "name": "LPR AM lap2 finish",
+  "metric": {
+    "name": "Finish section",
+    "time_delta": 0.65,
+    "entry_speed_delta_mph": -5.8,
+    "min_speed_delta_mph": -7.4,
+    "exit_speed_delta_mph": -4.0,
+    "avg_speed_delta_mph": -4.6
+  },
+  "expected": {
+    "diagnosis": "Over Slowing",
+    "confidence": "High",
+    "evidence_contains": "Minimum speed",
+    "cue": "You over-slowed the car."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Small unexplained loss",
+  "metric": {
+    "time_delta": 0.20,
+    "entry_speed_delta_mph": -0.2,
+    "min_speed_delta_mph": -0.2,
+    "exit_speed_delta_mph": -0.2,
+    "avg_speed_delta_mph": -0.2,
+    "throttle_commit_delay_delta_s": 0.05,
+    "brake_start_delta_s": 0.05
+  },
+  "expected": {
+    "diagnosis": "No Clear Diagnosis",
+    "confidence": "Low"
+  }
+}

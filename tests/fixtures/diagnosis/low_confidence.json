@@ -1,0 +1,15 @@
+{
+  "name": "Contradictory timing loss",
+  "metric": {
+    "time_delta": 0.40,
+    "entry_speed_delta_mph": 1.0,
+    "min_speed_delta_mph": 1.0,
+    "exit_speed_delta_mph": 1.0,
+    "avg_speed_delta_mph": 1.0
+  },
+  "expected": {
+    "diagnosis": "Low Confidence",
+    "confidence": "Low",
+    "evidence_contains": "conflict"
+  }
+}

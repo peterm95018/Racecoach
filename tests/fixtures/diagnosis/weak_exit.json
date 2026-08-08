@@ -1,0 +1,17 @@
+{
+  "name": "Historical weak exit pattern",
+  "metric": {
+    "name": "Finish acceleration",
+    "time_delta": 1.42,
+    "entry_speed_delta_mph": 3.0,
+    "min_speed_delta_mph": -1.5,
+    "exit_speed_delta_mph": -8.9,
+    "avg_speed_delta_mph": -4.3
+  },
+  "expected": {
+    "diagnosis": "Weak Exit",
+    "confidence": "High",
+    "evidence_contains": "Exit speed",
+    "cue": "You gave away speed on the exit."
+  }
+}

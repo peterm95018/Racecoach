@@ -1,0 +1,17 @@
+{
+  "name": "Late throttle commitment",
+  "metric": {
+    "name": "Launch / first element",
+    "time_delta": 0.50,
+    "throttle_commit_delay_delta_s": 0.96,
+    "exit_speed_delta_mph": -1.0,
+    "min_speed_delta_mph": 0.0,
+    "avg_speed_delta_mph": -0.5
+  },
+  "expected": {
+    "diagnosis": "Late to Power",
+    "confidence": "High",
+    "evidence_contains": "Power commitment",
+    "cue": "You waited too long to get back to power."
+  }
+}
