@@ -35,12 +35,9 @@ class SegmentMetric:
     coast_time_s: float
     throttle_pickup_time: Optional[float]
     segment_distance: float
-
-    coast_time_s: float
-    throttle_pickup_time: Optional[float]
     brake_start_time: Optional[float]
-    brake_start_distance: Optional[float]
-    segment_distance: float
+
+    brake_start_distance: Optional[float] = None
     recovery_speed_1s_mph: Optional[float] = None
 
     reference_duration: Optional[float] = None
@@ -58,7 +55,6 @@ class SegmentMetric:
     reference_recovery_speed_1s_mph: Optional[float] = None
     recovery_speed_delta_mph: Optional[float] = None
 
-    brake_start_distance: Optional[float] = None
     reference_brake_start_distance: Optional[float] = None
     brake_start_distance_delta: Optional[float] = None
 
@@ -70,16 +66,11 @@ class SegmentMetric:
     peak_decel_delta_g: Optional[float] = None
     coast_time_delta_s: Optional[float] = None
 
-    recovery_speed_1s_mph: float | None = None
-    recovery_speed_2s_mph: float | None = None
-    recovery_gain_1s_mph: float | None = None
-    recovery_gain_2s_mph: float | None = None
-
-    recovery_gain_1s_delta_mph: float | None = None
-    recovery_gain_2s_delta_mph: float | None = None
-
-    throttle_commit_delay_s: Optional[float] = None
-    reference_throttle_commit_delay_s: Optional[float] = None
+    recovery_speed_2s_mph: Optional[float] = None
+    recovery_gain_1s_mph: Optional[float] = None
+    recovery_gain_2s_mph: Optional[float] = None
+    recovery_gain_1s_delta_mph: Optional[float] = None
+    recovery_gain_2s_delta_mph: Optional[float] = None
 
     throttle_commit_delay_s: Optional[float] = None
     reference_throttle_commit_delay_s: Optional[float] = None
