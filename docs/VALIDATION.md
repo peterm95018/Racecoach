@@ -127,7 +127,7 @@ python3 -m unittest discover -s tests -v
 Expected result:
 
 ```text
-Ran 10 tests
+All tests pass.
 
 OK
 ```
