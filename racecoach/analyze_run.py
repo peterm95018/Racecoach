@@ -22,58 +22,78 @@ MPS_TO_MPH = 2.2369362921
 
 @dataclass
 class SegmentMetric:
+    # ------------------------------------------------------------------
+    # Measured segment values
+    # ------------------------------------------------------------------
     name: str
     type: str
+
     start_time: float
     end_time: float
     duration: float
+    segment_distance: float
+
     entry_speed_mph: float
     min_speed_mph: float
     exit_speed_mph: float
     avg_speed_mph: float
+
     peak_decel_g: float
     coast_time_s: float
+
     throttle_pickup_time: Optional[float]
-    segment_distance: float
     brake_start_time: Optional[float]
-
     brake_start_distance: Optional[float] = None
-    recovery_speed_1s_mph: Optional[float] = None
 
+    recovery_speed_1s_mph: Optional[float] = None
+    recovery_speed_2s_mph: Optional[float] = None
+    recovery_gain_1s_mph: Optional[float] = None
+    recovery_gain_2s_mph: Optional[float] = None
+
+    throttle_commit_delay_s: Optional[float] = None
+
+    # ------------------------------------------------------------------
+    # Reference lap values
+    # ------------------------------------------------------------------
     reference_duration: Optional[float] = None
+
     reference_entry_speed_mph: Optional[float] = None
     reference_min_speed_mph: Optional[float] = None
     reference_exit_speed_mph: Optional[float] = None
     reference_avg_speed_mph: Optional[float] = None
+
     reference_peak_decel_g: Optional[float] = None
     reference_coast_time_s: Optional[float] = None
+
     reference_throttle_pickup_time: Optional[float] = None
     reference_brake_start_time: Optional[float] = None
-
-    throttle_pickup_delta_s: Optional[float] = None
-    brake_start_delta_s: Optional[float] = None
-    reference_recovery_speed_1s_mph: Optional[float] = None
-    recovery_speed_delta_mph: Optional[float] = None
-
     reference_brake_start_distance: Optional[float] = None
-    brake_start_distance_delta: Optional[float] = None
 
+    reference_recovery_speed_1s_mph: Optional[float] = None
+
+    reference_throttle_commit_delay_s: Optional[float] = None
+
+    # ------------------------------------------------------------------
+    # Derived deltas
+    # ------------------------------------------------------------------
     time_delta: Optional[float] = None
+
     entry_speed_delta_mph: Optional[float] = None
     min_speed_delta_mph: Optional[float] = None
     exit_speed_delta_mph: Optional[float] = None
     avg_speed_delta_mph: Optional[float] = None
+
     peak_decel_delta_g: Optional[float] = None
     coast_time_delta_s: Optional[float] = None
 
-    recovery_speed_2s_mph: Optional[float] = None
-    recovery_gain_1s_mph: Optional[float] = None
-    recovery_gain_2s_mph: Optional[float] = None
+    throttle_pickup_delta_s: Optional[float] = None
+    brake_start_delta_s: Optional[float] = None
+    brake_start_distance_delta: Optional[float] = None
+
+    recovery_speed_delta_mph: Optional[float] = None
     recovery_gain_1s_delta_mph: Optional[float] = None
     recovery_gain_2s_delta_mph: Optional[float] = None
 
-    throttle_commit_delay_s: Optional[float] = None
-    reference_throttle_commit_delay_s: Optional[float] = None
     throttle_commit_delay_delta_s: Optional[float] = None
 
 
