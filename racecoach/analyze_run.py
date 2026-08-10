@@ -994,6 +994,12 @@ def clamp_score(value: float) -> int:
 
 
 def score_weak_exit(m: SegmentMetric) -> DiagnosisScore:
+    """
+    Score evidence that the driver gave away speed on corner exit.
+
+    Exit-speed loss is the primary signal. The score is reduced when
+    stronger telemetry points to a more specific upstream cause.
+    """
     score = 0
     evidence = []
     contributions = []
@@ -1017,6 +1023,12 @@ def score_weak_exit(m: SegmentMetric) -> DiagnosisScore:
 
 
 def score_late_to_power(m: SegmentMetric) -> DiagnosisScore:
+    """
+    Score delayed throttle commitment after the minimum-speed point.
+
+    Throttle delay is the primary signal, with exit-speed loss and
+    segment-time loss providing supporting evidence.
+    """
     score = 0
     evidence = []
     contributions = []
@@ -1045,6 +1057,12 @@ def score_late_to_power(m: SegmentMetric) -> DiagnosisScore:
 
 
 def score_over_slowing(m: SegmentMetric) -> DiagnosisScore:
+    """
+    Score unnecessary speed loss through the middle of the segment.
+
+    Minimum-speed deficit is the primary signal, supported by lower
+    average speed and weakened by evidence of a stronger exit.
+    """
     score = 0
     evidence = []
     contributions = []
@@ -1068,6 +1086,12 @@ def score_over_slowing(m: SegmentMetric) -> DiagnosisScore:
 
 
 def score_momentum_loss(m: SegmentMetric) -> DiagnosisScore:
+    """
+    Score distributed speed loss across a segment.
+
+    Average-speed deficit is the primary signal. The diagnosis should
+    defer when a specific weak-exit pattern better explains the loss.
+    """
     score = 0
     evidence = []
     contributions = []
