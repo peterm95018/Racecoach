@@ -20,6 +20,7 @@ from pathlib import Path
 from racecoach.analyze_run import (
     SegmentMetric,
     diagnose_segment,
+    short_run_name,
 )
 
 
@@ -71,7 +72,7 @@ def build_fixture(
 
     source_run = (
         summary.get("run", {}).get("name")
-        or summary.get("source")
+        or short_run_name(summary.get("source", ""))
         or summary_path.stem
     )
 
