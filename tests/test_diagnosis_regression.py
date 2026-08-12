@@ -9,7 +9,10 @@ from racecoach.analyze_run import (
 )
 
 
-FIXTURE_DIR = Path(__file__).parent / "fixtures" / "diagnosis"
+FIXTURE_DIRS = [
+    Path(__file__).parent / "fixtures" / "diagnosis",
+    Path(__file__).parent / "fixtures" / "historical",
+]
 
 
 def metric(**overrides) -> SegmentMetric:
@@ -37,7 +40,11 @@ def metric(**overrides) -> SegmentMetric:
 
 class DiagnosisRegressionTests(unittest.TestCase):
     def test_diagnosis_fixtures(self):
-        fixture_paths = sorted(FIXTURE_DIR.glob("*.json"))
+        fixture_paths = sorted(
+        path
+        for fixture_dir in FIXTURE_DIRS
+        for path in fixture_dir.glob("*.json")
+    )
 
         self.assertTrue(
             fixture_paths,
@@ -76,6 +83,20 @@ class DiagnosisRegressionTests(unittest.TestCase):
                         diagnosis.cue,
                         expected_cue,
                     )
+
+                expected_evidence = expected.get("evidence")
+                if expected_evidence is not None:
+                    self.assertEqual(
+                    diagnosis.evidence,
+                    expected_evidence,
+                )
+
+                expected_action = expected.get("action")
+                if expected_action:
+                    self.assertEqual(
+                    diagnosis.action,
+                    expected_action,
+                )
 
     def test_low_confidence_loss_is_not_a_finding(self):
         m = metric(
