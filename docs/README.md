@@ -24,6 +24,42 @@ As additional runs are recorded, RaceCoach also identifies recurring strengths, 
 
 ---
 
+## RaceCoach CLI
+
+Common commands:
+
+```bash
+racecoach status
+```
+Show the current event status.
+
+```bash
+racecoach today
+```
+Display the active event dashboard.
+
+```bash
+racecoach doctor
+```
+Validate the RaceCoach installation and current event.
+
+```bash
+racecoach validate
+```
+Run automated regression validation, including unit tests and historical regression fixtures.
+
+```bash
+racecoach reference --promote --rebuild
+```
+Promote the selected reference run and rebuild the event.
+
+```bash
+racecoach finalize
+```
+Complete end-of-event processing by selecting the best reference and rebuilding reports.
+```
+---
+
 # Reports
 
 ## Grid Report

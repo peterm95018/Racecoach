@@ -273,6 +273,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate the RaceCoach installation and event",
     )
 
+    subparsers.add_parser(
+        "validate",
+        help="Run RaceCoach regression validation",
+    )
+
     reference_parser = subparsers.add_parser(
         "reference",
         help="Preview or promote the best reference run",
@@ -306,6 +311,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Promote the best reference and rebuild the entire event"
         ),
     )
+
 
     return parser
 
@@ -752,6 +758,95 @@ def doctor_command(event_dir: Path) -> None:
     print("PASS — no problems found")
 
 
+def validate_command() -> None:
+    project_dir = project_root()
+
+    print("RaceCoach Validation")
+    print()
+
+    failures: list[str] = []
+
+    def pass_check(label: str) -> None:
+        print(f"✓ {label}")
+
+    def fail_check(label: str) -> None:
+        print(f"✗ {label}")
+        failures.append(label)
+
+    print("Static Checks")
+    print("-------------")
+
+    compile_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "py_compile",
+            str(project_dir / "racecoach" / "analyze_run.py"),
+        ],
+        cwd=project_dir,
+        check=False,
+    )
+
+    if compile_result.returncode == 0:
+        pass_check("analyze_run.py compiles")
+    else:
+        fail_check("analyze_run.py compile failed")
+
+    print()
+    print("Automated Regression")
+    print("--------------------")
+
+    test_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-v",
+        ],
+        cwd=project_dir,
+        check=False,
+    )
+
+    if test_result.returncode == 0:
+        pass_check("Regression test suite")
+    else:
+        fail_check("Regression test suite")
+
+    print()
+    print("Historical Corpus")
+    print("-----------------")
+
+    historical_dir = (
+        project_dir / "tests" / "fixtures" / "historical"
+    )
+
+    historical_fixtures = sorted(
+        historical_dir.glob("*.json")
+    )
+
+    if historical_fixtures:
+        pass_check(
+            f"{len(historical_fixtures)} historical fixture(s)"
+        )
+    else:
+        fail_check("No historical fixtures found")
+
+    print()
+    print("Result")
+    print("------")
+
+    if failures:
+        print(
+            f"FAIL — {len(failures)} validation failure(s)"
+        )
+        raise SystemExit(1)
+
+    print("PASS — validation complete")
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
@@ -762,6 +857,10 @@ def main() -> None:
         and not args.promote
     ):
         parser.error("reference --rebuild requires --promote")
+
+    if args.command == "validate":
+        validate_command()
+        return
 
     event_dir = resolve_event(args.event)
 

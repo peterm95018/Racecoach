@@ -364,6 +364,21 @@ These enhancements should preserve the core coaching-first philosophy while impr
 
 ---
 
+### Validation Tools
+
+RaceCoach includes several developer utilities supporting validation and regression testing.
+
+- extract_fixture.py
+  Creates historical regression fixtures from summary JSON files.
+
+- list_historical_fixtures.py
+  Displays the current historical regression corpus.
+
+- validate
+  Executes project-wide regression validation.
+
+  ---
+
 # Related Documentation
 
 - `README.md`

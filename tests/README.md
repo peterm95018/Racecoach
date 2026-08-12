@@ -6,6 +6,8 @@ The `tests/` directory contains fast regression tests that verify RaceCoach beha
 
 These tests are intended to detect unintended changes to telemetry preprocessing, diagnosis logic, and coaching behavior during development.
 
+Historical fixtures are generated using tools/extract_fixture.py rather than edited by hand. This ensures every fixture accurately reflects the telemetry and diagnosis produced by a real RaceCoach analysis.
+
 ## Test Organization
 
 ```

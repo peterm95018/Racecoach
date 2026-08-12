@@ -271,6 +271,18 @@ git diff --check
 
 ---
 
+## Historical Regression Corpus
+
+RaceCoach maintains a set of historical regression fixtures extracted from real analyzed events. Each fixture captures the complete SegmentMetric along with the expected diagnosis, confidence, evidence, cue, and coaching action.
+
+Historical fixtures are created using:
+
+python3 -m tools.extract_fixture ...
+
+These fixtures are executed automatically by the regression test suite and ensure that diagnosis behavior remains stable as the coaching engine evolves.
+
+---
+
 ## Automated Tests
 
 ```text
