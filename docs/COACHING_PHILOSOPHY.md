@@ -138,7 +138,77 @@ The Grid Report should identify:
 * The one behavior to repeat.
 * The one thought the driver should carry to the start line.
 
-⸻
+---
+## Habit-Based Coaching
+
+The objective of RaceCoach is sustained driver improvement rather than repeated diagnosis.
+
+A diagnosis identifies what happened during a run.
+
+A coaching theme identifies a recurring driving behavior that deserves deliberate practice.
+
+Repeatedly presenting the same diagnosis is not effective coaching. Instead, RaceCoach should identify persistent habits, prioritize the highest-value improvement opportunity, and continue reinforcing that theme until meaningful progress is achieved.
+
+Examples include:
+
+- Late throttle commitment
+- Over slowing corner entry
+- Weak exit execution
+- Momentum preservation
+- Slalom rhythm
+
+These themes become the driver's active coaching objectives rather than isolated observations from individual runs.
+
+---
+
+## Coaching Capacity
+
+Drivers have limited capacity for conscious improvement.
+
+RaceCoach should intentionally limit active coaching to one primary objective and, when appropriate, one secondary objective.
+
+Additional observations may be recorded but should not compete for the driver's attention during the next run.
+
+The goal is deliberate practice rather than comprehensive analysis.
+---
+
+## Reinforcement
+
+Improvement should be acknowledged as deliberately as mistakes.
+
+When a recurring weakness becomes less frequent or less severe, RaceCoach should recognize that progress and encourage continued execution.
+
+Positive reinforcement helps transform intentional practice into repeatable driving habits.
+
+---
+
+## Driver Development
+
+RaceCoach exists to support long-term driver development.
+
+Every analyzed run contributes to understanding:
+
+- recurring strengths
+- recurring weaknesses
+- coaching themes
+- repeatability
+- long-term trends
+
+The Driver Profile provides continuity across sessions, allowing coaching to evolve as the driver improves.
+
+Success is measured by sustained behavioral improvement rather than the number of diagnoses produced.
+
+---
+
+## Coaching Success
+
+The purpose of RaceCoach is not to maximize diagnoses.
+
+The purpose of RaceCoach is to reduce recurring mistakes while increasing repeatable strengths.
+
+The ideal long-term outcome is that previously active coaching themes become stable strengths, allowing attention to shift toward the next opportunity for improvement.
+
+---
 
 Session Summary
 

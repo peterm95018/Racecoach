@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from racecoach.event_reflection import load_event_reflection
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -237,6 +239,75 @@ def publish_command(event_dir: Path) -> None:
     check=True,
 )
 
+def reflection_command(event_dir: Path) -> None:
+    reflection = load_event_reflection(event_dir)
+
+    print("RaceCoach Event Reflection")
+    print()
+    print("Event")
+    print("-----")
+    print(event_dir.name)
+
+    if reflection is None:
+        print()
+        print("No event_reflection.yaml found.")
+        return
+
+    print()
+    print("Preparation")
+    print("-----------")
+
+    preparation = reflection.get("preparation") or {}
+
+    if preparation:
+        for key, value in preparation.items():
+            label = key.replace("_", " ")
+
+            if isinstance(value, bool):
+                display = "yes" if value else "no"
+            else:
+                display = str(value)
+
+            print(f"{label}: {display}")
+    else:
+        print("No preparation observations recorded.")
+
+    print()
+    print("Performance")
+    print("-----------")
+
+    performance = reflection.get("performance") or {}
+
+    if performance:
+        for key, value in performance.items():
+            label = key.replace("_", " ")
+            print(f"{label}: {value}")
+    else:
+        print("No performance observations recorded.")
+
+    print()
+    print("Observations")
+    print("------------")
+
+    observations = reflection.get("observations") or []
+
+    if observations:
+        for observation in observations:
+            print(f"- {observation}")
+    else:
+        print("No observations recorded.")
+
+    print()
+    print("Breakthrough")
+    print("------------")
+
+    breakthrough = reflection.get("breakthrough")
+
+    if breakthrough:
+        print(breakthrough)
+    else:
+        print("No breakthrough recorded.")
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -286,6 +357,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "today",
         help="Show the active event dashboard",
+    )
+
+    subparsers.add_parser(
+        "reflection",
+        help="Show the selected event's driver reflection",
     )
 
     reference_parser.add_argument(
@@ -882,6 +958,8 @@ def main() -> None:
         doctor_command(event_dir)
     elif args.command == "today":
         today_command(event_dir)
+    elif args.command == "reflection":
+        reflection_command(event_dir)
 
 if __name__ == "__main__":
     main()

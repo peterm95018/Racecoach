@@ -1,0 +1,25 @@
+schema_version: 1
+
+preparation:
+  workout_day_before: true
+  visualization: true
+  reviewed_video: false
+  simulator_practice: true
+  limited_grid_analysis: true
+
+performance:
+  energy: good
+  focus: good
+  mental_clutter: low
+
+observations:
+  - One-hour drive and smaller course reduced fatigue.
+  - Slalom practice on the simulator before the event helped preparation.
+  - Watching the first session helped identify the braking point and line for the overlap 180.
+  - The best line completed braking before turn-in and returned to throttle earlier.
+  - Avoiding excessive telemetry review on grid helped maintain focus.
+  - The event was approached as a performance-development day rather than primarily as a competition.
+
+breakthrough: >
+  Reduced mental clutter, targeted preparation, and focusing on execution
+  contributed to one of the strongest competitive performances to date.

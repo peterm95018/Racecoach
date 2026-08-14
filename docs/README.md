@@ -1,12 +1,35 @@
 # RaceCoach
 
-RaceCoach is a telemetry-driven coaching system for autocross and track drivers.
+RaceCoach is an evidence-based driver coaching system that combines telemetry analysis with long-term driver development.
 
 Rather than overwhelming drivers with telemetry, RaceCoach identifies the **single driving behavior** most likely to improve the next run.
 
 Telemetry is evidence.
 
 Coaching is the product.
+
+RaceCoach helps drivers systematically reduce the gap between their current performance and their potential performance.
+
+---
+
+
+## Project Vision
+
+RaceCoach is more than a telemetry analysis tool.
+
+Its purpose is to help drivers systematically improve by identifying recurring habits, prioritizing the highest-value coaching opportunities, and reinforcing successful behaviors over time.
+
+RaceCoach follows a layered coaching model:
+
+- **Telemetry** measures what happened.
+- **Metrics** quantify performance.
+- **Diagnosis** explains why time was gained or lost.
+- **Coaching** identifies the most valuable improvement for the next run.
+- **Driver Development** tracks long-term progress across runs, events, and seasons.
+
+The long-term objective is not simply to analyze laps, but to help drivers reduce performance plateaus through deliberate practice, focused preparation, and continuous improvement.
+
+Every feature in RaceCoach should support that objective.
 
 ---
 
@@ -57,7 +80,7 @@ Promote the selected reference run and rebuild the event.
 racecoach finalize
 ```
 Complete end-of-event processing by selecting the best reference and rebuilding reports.
-```
+
 ---
 
 # Reports
@@ -98,6 +121,30 @@ Identifies:
 - Recurring weaknesses
 - Biggest improvements
 - Development priorities before the next event
+
+---
+
+## Roadmap
+
+Current foundation
+
+- Telemetry processing
+- Segment analysis
+- Diagnosis engine
+- Confidence scoring
+- Historical regression testing
+- Validation framework
+- Reference selection
+- Session consistency metrics
+
+Next phase — Driver Intelligence
+
+- Driver Profile
+- Habit Detection
+- Performance Profile
+- Event Preparation
+- Driver Development
+- Seasonal benchmarking
 
 ---
 

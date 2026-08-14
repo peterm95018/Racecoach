@@ -188,6 +188,8 @@ As the diagnosis engine matured, the grid report began exposing internal scoring
 
 While useful during development, these details created unnecessary cognitive load for the driver and could be mistaken for telemetry values or timing data.
 
+This separation established the foundation for future Driver Development features by allowing coaching output to remain simple while the underlying analysis became progressively more sophisticated.
+
 ### Decision
 
 Separate RaceCoach into two audiences.
@@ -236,6 +238,39 @@ Telemetry → Algorithm → Driver
 
 The diagnosis engine exists to translate telemetry into language that helps the driver improve, not to expose its internal implementation.
 
+
+---
+
+---
+
+## August 2026 — Transition to Driver Development
+
+### Problem
+
+RaceCoach now produces reliable telemetry metrics, high-confidence diagnoses, and concise between-run coaching.
+
+However, repeatedly presenting the same diagnosis does not necessarily help the driver improve. Long-term improvement requires identifying recurring habits, maintaining focus on a small number of coaching priorities, and recognizing when those habits have changed.
+
+### Decision
+
+RaceCoach will evolve beyond run-by-run coaching into a driver development system.
+
+Future work will introduce concepts including:
+
+- Driver Profile
+- Habit Detection
+- Active Coaching Themes
+- Coaching Debt
+- Long-term Trend Analysis
+- Strength Reinforcement
+
+### Reason
+
+The objective is no longer simply to explain individual runs.
+
+The objective is to replace limiting driving habits with repeatable high-performance behaviors.
+
+This marks the beginning of RaceCoach's transition from telemetry analysis toward long-term driver development.
 
 ---
 
