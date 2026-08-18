@@ -8,6 +8,8 @@ from pathlib import Path
 
 from racecoach.event_reflection import load_event_reflection
 
+from racecoach.coaching_themes import load_coaching_themes
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -308,6 +310,89 @@ def reflection_command(event_dir: Path) -> None:
     else:
         print("No breakthrough recorded.")
 
+def themes_command() -> None:
+    project_dir = project_root()
+    themes = load_coaching_themes(project_dir)
+
+    print("RaceCoach Coaching Themes")
+    print()
+
+    if themes is None:
+        print("No driver/coaching_themes.yaml found.")
+        return
+
+    def show_theme(label: str, theme: dict | None) -> None:
+        print(label)
+        print("-" * len(label))
+
+        if not theme:
+            print("None")
+            print()
+            return
+
+        print(theme.get("name", "Unnamed theme"))
+
+        status = theme.get("status")
+        if status:
+            print(f"Status: {status}")
+
+        priority = theme.get("priority")
+        if priority is not None:
+            print(f"Priority: {priority}")
+
+        started = theme.get("started")
+        if started:
+            print(f"Started: {started}")
+
+        practice = theme.get("practice_objective")
+        if practice:
+            print(f"Practice: {practice}")
+
+        cue = theme.get("reinforcement_cue")
+        if cue:
+            print(f"Cue: {cue}")
+
+        notes = theme.get("notes")
+        if notes:
+            print(f"Notes: {notes}")
+
+        print()
+
+    show_theme("Primary", themes.get("primary"))
+    show_theme("Secondary", themes.get("secondary"))
+
+    print("Completed")
+    print("---------")
+
+    completed = themes.get("completed") or []
+
+    if completed:
+        for theme in completed:
+            if isinstance(theme, dict):
+                name = theme.get("name", "Unnamed theme")
+                completed_date = theme.get("completed")
+
+                if completed_date:
+                    print(f"- {name} ({completed_date})")
+                else:
+                    print(f"- {name}")
+            else:
+                print(f"- {theme}")
+    else:
+        print("None")
+
+    print()
+    print("Future Candidates")
+    print("-----------------")
+
+    candidates = themes.get("future_candidates") or []
+
+    if candidates:
+        for candidate in candidates:
+            print(f"- {candidate}")
+    else:
+        print("None")
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -386,6 +471,11 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Promote the best reference and rebuild the entire event"
         ),
+    )
+
+    subparsers.add_parser(
+        "themes",
+        help="Show current driver coaching themes",
     )
 
 
@@ -936,6 +1026,10 @@ def main() -> None:
 
     if args.command == "validate":
         validate_command()
+        return
+
+    if args.command == "themes":
+        themes_command()
         return
 
     event_dir = resolve_event(args.event)

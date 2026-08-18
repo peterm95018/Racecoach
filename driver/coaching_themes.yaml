@@ -1,0 +1,77 @@
+schema_version: 1
+
+primary:
+
+  name: Earlier Throttle Commitment
+
+  status: active
+
+  started: 2026-08-17
+
+  priority: 1
+
+  practice_objective: >
+    Commit to throttle immediately after the car is rotated
+    and pointed toward the next acceleration zone.
+
+  reinforcement_cue: >
+    Point, then power.
+
+  notes: >
+    This has been the highest-impact coaching theme across
+    recent events. Continue reinforcing early commitment
+    without sacrificing rotation.
+
+secondary:
+
+  name: Preserve Momentum
+
+  status: emerging
+
+  started: 2026-08-17
+
+  priority: 2
+
+  practice_objective: >
+    Minimize unnecessary speed loss through transitions,
+    sweepers, and slow corners.
+
+  reinforcement_cue: >
+    Slow less. Carry speed.
+
+  notes: >
+    Continue reducing unnecessary braking and preserving
+    speed through the middle of the corner.
+
+completed:
+
+  - name: Driver consistency
+
+    completed: 2026-07-12
+
+    notes: >
+      Significant progress in repeatability and clean-run
+      percentage. Continue reinforcing without making it
+      an active coaching priority.
+
+future_candidates:
+
+  - Protect Exit Speed
+
+  - Slalom Rhythm
+
+  - Course Visualization
+
+  - Preparation Routine
+
+theme_status:
+
+  emerging: Identified but not yet a primary focus.
+
+  active: Current coaching objective.
+
+  improving: Measurable progress observed.
+
+  reinforced: Consistently demonstrated.
+
+  retired: No longer an active coaching objective.

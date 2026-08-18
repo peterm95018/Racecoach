@@ -212,6 +212,74 @@ RaceCoach should intentionally limit active coaching themes.
 
 ---
 
+
+## Coaching Theme Model
+
+A Coaching Theme represents a recurring driver-development objective.
+
+Diagnoses describe individual observations.
+
+Coaching Themes describe behaviors the driver is deliberately working to change or reinforce over time.
+
+Examples:
+
+| Diagnosis | Coaching Theme |
+|---|---|
+| Late to Power | Earlier Throttle Commitment |
+| Over Slowing | Preserve Momentum |
+| Weak Exit | Protect Exit Speed |
+| Momentum Loss | Maintain Flow |
+
+A Coaching Theme should preserve enough history to determine whether the behavior is emerging, active, improving, reinforced, or retired.
+
+### Theme Attributes
+
+Each theme should eventually include:
+
+- `name`
+- `status`
+- `priority`
+- `started`
+- `last_observed`
+- `occurrence_count`
+- `event_count`
+- `cumulative_opportunity_s`
+- `trend`
+- `evidence`
+- `practice_objective`
+- `reinforcement_cue`
+
+### Theme Status
+
+Supported lifecycle states:
+
+- `emerging`
+- `active`
+- `improving`
+- `reinforced`
+- `retired`
+
+Theme transitions should occur gradually and should require repeated evidence.
+
+A single diagnosis should never automatically create or retire a coaching theme.
+
+### Coaching Capacity
+
+RaceCoach should maintain no more than:
+
+- one Primary Coaching Theme
+- one Secondary Coaching Theme
+
+Other recurring patterns may remain `emerging` without competing for the driver's active attention.
+
+### Separation of Observation and Interpretation
+
+The first implementation should store Coaching Themes explicitly rather than automatically infer them from diagnosis history.
+
+Automated habit detection should be added only after enough longitudinal event data exists to validate the transition rules.
+
+---
+
 ## Completed Improvements
 
 Previously active coaching themes that have become consistent strengths.
