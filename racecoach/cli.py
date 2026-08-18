@@ -10,6 +10,8 @@ from racecoach.event_reflection import load_event_reflection
 
 from racecoach.coaching_themes import load_coaching_themes
 
+from racecoach.preparation import build_preparation_brief
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -310,6 +312,97 @@ def reflection_command(event_dir: Path) -> None:
     else:
         print("No breakthrough recorded.")
 
+def prepare_command() -> None:
+    brief = build_preparation_brief(project_root())
+
+    print("RaceCoach Preparation Brief")
+    print()
+
+    primary = brief.get("primary_theme")
+    secondary = brief.get("secondary_theme")
+
+    print("Primary Focus")
+    print("-------------")
+
+    if primary:
+        print(primary.get("name", "Unnamed theme"))
+
+        practice = primary.get("practice_objective")
+        if practice:
+            print(f"Practice: {practice}")
+
+        cue = primary.get("reinforcement_cue")
+        if cue:
+            print(f"Cue: {cue}")
+    else:
+        print("No primary coaching theme established.")
+
+    print()
+    print("Secondary Focus")
+    print("---------------")
+
+    if secondary:
+        print(secondary.get("name", "Unnamed theme"))
+
+        cue = secondary.get("reinforcement_cue")
+        if cue:
+            print(f"Cue: {cue}")
+    else:
+        print("None")
+
+    reflection_event = brief.get("reflection_event")
+
+    print()
+    print("What Helped Previously")
+    print("----------------------")
+
+    if reflection_event:
+        print(f"From: {reflection_event}")
+
+        observations = brief.get("observations") or []
+
+        if observations:
+            for observation in observations:
+                print(f"- {observation}")
+
+        breakthrough = brief.get("breakthrough")
+
+        if breakthrough:
+            print()
+            print(f"Breakthrough: {breakthrough}")
+    else:
+        print("No prior event reflection available.")
+
+    preparation = brief.get("preparation") or {}
+
+    print()
+    print("Preparation Reminders")
+    print("---------------------")
+
+    enabled = [
+        key.replace("_", " ")
+        for key, value in preparation.items()
+        if value is True
+    ]
+
+    if enabled:
+        for reminder in enabled:
+            print(f"- {reminder}")
+    else:
+        print("No preparation observations available.")
+
+    print()
+    print("One Thing")
+    print("---------")
+
+    if primary and primary.get("reinforcement_cue"):
+        print(primary["reinforcement_cue"])
+    elif primary:
+        print(primary.get("name", "Primary coaching theme"))
+    else:
+        print("Arrive focused and establish one coaching objective.")
+
+
 def themes_command() -> None:
     project_dir = project_root()
     themes = load_coaching_themes(project_dir)
@@ -476,6 +569,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "themes",
         help="Show current driver coaching themes",
+    )
+
+    subparsers.add_parser(
+        "prepare",
+        help="Show a pre-event preparation brief",
     )
 
 
@@ -1030,6 +1128,10 @@ def main() -> None:
 
     if args.command == "themes":
         themes_command()
+        return
+
+    if args.command == "prepare":
+        prepare_command()
         return
 
     event_dir = resolve_event(args.event)
