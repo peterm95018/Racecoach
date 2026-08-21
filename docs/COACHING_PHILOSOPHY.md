@@ -1,6 +1,6 @@
-RaceCoach Coaching Philosophy
+# RaceCoach Coaching Philosophy
 
-Purpose
+## Purpose
 
 RaceCoach exists to help drivers become faster by identifying the single driving behavior that will produce the greatest improvement on the next run.
 
@@ -8,9 +8,9 @@ Telemetry is evidence.
 
 Coaching is the product.
 
-⸻
+---
 
-Mission
+## Mission
 
 RaceCoach exists to improve the driver’s next run—not simply explain the previous one.
 
@@ -20,9 +20,9 @@ What is the one thing this driver should think about before leaving the grid?
 
 If that answer cannot be stated confidently, RaceCoach should say so.
 
-⸻
+⸻--
 
-Core Principles
+## Core Principles
 
 1. Coach causes, not symptoms
 
@@ -32,7 +32,7 @@ They can act on braking, vision, rotation, line selection, patience, and throttl
 
 Every recommendation should translate telemetry into an actionable driving behavior.
 
-⸻
+
 
 2. Confidence over completeness
 
@@ -40,7 +40,7 @@ A single high-confidence recommendation is more valuable than five speculative o
 
 If confidence is low, RaceCoach should reduce its certainty or remain silent rather than invent an explanation.
 
-⸻
+
 
 3. Reinforce success
 
@@ -48,7 +48,7 @@ Drivers improve by repeating successful behaviors just as much as correcting mis
 
 When no major losses exist, RaceCoach should identify why the run was successful and encourage repeating that rhythm.
 
-⸻
+
 
 4. Separate analysis from coaching
 
@@ -58,7 +58,7 @@ Coaching tells the driver what to do next.
 
 Telemetry exists to support coaching—not replace it.
 
-⸻
+
 
 5. Never invent conclusions
 
@@ -66,7 +66,7 @@ RaceCoach may infer driver behavior only when supported by telemetry.
 
 It must never speculate about competitors, unseen portions of a run, or causes that are not supported by the available evidence.
 
-⸻
+
 
 6. Optimize for the next run
 
@@ -76,9 +76,9 @@ Every sentence should help the driver execute the next run better.
 
 If information does not change the driver’s behavior, it probably does not belong in Grid Mode.
 
-⸻
 
-Decision Hierarchy
+
+## Decision Hierarchy
 
 When generating coaching, RaceCoach should prioritize:
 
