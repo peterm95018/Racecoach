@@ -132,6 +132,75 @@ def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
         raise ValueError("Could not find RaceChrono data header row.")
     return pd.read_csv(csv_path, skiprows=[*range(header_idx), header_idx + 1, header_idx + 2])
 
+def select_timed_lap_rows(
+    df: pd.DataFrame,
+    source_name: str,
+) -> pd.DataFrame:
+    """
+    Select the timed lap from a RaceChrono export.
+
+    Single-lap exports may include pre-start and post-finish rows
+    with a blank lap_number. Keep only the intended numbered lap
+    before time and distance are normalized.
+    """
+    lap_col = next(
+        (
+            col
+            for col in df.columns
+            if str(col).strip().lower() == "lap_number"
+        ),
+        None,
+    )
+
+    if lap_col is None:
+        return df
+
+    lap_numbers = pd.to_numeric(df[lap_col], errors="coerce")
+    available_laps = sorted(
+        {int(value) for value in lap_numbers.dropna().unique()}
+    )
+
+    if not available_laps:
+        return df
+
+    filename_lap = None
+
+    for part in Path(source_name).stem.lower().split("_"):
+        if part.startswith("lap") and part[3:].isdigit():
+            filename_lap = int(part[3:])
+            break
+
+    if filename_lap is not None:
+        if filename_lap not in available_laps:
+            raise ValueError(
+                f"{source_name} requests lap {filename_lap}, "
+                f"but available laps are {available_laps}"
+            )
+        target_lap = filename_lap
+    elif len(available_laps) == 1:
+        target_lap = available_laps[0]
+    else:
+        raise ValueError(
+            f"Multiple timed laps found in {source_name}: "
+            f"{available_laps}; filename must identify one"
+        )
+
+    selected = df[lap_numbers == target_lap].copy()
+
+    if len(selected) < 5:
+        raise ValueError(
+            f"Timed lap {target_lap} in {source_name} "
+            f"contains only {len(selected)} samples"
+        )
+
+    print(
+        f"Using timed lap {target_lap}: "
+        f"{len(selected)} samples"
+    )
+
+    return selected.reset_index(drop=True)
+
+
 def unique_columns(columns):
     seen = {}
     output = []
@@ -563,7 +632,12 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
 
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
-    df = normalize_columns(read_racechrono_csv(csv_path))
+    df = normalize_columns(
+        select_timed_lap_rows(
+            read_racechrono_csv(csv_path),
+            csv_path.name,
+        )
+    )
 
     df = trim_prestart_staging(df)
 
@@ -580,7 +654,13 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
     if mode == "reference_path" and ref_path.exists():
         print("Using reference path segmentation.")
 
-        ref_df = normalize_columns(read_racechrono_csv(ref_path))
+        ref_df = normalize_columns(
+            select_timed_lap_rows(
+                read_racechrono_csv(ref_path),
+                ref_path.name,
+            )
+        )
+
         ref_df = add_gps_path_position(ref_df)
 
         max_ref_d = float(ref_df["gps_path_m"].max())
@@ -664,7 +744,12 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
     if ref_path.exists():
         if mode != "reference_path":
-            ref_df = normalize_columns(read_racechrono_csv(ref_path))
+            ref_df = normalize_columns(
+                select_timed_lap_rows(
+                    read_racechrono_csv(ref_path),
+                    ref_path.name,
+                )
+            )
 
             start_d = float(segment_config.get("timed_start_distance", 0))
             finish_d = float(segment_config.get("timed_finish_distance", ref_df["distance"].max()))
