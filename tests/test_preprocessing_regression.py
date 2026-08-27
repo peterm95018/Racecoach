@@ -113,6 +113,13 @@ class PreprocessingRegressionTests(unittest.TestCase):
         )
         normalized = normalize_columns(selected)
 
+        self.assertTrue(
+            selected.attrs["numbered_timed_lap_selected"]
+        )
+        self.assertTrue(
+            normalized.attrs["numbered_timed_lap_selected"]
+        )
+
         self.assertEqual(len(normalized), 5)
         self.assertEqual(normalized.iloc[0]["time_s"], 0.0)
         self.assertEqual(normalized.iloc[0]["distance"], 0.0)
@@ -130,6 +137,9 @@ class PreprocessingRegressionTests(unittest.TestCase):
         selected = select_timed_lap_rows(
             df,
             "session_event_lap2_v3.csv",
+        )
+        self.assertTrue(
+            selected.attrs["numbered_timed_lap_selected"]
         )
 
         self.assertEqual(selected["marker"].tolist(), list(range(5, 10)))
@@ -156,6 +166,9 @@ class PreprocessingRegressionTests(unittest.TestCase):
         )
 
         selected = select_timed_lap_rows(df, "legacy.csv")
+        self.assertFalse(
+            selected.attrs["numbered_timed_lap_selected"]
+        )
 
         pd.testing.assert_frame_equal(selected, df)
 

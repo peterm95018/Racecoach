@@ -11,8 +11,79 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from .analyze_run import analyze, write_report
+from .analyze_run import (
+    analyze,
+    markdown_to_html,
+    write_report,
+)
+from .data_quality import DataQualityError
 
+def write_data_quality_failure_reports(
+    source: Path,
+    reports_dir: Path,
+    error: DataQualityError,
+) -> tuple[Path, Path]:
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    report_text = f"""# RaceCoach Data Validation Failed
+
+Run: `{source.name}`
+
+## No coaching generated
+
+RaceCoach rejected this run because the telemetry or course
+configuration could not be validated.
+
+**Reason:** {error}
+
+Check the RaceChrono track selection, CSV lap export, reference lap,
+and full-course segment coverage before using coaching.
+"""
+
+    grid_text = f"""# DATA INVALID
+
+**No coaching generated for `{source.name}`.**
+
+Reason: {error}
+
+Do not use coaching from the previous run. Correct the data or course
+configuration and reprocess this run.
+"""
+
+    run_path = reports_dir / f"{source.stem}_invalid.md"
+    run_path.write_text(report_text)
+
+    run_html_path = reports_dir / f"{source.stem}_invalid.html"
+    run_html_path.write_text(markdown_to_html(report_text))
+
+    latest_path = reports_dir / "latest_report.md"
+    latest_path.write_text(report_text)
+
+    latest_html_path = reports_dir / "latest_report.html"
+    latest_html_path.write_text(markdown_to_html(report_text))
+
+    grid_path = reports_dir / "grid_report.md"
+    grid_path.write_text(grid_text)
+
+    grid_html_path = reports_dir / "grid_report.html"
+    grid_html_path.write_text(markdown_to_html(grid_text))
+
+    return latest_path, grid_path
+
+
+def publish_reports_to_drupal(project_dir: Path) -> None:
+    publish_script = project_dir / "publish_reports.sh"
+
+    if not publish_script.exists():
+        raise FileNotFoundError(
+            f"Publishing script not found: {publish_script}"
+        )
+
+    subprocess.run(
+        [str(publish_script)],
+        cwd=project_dir,
+        check=True,
+    )
 
 class UploadHandler(FileSystemEventHandler):
     def __init__(self, event_dir: Path, reports_dir: Path, processed_dir: Path):
@@ -31,20 +102,24 @@ class UploadHandler(FileSystemEventHandler):
 
         time.sleep(2)
 
+        project_dir = Path(__file__).resolve().parent.parent
+        reference_path = self.event_dir / "reference.csv"
+        analysis_reference = (
+            reference_path if reference_path.exists() else path
+        )
+
         try:
             print(f"Analyzing {path.name}...")
-
-            reference_path = self.event_dir / "reference.csv"
-
-            if not reference_path.exists():
-                shutil.copy2(path, reference_path)
-                print(f"Created reference lap: {reference_path.name}")
 
             df, metrics, findings = analyze(
                 path,
                 self.event_dir,
-                reference_path,
+                analysis_reference,
             )
+
+            if not reference_path.exists():
+                shutil.copy2(path, reference_path)
+                print(f"Created reference lap: {reference_path.name}")
 
             analyzed_duration_s = None
 
@@ -65,23 +140,30 @@ class UploadHandler(FileSystemEventHandler):
                 sample_count=len(df),
             )
 
-            project_dir = Path(__file__).resolve().parent.parent
-            publish_script = project_dir / "publish_reports.sh"
-
-            if not publish_script.exists():
-                raise FileNotFoundError(
-                    f"Publishing script not found: {publish_script}"
-                )
-
-            subprocess.run(
-                [str(publish_script)],
-                cwd=project_dir,
-                check=True,
-            )
+            publish_reports_to_drupal(project_dir)
 
             print(f"Report written: {md}")
             print("Reports published to Drupal.")
             print(f"Processed file retained in uploads: {path}")
+
+        except DataQualityError as exc:
+            print(f"DATA INVALID for {path.name}: {exc}")
+
+            write_data_quality_failure_reports(
+                path,
+                self.reports_dir,
+                exc,
+            )
+
+            try:
+                publish_reports_to_drupal(project_dir)
+                print("Data-validation warning published to Drupal.")
+            except Exception as publish_exc:
+                print(
+                    "ERROR publishing data-validation warning: "
+                    f"{publish_exc}"
+                )
+                traceback.print_exc()
 
         except Exception as exc:
             print(f"ERROR analyzing {path.name}: {exc}")

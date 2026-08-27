@@ -18,6 +18,11 @@ from racecoach.reference_path import (
     project_lap_to_reference,
 )
 
+from racecoach.data_quality import (
+    DataQualityError,
+    validate_segment_coverage,
+)
+
 MPS_TO_MPH = 2.2369362921
 
 @dataclass
@@ -129,7 +134,7 @@ def read_racechrono_csv(csv_path: Path) -> pd.DataFrame:
                 header_idx = i
                 break
     if header_idx is None:
-        raise ValueError("Could not find RaceChrono data header row.")
+        raise DataQualityError("Could not find RaceChrono data header row.")
     return pd.read_csv(csv_path, skiprows=[*range(header_idx), header_idx + 1, header_idx + 2])
 
 def select_timed_lap_rows(
@@ -153,7 +158,9 @@ def select_timed_lap_rows(
     )
 
     if lap_col is None:
-        return df
+        unchanged = df.copy()
+        unchanged.attrs["numbered_timed_lap_selected"] = False
+        return unchanged
 
     lap_numbers = pd.to_numeric(df[lap_col], errors="coerce")
     available_laps = sorted(
@@ -161,7 +168,9 @@ def select_timed_lap_rows(
     )
 
     if not available_laps:
-        return df
+        unchanged = df.copy()
+        unchanged.attrs["numbered_timed_lap_selected"] = False
+        return unchanged
 
     filename_lap = None
 
@@ -172,7 +181,7 @@ def select_timed_lap_rows(
 
     if filename_lap is not None:
         if filename_lap not in available_laps:
-            raise ValueError(
+            raise DataQualityError(
                 f"{source_name} requests lap {filename_lap}, "
                 f"but available laps are {available_laps}"
             )
@@ -180,7 +189,7 @@ def select_timed_lap_rows(
     elif len(available_laps) == 1:
         target_lap = available_laps[0]
     else:
-        raise ValueError(
+        raise DataQualityError(
             f"Multiple timed laps found in {source_name}: "
             f"{available_laps}; filename must identify one"
         )
@@ -188,7 +197,7 @@ def select_timed_lap_rows(
     selected = df[lap_numbers == target_lap].copy()
 
     if len(selected) < 5:
-        raise ValueError(
+        raise DataQualityError(
             f"Timed lap {target_lap} in {source_name} "
             f"contains only {len(selected)} samples"
         )
@@ -198,7 +207,9 @@ def select_timed_lap_rows(
         f"{len(selected)} samples"
     )
 
-    return selected.reset_index(drop=True)
+    selected = selected.reset_index(drop=True)
+    selected.attrs["numbered_timed_lap_selected"] = True
+    return selected
 
 
 def unique_columns(columns):
@@ -215,8 +226,14 @@ def unique_columns(columns):
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    numbered_timed_lap_selected = bool(
+        df.attrs.get("numbered_timed_lap_selected", False)
+    )
     df.columns = unique_columns([str(c).strip() for c in df.columns])
     out = pd.DataFrame()
+    out.attrs["numbered_timed_lap_selected"] = (
+        numbered_timed_lap_selected
+    )
     time_col = pick_existing(df, ["elapsed_time", "timestamp"])
     dist_col = pick_existing(df, ["distance_traveled"])
     speed_col = pick_existing(df, ["speed"])
@@ -638,6 +655,10 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
             csv_path.name,
         )
     )
+    timed_lap_distance_m = None
+
+    if df.attrs.get("numbered_timed_lap_selected", False):
+        timed_lap_distance_m = float(df["distance"].max())
 
     df = trim_prestart_staging(df)
 
@@ -730,19 +751,34 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
 
         ref_df = None
 
+    coverage = validate_segment_coverage(
+        df,
+        segments,
+        label=csv_path.name,
+        timed_lap_distance_m=(
+            timed_lap_distance_m
+            if mode != "reference_path"
+            else None
+        ),
+    )
+
+    print(
+        "Segment coverage validated: "
+        f"{coverage.configured_start_m:.1f}-"
+        f"{coverage.configured_finish_m:.1f}m "
+        f"for {coverage.lap_distance_m:.1f}m timed lap"
+    )
+
     metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
 
     if not metrics:
-        print("WARNING: No valid segments found; using default Start/Middle/Finish segments.")
-        max_d = float(df["distance"].max())
-        segments = [
-            {"name": "Start", "start_distance": 0, "end_distance": max_d * 0.25},
-            {"name": "Middle course", "start_distance": max_d * 0.25, "end_distance": max_d * 0.75},
-            {"name": "Finish section", "start_distance": max_d * 0.75, "end_distance": max_d},
-        ]
-        metrics = [m for seg in segments if (m := metrics_for_segment(df, seg))]
+        raise DataQualityError(
+            f"{csv_path.name}: no valid segment metrics were produced"
+        )
 
     if ref_path.exists():
+        reference_timed_lap_distance_m = None
+
         if mode != "reference_path":
             ref_df = normalize_columns(
                 select_timed_lap_rows(
@@ -751,16 +787,51 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
                 )
             )
 
-            start_d = float(segment_config.get("timed_start_distance", 0))
-            finish_d = float(segment_config.get("timed_finish_distance", ref_df["distance"].max()))
+            if ref_df.attrs.get(
+                "numbered_timed_lap_selected",
+                False,
+            ):
+                reference_timed_lap_distance_m = float(
+                    ref_df["distance"].max()
+                )
+
+            start_d = float(
+                segment_config.get(
+                    "timed_start_distance",
+                    0,
+                )
+            )
+            finish_d = float(
+                segment_config.get(
+                    "timed_finish_distance",
+                    ref_df["distance"].max(),
+                )
+            )
 
             ref_df = ref_df[
-                (ref_df["distance"] >= start_d) &
-                (ref_df["distance"] <= finish_d)
+                (ref_df["distance"] >= start_d)
+                & (ref_df["distance"] <= finish_d)
             ].copy()
 
-            ref_df["time_s"] = ref_df["time_s"] - ref_df["time_s"].iloc[0]
-            ref_df["distance"] = ref_df["distance"] - ref_df["distance"].iloc[0]
+            ref_df["time_s"] = (
+                ref_df["time_s"] - ref_df["time_s"].iloc[0]
+            )
+            ref_df["distance"] = (
+                ref_df["distance"] - ref_df["distance"].iloc[0]
+            )
+
+        reference_coverage = validate_segment_coverage(
+            ref_df,
+            segments,
+            label=f"reference {ref_path.name}",
+            timed_lap_distance_m=reference_timed_lap_distance_m,
+        )
+        print(
+            "Reference coverage validated: "
+            f"{reference_coverage.configured_start_m:.1f}-"
+            f"{reference_coverage.configured_finish_m:.1f}m "
+            f"for {reference_coverage.lap_distance_m:.1f}m timed lap"
+        )
 
         ref_metrics = {
             m.name: m
