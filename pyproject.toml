@@ -14,3 +14,6 @@ racecoach = "racecoach.cli:main"
 
 [tool.setuptools]
 packages = ["racecoach"]
+
+[tool.setuptools.package-data]
+racecoach = ["timing_profiles.yaml"]

@@ -16,12 +16,14 @@ from racecoach.run_status import (
     VALID_RUN_STATUSES,
     set_run_status,
 )
+
 from racecoach.select_reference import (
     load_candidates,
     rebuild_event,
     reconcile_live_reference,
 )
 
+from racecoach.timing_config import load_event_timing
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -615,6 +617,23 @@ def themes_command() -> None:
         print("None")
 
 
+def timing_command(event_dir: Path) -> None:
+    timing = load_event_timing(event_dir)
+
+    print("RaceCoach Live Timing")
+    print()
+
+    if timing is None:
+        print("No live-timing configuration is available.")
+        return
+
+    print(f"Organizer: {timing.organizer or 'unspecified'}")
+    print(f"Profile: {timing.profile or 'event-specific'}")
+    print(f"Provider: {timing.provider}")
+    print(f"Driver number: {timing.driver_number}")
+    print(f"Results: {timing.results_url}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="racecoach",
@@ -710,6 +729,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "summary",
         help="Regenerate the session summary",
+    )
+
+    subparsers.add_parser(
+        "timing",
+        help="Show the selected event's live-timing configuration",
     )
 
     subparsers.add_parser(
@@ -1316,6 +1340,8 @@ def main() -> None:
         today_command(event_dir)
     elif args.command == "reflection":
         reflection_command(event_dir)
+    elif args.command == "timing":
+        timing_command(event_dir)
 
 if __name__ == "__main__":
     main()

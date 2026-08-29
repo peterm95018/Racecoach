@@ -1,0 +1,10 @@
+profiles:
+  ggr:
+    provider: clokkr
+    results_url: https://app.clokkr.com/results/ggr-autocross
+    driver_number: 353
+
+  lpr:
+    provider: clokkr
+    results_url: https://app.clokkr.com/results/lpr-autocross
+    driver_number: 353
