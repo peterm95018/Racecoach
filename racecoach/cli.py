@@ -25,6 +25,9 @@ from racecoach.select_reference import (
 
 from racecoach.timing_config import load_event_timing
 
+from racecoach.clokkr import fetch_driver_result
+
+
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
@@ -617,7 +620,11 @@ def themes_command() -> None:
         print("None")
 
 
-def timing_command(event_dir: Path) -> None:
+def timing_command(
+    event_dir: Path,
+    *,
+    show_runs: bool = False,
+) -> None:
     timing = load_event_timing(event_dir)
 
     print("RaceCoach Live Timing")
@@ -633,6 +640,45 @@ def timing_command(event_dir: Path) -> None:
     print(f"Driver number: {timing.driver_number}")
     print(f"Results: {timing.results_url}")
 
+    if not show_runs:
+        return
+
+    if timing.provider != "clokkr":
+        raise ValueError(
+            f"Live results are not supported for "
+            f"provider {timing.provider!r}"
+        )
+
+    result = fetch_driver_result(
+        timing.results_url,
+        timing.driver_number,
+    )
+
+    print()
+    print(f"Car: {result.car_number}")
+    print(f"Class: {result.car_class}")
+    print(f"Vehicle: {result.car_name}")
+    print()
+    print("Run  Raw      Adjusted  Status")
+
+    for run in result.runs:
+        raw = (
+            f"{run.time_s:.3f}"
+            if run.time_s is not None
+            else "-"
+        )
+        adjusted = (
+            f"{run.adjusted_time_s:.3f}"
+            if run.adjusted_time_s is not None
+            else "-"
+        )
+
+        print(
+            f"{run.index:<4} "
+            f"{raw:<8} "
+            f"{adjusted:<9} "
+            f"{run.status}"
+        )
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -731,9 +777,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Regenerate the session summary",
     )
 
-    subparsers.add_parser(
+    timing_parser = subparsers.add_parser(
         "timing",
-        help="Show the selected event's live-timing configuration",
+        help="Show live-timing configuration and results",
+    )
+
+    timing_parser.add_argument(
+        "--runs",
+        dest="show_runs",
+        action="store_true",
+        help="Fetch and show runs for the configured driver",
     )
 
     subparsers.add_parser(
@@ -1341,7 +1394,10 @@ def main() -> None:
     elif args.command == "reflection":
         reflection_command(event_dir)
     elif args.command == "timing":
-        timing_command(event_dir)
+        timing_command(
+            event_dir,
+            show_runs=args.show_runs,
+        )
 
 if __name__ == "__main__":
     main()
