@@ -12,6 +12,10 @@ from racecoach.coaching_themes import load_coaching_themes
 
 from racecoach.preparation import build_preparation_brief
 
+from racecoach.run_status import (
+    VALID_RUN_STATUSES,
+    set_run_status,
+)
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -209,6 +213,23 @@ def reference_command(
         command.append("--rebuild")
 
     subprocess.run(command, check=True)
+
+def classify_command(
+    event_dir: Path,
+    run_name: str,
+    status: str,
+) -> None:
+    status_path = set_run_status(
+        event_dir,
+        run_name,
+        status,
+    )
+
+    print(
+        f"Classified {run_name} as "
+        f"{status.strip().lower()}."
+    )
+    print(f"Updated: {status_path}")
 
 
 def summary_command(event_dir: Path) -> None:
@@ -552,6 +573,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--rebuild",
         action="store_true",
         help="Rebuild the event after promotion",
+    )
+
+    classify_parser = subparsers.add_parser(
+        "classify",
+        help="Classify a run as clean, cone, DNF, or off-course",
+    )
+
+    classify_parser.add_argument(
+        "run",
+        help="Run name, for example lap2",
+    )
+
+    classify_parser.add_argument(
+        "status",
+        choices=sorted(VALID_RUN_STATUSES),
+        help="Official run classification",
     )
 
     subparsers.add_parser(
@@ -1143,6 +1180,12 @@ def main() -> None:
             event_dir,
             promote=args.promote,
             rebuild=args.rebuild,
+        )
+    elif args.command == "classify":
+        classify_command(
+            event_dir,
+            args.run,
+            args.status,
         )
     elif args.command == "summary":
         summary_command(event_dir)

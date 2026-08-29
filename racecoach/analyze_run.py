@@ -23,6 +23,8 @@ from racecoach.data_quality import (
     validate_segment_coverage,
 )
 
+from racecoach.run_status import load_run_status
+
 MPS_TO_MPH = 2.2369362921
 
 @dataclass
@@ -312,48 +314,13 @@ def load_segment_config(event_dir: Path):
 def load_segments(event_dir: Path):
     return load_segment_config(event_dir)["segments"]
 
-
-VALID_RUN_STATUSES = {
-    "clean",
-    "cone",
-    "dnf",
-    "off_course",
-    "unknown",
-}
-
-
-def load_run_status(
-    event_dir: Path,
-    run_name: str,
-) -> tuple[str, bool | None]:
-    status_file = event_dir / "run_status.yaml"
-
-    if not status_file.exists():
-        return "unknown", None
-
-    data = yaml.safe_load(
-        status_file.read_text(encoding="utf-8")
-    ) or {}
-
-    run_data = (data.get("runs") or {}).get(run_name) or {}
-    status = str(run_data.get("status", "unknown")).strip().lower()
-
-    if status not in VALID_RUN_STATUSES:
-        raise ValueError(
-            f"Invalid run status {status!r} for {run_name} "
-            f"in {status_file}"
-        )
-
-    if status == "clean":
-        return status, True
-
-    if status in {"cone", "dnf", "off_course"}:
-        return status, False
-
-    return "unknown", None
+def load_segments(event_dir: Path):
+    return load_segment_config(event_dir)["segments"]
 
 
 def trim_prestart_staging(df: pd.DataFrame) -> pd.DataFrame:
+
+
     """
     Remove abnormal pre-start staging from RaceChrono exports.
 
