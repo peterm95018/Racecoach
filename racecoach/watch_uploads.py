@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 import subprocess
 import time
 import traceback
@@ -17,6 +16,13 @@ from .analyze_run import (
     write_report,
 )
 from .data_quality import DataQualityError
+
+from .select_reference import (
+    load_candidates,
+    rebuild_event,
+    update_live_reference,
+)
+
 
 def write_data_quality_failure_reports(
     source: Path,
@@ -85,6 +91,25 @@ def publish_reports_to_drupal(project_dir: Path) -> None:
         check=True,
     )
 
+
+def read_optional_file(path: Path) -> bytes | None:
+    if not path.exists():
+        return None
+
+    return path.read_bytes()
+
+
+def restore_optional_file(
+    path: Path,
+    previous_contents: bytes | None,
+) -> None:
+    if previous_contents is None:
+        path.unlink(missing_ok=True)
+        return
+
+    path.write_bytes(previous_contents)
+
+
 class UploadHandler(FileSystemEventHandler):
     def __init__(self, event_dir: Path, reports_dir: Path, processed_dir: Path):
         self.event_dir = event_dir
@@ -104,6 +129,12 @@ class UploadHandler(FileSystemEventHandler):
 
         project_dir = Path(__file__).resolve().parent.parent
         reference_path = self.event_dir / "reference.csv"
+        reference_existed = reference_path.exists()
+        metadata_path = (
+            self.event_dir / "reference_selection.json"
+        )
+        reference_before = read_optional_file(reference_path)
+        metadata_before = read_optional_file(metadata_path)
         analysis_reference = (
             reference_path if reference_path.exists() else path
         )
@@ -117,10 +148,6 @@ class UploadHandler(FileSystemEventHandler):
                 analysis_reference,
             )
 
-            if not reference_path.exists():
-                shutil.copy2(path, reference_path)
-                print(f"Created reference lap: {reference_path.name}")
-
             analyzed_duration_s = None
 
             if not df.empty and "time_s" in df.columns:
@@ -128,7 +155,7 @@ class UploadHandler(FileSystemEventHandler):
 
             md, js = write_report(
                 path,
-                reference_path,
+                analysis_reference,
                 metrics,
                 findings,
                 self.reports_dir,
@@ -139,6 +166,62 @@ class UploadHandler(FileSystemEventHandler):
                 analyzed_duration_s=analyzed_duration_s,
                 sample_count=len(df),
             )
+
+            try:
+                candidates = load_candidates(self.event_dir)
+                selected, reference_changed = (
+                    update_live_reference(
+                        self.event_dir,
+                        candidates,
+                        allow_provisional=not reference_existed,
+                    )
+                )
+
+                if selected is None:
+                    print(
+                        "Reference unchanged: "
+                        "no clean live candidate is available."
+                    )
+                else:
+                    print(
+                        f"Live reference: {selected.run_name} "
+                        f"({selected.duration_s:.3f}s)"
+                    )
+
+                rebuild_required = (
+                    reference_changed
+                    and selected is not None
+                    and (
+                        reference_existed
+                        or selected.csv_path.resolve()
+                        != path.resolve()
+                    )
+                )
+
+                if rebuild_required:
+                    print(
+                        "Reference changed; "
+                        "rebuilding event reports..."
+                    )
+                    rebuild_event(
+                        self.event_dir,
+                        reference_path,
+                    )
+
+            except Exception:
+                restore_optional_file(
+                    reference_path,
+                    reference_before,
+                )
+                restore_optional_file(
+                    metadata_path,
+                    metadata_before,
+                )
+                print(
+                    "Reference update rolled back after "
+                    "rebuild failure."
+                )
+                raise
 
             publish_reports_to_drupal(project_dir)
 
@@ -168,6 +251,7 @@ class UploadHandler(FileSystemEventHandler):
         except Exception as exc:
             print(f"ERROR analyzing {path.name}: {exc}")
             traceback.print_exc()
+
 
 def main():
     parser = argparse.ArgumentParser()

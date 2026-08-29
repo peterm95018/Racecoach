@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -106,6 +107,105 @@ class WatchUploadTests(unittest.TestCase):
                 source,
             )
             publish_mock.assert_called_once()
+    def test_failed_rebuild_restores_reference_and_metadata(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            event_dir = root / "event"
+            uploads_dir = event_dir / "uploads"
+            reports_dir = event_dir / "reports"
+            processed_dir = event_dir / "processed"
+            uploads_dir.mkdir(parents=True)
+            reports_dir.mkdir(parents=True)
+
+            reference_path = event_dir / "reference.csv"
+            reference_path.write_text(
+                "old reference",
+                encoding="utf-8",
+            )
+
+            metadata_path = (
+                event_dir / "reference_selection.json"
+            )
+            old_metadata = '{"run": "lap1"}\n'
+            metadata_path.write_text(
+                old_metadata,
+                encoding="utf-8",
+            )
+
+            source = uploads_dir / "lap2.csv"
+            source.write_text(
+                "new clean run",
+                encoding="utf-8",
+            )
+
+            handler = UploadHandler(
+                event_dir,
+                reports_dir,
+                processed_dir,
+            )
+            event = SimpleNamespace(
+                is_directory=False,
+                src_path=str(source),
+            )
+
+            df = pd.DataFrame(
+                {
+                    "time_s": [0.0, 1.0],
+                }
+            )
+            df.attrs["driver_input_source"] = "accelerator_pos"
+
+            selected = SimpleNamespace(
+                run_name="lap2",
+                source="lap2.csv",
+                duration_s=37.0,
+                is_clean=True,
+                csv_path=source,
+            )
+
+            with (
+                patch(
+                    "racecoach.watch_uploads.time.sleep"
+                ),
+                patch(
+                    "racecoach.watch_uploads.analyze",
+                    return_value=(df, [], []),
+                ),
+                patch(
+                    "racecoach.watch_uploads.write_report",
+                    return_value=(
+                        reports_dir / "lap2_report.md",
+                        reports_dir / "lap2_summary.json",
+                    ),
+                ),
+                patch(
+                    "racecoach.watch_uploads.load_candidates",
+                    return_value=[selected],
+                ),
+                patch(
+                    "racecoach.watch_uploads.rebuild_event",
+                    side_effect=RuntimeError("rebuild failed"),
+                ),
+                patch(
+                    "racecoach.watch_uploads."
+                    "publish_reports_to_drupal"
+                ) as publish_mock,
+                patch(
+                    "racecoach.watch_uploads."
+                    "traceback.print_exc"
+                ),
+            ):
+                handler.on_created(event)
+
+            self.assertEqual(
+                reference_path.read_text(encoding="utf-8"),
+                "old reference",
+            )
+            self.assertEqual(
+                metadata_path.read_text(encoding="utf-8"),
+                old_metadata,
+            )
+            publish_mock.assert_not_called()
 
     def test_valid_first_upload_becomes_reference_after_analysis(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -118,7 +218,10 @@ class WatchUploadTests(unittest.TestCase):
             reports_dir.mkdir(parents=True)
 
             source = uploads_dir / "lap1.csv"
-            source.write_text("valid test data")
+            source.write_text(
+                "valid test data",
+                encoding="utf-8",
+            )
 
             handler = UploadHandler(
                 event_dir,
@@ -140,6 +243,24 @@ class WatchUploadTests(unittest.TestCase):
             report_path = reports_dir / "lap1_report.md"
             summary_path = reports_dir / "lap1_summary.json"
 
+            def write_report_side_effect(*args, **kwargs):
+                summary_path.write_text(
+                    json.dumps(
+                        {
+                            "source": source.name,
+                            "run": {
+                                "name": "lap1",
+                                "analyzed_duration_s": 1.0,
+                                "is_clean": None,
+                            },
+                            "metrics": [],
+                            "findings": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                return report_path, summary_path
+
             with (
                 patch(
                     "racecoach.watch_uploads.time.sleep"
@@ -150,7 +271,7 @@ class WatchUploadTests(unittest.TestCase):
                 ) as analyze_mock,
                 patch(
                     "racecoach.watch_uploads.write_report",
-                    return_value=(report_path, summary_path),
+                    side_effect=write_report_side_effect,
                 ),
                 patch(
                     "racecoach.watch_uploads."
@@ -163,9 +284,21 @@ class WatchUploadTests(unittest.TestCase):
 
             self.assertTrue(reference_path.exists())
             self.assertEqual(
-                reference_path.read_text(),
-                source.read_text(),
+                reference_path.read_text(encoding="utf-8"),
+                source.read_text(encoding="utf-8"),
             )
+
+            metadata = json.loads(
+                (
+                    event_dir / "reference_selection.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                metadata["selection_rule"],
+                "first_valid_provisional",
+            )
+            self.assertTrue(metadata["provisional"])
+
             analyze_mock.assert_called_once_with(
                 source,
                 event_dir,
@@ -173,6 +306,110 @@ class WatchUploadTests(unittest.TestCase):
             )
             publish_mock.assert_called_once()
 
+    def test_changed_clean_reference_rebuilds_before_publish(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            event_dir = root / "event"
+            uploads_dir = event_dir / "uploads"
+            reports_dir = event_dir / "reports"
+            processed_dir = event_dir / "processed"
+            uploads_dir.mkdir(parents=True)
+            reports_dir.mkdir(parents=True)
+
+            reference_path = event_dir / "reference.csv"
+            reference_path.write_text(
+                "old reference",
+                encoding="utf-8",
+            )
+
+            source = uploads_dir / "lap2.csv"
+            source.write_text(
+                "new clean run",
+                encoding="utf-8",
+            )
+
+            handler = UploadHandler(
+                event_dir,
+                reports_dir,
+                processed_dir,
+            )
+            event = SimpleNamespace(
+                is_directory=False,
+                src_path=str(source),
+            )
+
+            df = pd.DataFrame(
+                {
+                    "time_s": [0.0, 1.0],
+                }
+            )
+            df.attrs["driver_input_source"] = "accelerator_pos"
+
+            selected = SimpleNamespace(
+                run_name="lap2",
+                duration_s=37.0,
+                csv_path=source,
+            )
+            call_order = []
+
+            with (
+                patch(
+                    "racecoach.watch_uploads.time.sleep"
+                ),
+                patch(
+                    "racecoach.watch_uploads.analyze",
+                    return_value=(df, [], []),
+                ) as analyze_mock,
+                patch(
+                    "racecoach.watch_uploads.write_report",
+                    return_value=(
+                        reports_dir / "lap2_report.md",
+                        reports_dir / "lap2_summary.json",
+                    ),
+                ),
+                patch(
+                    "racecoach.watch_uploads.load_candidates",
+                    return_value=[selected],
+                ),
+                patch(
+                    "racecoach.watch_uploads."
+                    "update_live_reference",
+                    return_value=(selected, True),
+                ) as update_mock,
+                patch(
+                    "racecoach.watch_uploads.rebuild_event",
+                    side_effect=lambda *args: call_order.append(
+                        "rebuild"
+                    ),
+                ) as rebuild_mock,
+                patch(
+                    "racecoach.watch_uploads."
+                    "publish_reports_to_drupal",
+                    side_effect=lambda *args: call_order.append(
+                        "publish"
+                    ),
+                ),
+            ):
+                handler.on_created(event)
+
+            analyze_mock.assert_called_once_with(
+                source,
+                event_dir,
+                reference_path,
+            )
+            update_mock.assert_called_once_with(
+                event_dir,
+                [selected],
+                allow_provisional=False,
+            )
+            rebuild_mock.assert_called_once_with(
+                event_dir,
+                reference_path,
+            )
+            self.assertEqual(
+                call_order,
+                ["rebuild", "publish"],
+            )
 
 if __name__ == "__main__":
     unittest.main()

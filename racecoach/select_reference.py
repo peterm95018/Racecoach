@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import filecmp
 import argparse
 import json
 import shutil
@@ -78,28 +79,44 @@ def load_candidates(event_dir: Path) -> list[ReferenceCandidate]:
     return candidates
 
 
-def select_reference(
+def select_clean_reference(
     candidates: list[ReferenceCandidate],
-) -> tuple[ReferenceCandidate, str]:
-    if not candidates:
-        raise ValueError("No valid reference candidates found")
-
+) -> ReferenceCandidate | None:
     clean_candidates = [
         candidate
         for candidate in candidates
         if candidate.is_clean is True
     ]
 
-    if clean_candidates:
-        selected = min(
-            clean_candidates,
-            key=lambda candidate: candidate.duration_s,
-        )
-        return selected, "fastest_clean"
+    if not clean_candidates:
+        return None
+
+    return min(
+        clean_candidates,
+        key=lambda candidate: (
+            candidate.duration_s,
+            candidate.run_name,
+        ),
+    )
+
+
+def select_reference(
+    candidates: list[ReferenceCandidate],
+) -> tuple[ReferenceCandidate, str]:
+    if not candidates:
+        raise ValueError("No valid reference candidates found")
+
+    selected_clean = select_clean_reference(candidates)
+
+    if selected_clean is not None:
+        return selected_clean, "fastest_clean"
 
     selected = min(
         candidates,
-        key=lambda candidate: candidate.duration_s,
+        key=lambda candidate: (
+            candidate.duration_s,
+            candidate.run_name,
+        ),
     )
     return selected, "fastest_analyzed_fallback"
 
@@ -124,6 +141,8 @@ def write_selection_metadata(
         "source": selected.source,
         "duration_s": selected.duration_s,
         "selection_rule": selection_rule,
+        "is_clean": selected.is_clean,
+        "provisional": selection_rule == "first_valid_provisional",
         "selected_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -133,6 +152,67 @@ def write_selection_metadata(
     )
 
     return metadata_path
+
+
+def update_live_reference(
+    event_dir: Path,
+    candidates: list[ReferenceCandidate],
+    *,
+    allow_provisional: bool,
+) -> tuple[ReferenceCandidate | None, bool]:
+    """
+    Select and promote a reference for live event use.
+
+    A clean candidate always takes priority. When an event has no
+    reference yet, an unknown but successfully analyzed run may be
+    used as a provisional reference. Explicitly non-clean runs are
+    never used for provisional live references.
+
+    Return the selected candidate and whether reference.csv changed.
+    """
+    selected = select_clean_reference(candidates)
+    selection_rule = "fastest_clean"
+
+    if selected is None and allow_provisional:
+        provisional_candidates = [
+            candidate
+            for candidate in candidates
+            if candidate.is_clean is None
+        ]
+
+        if provisional_candidates:
+            selected = min(
+                provisional_candidates,
+                key=lambda candidate: (
+                    candidate.duration_s,
+                    candidate.run_name,
+                ),
+            )
+            selection_rule = "first_valid_provisional"
+
+    if selected is None:
+        return None, False
+
+    reference_path = event_dir / "reference.csv"
+    reference_changed = (
+        not reference_path.exists()
+        or not filecmp.cmp(
+            selected.csv_path,
+            reference_path,
+            shallow=False,
+        )
+    )
+
+    if reference_changed:
+        promote_reference(event_dir, selected)
+
+    write_selection_metadata(
+        event_dir,
+        selected,
+        selection_rule,
+    )
+
+    return selected, reference_changed
 
 
 def rebuild_event(event_dir: Path, reference_path: Path) -> None:
