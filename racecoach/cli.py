@@ -16,6 +16,12 @@ from racecoach.run_status import (
     VALID_RUN_STATUSES,
     set_run_status,
 )
+from racecoach.select_reference import (
+    load_candidates,
+    rebuild_event,
+    reconcile_live_reference,
+)
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -214,22 +220,123 @@ def reference_command(
 
     subprocess.run(command, check=True)
 
+def read_optional_file(path: Path) -> bytes | None:
+    if not path.exists():
+        return None
+
+    return path.read_bytes()
+
+
+def restore_optional_file(
+    path: Path,
+    previous_contents: bytes | None,
+) -> None:
+    if previous_contents is None:
+        path.unlink(missing_ok=True)
+        return
+
+    path.write_bytes(previous_contents)
+
 def classify_command(
     event_dir: Path,
     run_name: str,
     status: str,
+    *,
+    reprocess: bool = True,
 ) -> None:
-    status_path = set_run_status(
-        event_dir,
-        run_name,
-        status,
-    )
+    normalized_run_name = str(run_name).strip()
+
+    if not reprocess:
+        status_path = set_run_status(
+            event_dir,
+            normalized_run_name,
+            status,
+        )
+        print(
+            f"Classified {normalized_run_name} as "
+            f"{status.strip().lower()}."
+        )
+        print(f"Updated: {status_path}")
+        print("Reprocessing skipped.")
+        return
+
+    existing_candidates = load_candidates(event_dir)
+
+    if not any(
+        candidate.run_name == normalized_run_name
+        for candidate in existing_candidates
+    ):
+        raise ValueError(
+            f"{normalized_run_name}: no analyzed run was found; "
+            "use --no-reprocess to classify it before upload"
+        )
+
+    status_path = event_dir / "run_status.yaml"
+    reference_path = event_dir / "reference.csv"
+    metadata_path = event_dir / "reference_selection.json"
+
+    previous_files = {
+        status_path: read_optional_file(status_path),
+        reference_path: read_optional_file(reference_path),
+        metadata_path: read_optional_file(metadata_path),
+    }
+
+    try:
+        set_run_status(
+            event_dir,
+            normalized_run_name,
+            status,
+        )
+
+        candidates = load_candidates(event_dir)
+        selected, reference_changed = (
+            reconcile_live_reference(
+                event_dir,
+                candidates,
+            )
+        )
+
+        rebuild_reference = (
+            reference_path if reference_path.exists() else None
+        )
+
+        rebuild_event(
+            event_dir,
+            rebuild_reference,
+        )
+
+    except Exception:
+        for path, previous_contents in previous_files.items():
+            restore_optional_file(
+                path,
+                previous_contents,
+            )
+
+        print(
+            "Classification and reference update rolled back "
+            "after rebuild failure."
+        )
+        raise
 
     print(
-        f"Classified {run_name} as "
+        f"Classified {normalized_run_name} as "
         f"{status.strip().lower()}."
     )
     print(f"Updated: {status_path}")
+
+    if selected is None:
+        print("No eligible live reference is available.")
+    else:
+        print(
+            f"Live reference: {selected.run_name} "
+            f"({selected.duration_s:.3f}s)"
+        )
+
+    if reference_changed:
+        print("Reference selection changed.")
+
+    publish_command(event_dir)
+    print("Event reports rebuilt and published.")
 
 
 def summary_command(event_dir: Path) -> None:
@@ -590,6 +697,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=sorted(VALID_RUN_STATUSES),
         help="Official run classification",
     )
+    classify_parser.add_argument(
+        "--no-reprocess",
+        dest="reprocess",
+        action="store_false",
+        help=(
+            "Only record the classification; do not rebuild or publish"
+        ),
+    )
+    classify_parser.set_defaults(reprocess=True)
 
     subparsers.add_parser(
         "summary",
@@ -1186,6 +1302,7 @@ def main() -> None:
             event_dir,
             args.run,
             args.status,
+            reprocess=args.reprocess,
         )
     elif args.command == "summary":
         summary_command(event_dir)

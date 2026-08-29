@@ -10,12 +10,16 @@ from racecoach.select_reference import (
     canonical_duration,
     load_candidates,
     promote_reference,
+    rebuild_event,
+    reconcile_live_reference,
     select_clean_reference,
     select_reference,
     update_live_reference,
     write_selection_metadata,
 )
 
+from racecoach.run_status import set_run_status
+from unittest.mock import patch
 
 class SelectReferenceTests(unittest.TestCase):
     def candidate(
@@ -120,6 +124,39 @@ class SelectReferenceTests(unittest.TestCase):
             "No valid reference candidates",
         ):
             select_reference([])
+
+    def test_load_candidates_uses_current_run_status(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            event_dir = Path(temp_dir)
+            reports_dir = event_dir / "reports"
+            uploads_dir = event_dir / "uploads"
+            reports_dir.mkdir()
+            uploads_dir.mkdir()
+
+            source = uploads_dir / "lap1.csv"
+            source.write_text("lap one", encoding="utf-8")
+
+            summary = {
+                "source": source.name,
+                "run": {
+                    "name": "lap1",
+                    "analyzed_duration_s": 38.0,
+                    "is_clean": None,
+                },
+                "metrics": [],
+            }
+
+            (reports_dir / "lap1_summary.json").write_text(
+                json.dumps(summary),
+                encoding="utf-8",
+            )
+
+            set_run_status(event_dir, "lap1", "clean")
+
+            candidates = load_candidates(event_dir)
+
+            self.assertEqual(len(candidates), 1)
+            self.assertTrue(candidates[0].is_clean)
 
     def test_load_candidates_skips_missing_source_csv(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -288,6 +325,100 @@ class SelectReferenceTests(unittest.TestCase):
                 (event_dir / "reference_selection.json").exists()
             )
 
+    def test_reconcile_replaces_disqualified_reference_with_unknown(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            event_dir = Path(temp_dir)
+            uploads_dir = event_dir / "uploads"
+            uploads_dir.mkdir()
+
+            old_source = uploads_dir / "lap1.csv"
+            old_source.write_text(
+                "disqualified run",
+                encoding="utf-8",
+            )
+            new_source = uploads_dir / "lap2.csv"
+            new_source.write_text(
+                "unknown valid run",
+                encoding="utf-8",
+            )
+
+            reference_path = event_dir / "reference.csv"
+            reference_path.write_text(
+                "disqualified run",
+                encoding="utf-8",
+            )
+
+            disqualified = ReferenceCandidate(
+                run_name="lap1",
+                source="lap1.csv",
+                csv_path=old_source,
+                duration_s=36.0,
+                is_clean=False,
+            )
+            provisional = ReferenceCandidate(
+                run_name="lap2",
+                source="lap2.csv",
+                csv_path=new_source,
+                duration_s=38.0,
+                is_clean=None,
+            )
+
+            selected, changed = reconcile_live_reference(
+                event_dir,
+                [disqualified, provisional],
+            )
+
+            self.assertEqual(selected, provisional)
+            self.assertTrue(changed)
+            self.assertEqual(
+                reference_path.read_text(encoding="utf-8"),
+                "unknown valid run",
+            )
+
+    def test_reconcile_retires_disqualified_reference_without_replacement(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            event_dir = Path(temp_dir)
+            uploads_dir = event_dir / "uploads"
+            uploads_dir.mkdir()
+
+            source = uploads_dir / "lap1.csv"
+            source.write_text(
+                "disqualified run",
+                encoding="utf-8",
+            )
+
+            reference_path = event_dir / "reference.csv"
+            reference_path.write_text(
+                "disqualified run",
+                encoding="utf-8",
+            )
+            metadata_path = event_dir / "reference_selection.json"
+            metadata_path.write_text(
+                '{"run": "lap1"}',
+                encoding="utf-8",
+            )
+
+            disqualified = ReferenceCandidate(
+                run_name="lap1",
+                source="lap1.csv",
+                csv_path=source,
+                duration_s=36.0,
+                is_clean=False,
+            )
+
+            selected, changed = reconcile_live_reference(
+                event_dir,
+                [disqualified],
+            )
+
+            self.assertIsNone(selected)
+            self.assertTrue(changed)
+            self.assertFalse(reference_path.exists())
+            self.assertFalse(metadata_path.exists())
+
+
     def test_unknown_run_does_not_replace_existing_reference(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             event_dir = Path(temp_dir)
@@ -372,6 +503,51 @@ class SelectReferenceTests(unittest.TestCase):
             )
             self.assertFalse(metadata["provisional"])
             self.assertTrue(metadata["is_clean"])
+
+    def test_rebuild_event_includes_existing_reference(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            event_dir = Path(temp_dir)
+            uploads_dir = event_dir / "uploads"
+            uploads_dir.mkdir()
+
+            source = uploads_dir / "lap1.csv"
+            source.write_text("telemetry", encoding="utf-8")
+            reference_path = event_dir / "reference.csv"
+            reference_path.write_text(
+                "telemetry",
+                encoding="utf-8",
+            )
+
+            with patch(
+                "racecoach.select_reference.subprocess.run"
+            ) as run_mock:
+                rebuild_event(event_dir, reference_path)
+
+            analyze_command = run_mock.call_args_list[0].args[0]
+
+            self.assertIn("--reference", analyze_command)
+            self.assertIn(
+                str(reference_path),
+                analyze_command,
+            )
+
+    def test_rebuild_event_omits_missing_reference(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            event_dir = Path(temp_dir)
+            uploads_dir = event_dir / "uploads"
+            uploads_dir.mkdir()
+
+            source = uploads_dir / "lap1.csv"
+            source.write_text("telemetry", encoding="utf-8")
+
+            with patch(
+                "racecoach.select_reference.subprocess.run"
+            ) as run_mock:
+                rebuild_event(event_dir, None)
+
+            analyze_command = run_mock.call_args_list[0].args[0]
+
+            self.assertNotIn("--reference", analyze_command)
 
 if __name__ == "__main__":
     unittest.main()

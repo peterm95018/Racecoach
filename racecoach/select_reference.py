@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import filecmp
 import argparse
+import filecmp
 import json
 import shutil
 import subprocess
@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from racecoach.run_status import load_run_status
 
 @dataclass(frozen=True)
 class ReferenceCandidate:
@@ -66,16 +67,23 @@ def load_candidates(event_dir: Path) -> list[ReferenceCandidate]:
         if not csv_path.exists():
             continue
 
+        run_name = str(
+            run.get("name") or Path(source).stem
+        )
+        _, is_clean = load_run_status(
+            event_dir,
+            run_name,
+        )
+
         candidates.append(
             ReferenceCandidate(
-                run_name=str(run.get("name") or Path(source).stem),
+                run_name=run_name,
                 source=source,
                 csv_path=csv_path,
                 duration_s=duration,
-                is_clean=run.get("is_clean"),
+                is_clean=is_clean,
             )
         )
-
     return candidates
 
 
@@ -214,8 +222,74 @@ def update_live_reference(
 
     return selected, reference_changed
 
+def reconcile_live_reference(
+    event_dir: Path,
+    candidates: list[ReferenceCandidate],
+) -> tuple[ReferenceCandidate | None, bool]:
+    """
+    Reconcile an existing live reference after classifications change.
 
-def rebuild_event(event_dir: Path, reference_path: Path) -> None:
+    Prefer the fastest clean run. Preserve an existing unknown
+    provisional reference, but never preserve a reference that is now
+    explicitly non-clean.
+    """
+    reference_path = event_dir / "reference.csv"
+    metadata_path = event_dir / "reference_selection.json"
+
+    selected_clean = select_clean_reference(candidates)
+
+    if selected_clean is not None:
+        return update_live_reference(
+            event_dir,
+            candidates,
+            allow_provisional=False,
+        )
+
+    current_candidate = None
+
+    if reference_path.exists():
+        for candidate in candidates:
+            if filecmp.cmp(
+                candidate.csv_path,
+                reference_path,
+                shallow=False,
+            ):
+                current_candidate = candidate
+                break
+
+    if (
+        current_candidate is not None
+        and current_candidate.is_clean is None
+    ):
+        return current_candidate, False
+
+    if current_candidate is None and reference_path.exists():
+        return None, False
+
+    selected, changed = update_live_reference(
+        event_dir,
+        candidates,
+        allow_provisional=True,
+    )
+
+    if selected is not None:
+        return selected, changed
+
+    if (
+        current_candidate is not None
+        and current_candidate.is_clean is False
+    ):
+        reference_path.unlink(missing_ok=True)
+        metadata_path.unlink(missing_ok=True)
+        return None, True
+
+    return None, False
+
+
+def rebuild_event(
+    event_dir: Path,
+    reference_path: Path | None,
+) -> None:
     uploads_dir = event_dir / "uploads"
     reports_dir = event_dir / "reports"
 
@@ -231,19 +305,32 @@ def rebuild_event(event_dir: Path, reference_path: Path) -> None:
     for csv_path in csv_paths:
         print(f"Rebuilding report: {csv_path.name}")
 
-        subprocess.run(
+        command = [
+            sys.executable,
+            "-m",
+            "racecoach.analyze_run",
+            str(csv_path),
+            "--event",
+            str(event_dir),
+        ]
+
+        if reference_path is not None:
+            command.extend(
+                [
+                    "--reference",
+                    str(reference_path),
+                ]
+            )
+
+        command.extend(
             [
-                sys.executable,
-                "-m",
-                "racecoach.analyze_run",
-                str(csv_path),
-                "--event",
-                str(event_dir),
-                "--reference",
-                str(reference_path),
                 "--reports",
                 str(reports_dir),
-            ],
+            ]
+        )
+
+        subprocess.run(
+            command,
             check=True,
         )
 
