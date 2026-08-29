@@ -5,20 +5,84 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
-read -r -p "Event name, example salinas_2026-05-17: " EVENT_NAME
+read -r -p \
+    "Event name, example GGR_salinas_2026-05-17: " \
+    EVENT_NAME
 
 if [ -z "$EVENT_NAME" ]; then
     echo "Event name required."
     exit 1
 fi
 
+EVENT_NAME_LOWER="$(
+    printf '%s' "$EVENT_NAME" \
+        | tr '[:upper:]' '[:lower:]'
+)"
+
+DEFAULT_ORGANIZER=""
+
+case "$EVENT_NAME_LOWER" in
+    ggr*)
+        DEFAULT_ORGANIZER="ggr"
+        ;;
+    lpr*)
+        DEFAULT_ORGANIZER="lpr"
+        ;;
+    gglc*)
+        DEFAULT_ORGANIZER="gglc"
+        ;;
+esac
+
+if [ -n "$DEFAULT_ORGANIZER" ]; then
+    read -r -p \
+        "Organizer [$DEFAULT_ORGANIZER]: " \
+        ORGANIZER_INPUT
+    ORGANIZER="${ORGANIZER_INPUT:-$DEFAULT_ORGANIZER}"
+else
+    read -r -p \
+        "Organizer (ggr, lpr, gglc, or blank): " \
+        ORGANIZER
+fi
+
+ORGANIZER="$(
+    printf '%s' "$ORGANIZER" \
+        | tr '[:upper:]' '[:lower:]'
+)"
+
+
+if [ -n "$ORGANIZER" ]; then
+    if ! printf '%s' "$ORGANIZER" \
+        | grep -Eq '^[a-z0-9_-]+$'; then
+        echo "Organizer must contain only letters, numbers, _ or -."
+        exit 1
+    fi
+fi
+
+
 EVENT_DIR="events/$EVENT_NAME"
+EVENT_CONFIG="$EVENT_DIR/event.yaml"
 
 mkdir -p "$EVENT_DIR/uploads"
 mkdir -p "$EVENT_DIR/reports"
 
+if [ -n "$ORGANIZER" ]; then
+    if [ ! -f "$EVENT_CONFIG" ]; then
+        printf 'organizer: %s\n' \
+            "$ORGANIZER" \
+            > "$EVENT_CONFIG"
+    elif ! grep -Eq \
+        '^[[:space:]]*organizer:' \
+        "$EVENT_CONFIG"; then
+        printf '\norganizer: %s\n' \
+            "$ORGANIZER" \
+            >> "$EVENT_CONFIG"
+    fi
+fi
+
 if [ ! -f "$EVENT_DIR/segments.yaml" ]; then
-    cp events/sample_event/segments.yaml "$EVENT_DIR/segments.yaml"
+    cp \
+        events/sample_event/segments.yaml \
+        "$EVENT_DIR/segments.yaml"
 fi
 
 ./set_active_event "$EVENT_NAME"
@@ -31,3 +95,7 @@ echo ""
 echo "Event folders ready:"
 echo "  $EVENT_DIR/uploads"
 echo "  $EVENT_DIR/reports"
+
+if [ -n "$ORGANIZER" ]; then
+    echo "  Organizer: $ORGANIZER"
+fi
