@@ -4,6 +4,7 @@ import pandas as pd
 
 from racecoach.data_quality import (
     DataQualityError,
+    validate_course_geometry,
     validate_segment_coverage,
 )
 
@@ -124,6 +125,78 @@ class SegmentCoverageTests(unittest.TestCase):
                 label="trimmed numbered lap",
                 timed_lap_distance_m=748.0,
             )
+
+
+class CourseGeometryTests(unittest.TestCase):
+    def setUp(self):
+        self.reference = pd.DataFrame(
+            {
+                "latitude": [
+                    36.66000, 36.66010, 36.66020, 36.66030, 36.66040,
+                    36.66050, 36.66060, 36.66070, 36.66080, 36.66090,
+                ],
+                "longitude": [-121.61000] * 10,
+                "distance": [
+                    0.0, 11.1, 22.2, 33.3, 44.4,
+                    55.5, 66.6, 77.7, 88.8, 99.9,
+                ],
+            }
+        )
+
+    def test_matching_course_geometry_passes(self):
+        lap = self.reference.copy()
+        lap["longitude"] = lap["longitude"] + 0.00001
+
+        result = validate_course_geometry(
+            lap,
+            self.reference,
+            label="matching lap",
+            downsample=1,
+        )
+
+        self.assertLess(result.p95_error_m, 5.0)
+        self.assertEqual(result.far_sample_ratio, 0.0)
+
+    def test_course_subset_is_rejected(self):
+        # Every point in this shorter lap lies exactly on the reference,
+        # so a one-way lap-to-reference check would incorrectly pass it.
+        lap = self.reference.iloc[:6].copy()
+
+        with self.assertRaisesRegex(
+            DataQualityError,
+            "course geometry does not match",
+        ):
+            validate_course_geometry(
+                lap,
+                self.reference,
+                label="shorter course",
+                downsample=1,
+                p95_error_limit_m=20.0,
+                far_error_m=20.0,
+                far_sample_ratio_limit=0.05,
+            )
+
+    def test_large_course_divergence_is_rejected(self):
+        lap = self.reference.copy()
+
+        lap.loc[8:, "longitude"] = (
+            lap.loc[8:, "longitude"] + 0.00070
+        )
+
+        with self.assertRaisesRegex(
+            DataQualityError,
+            "course geometry does not match",
+        ):
+            validate_course_geometry(
+                lap,
+                self.reference,
+                label="mismatched lap",
+                downsample=1,
+                p95_error_limit_m=20.0,
+                far_error_m=20.0,
+                far_sample_ratio_limit=0.05,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

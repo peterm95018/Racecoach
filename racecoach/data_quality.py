@@ -3,11 +3,119 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
+
+from racecoach.reference_path import project_lap_to_reference
 
 
 class DataQualityError(ValueError):
     """Raised when telemetry cannot safely produce coaching."""
+
+
+@dataclass(frozen=True)
+class CourseGeometry:
+    median_error_m: float
+    p90_error_m: float
+    p95_error_m: float
+    max_error_m: float
+    far_sample_ratio: float
+    reverse_p95_error_m: float
+    reverse_far_sample_ratio: float
+
+
+def validate_course_geometry(
+    lap_df: pd.DataFrame,
+    reference_df: pd.DataFrame,
+    *,
+    label: str = "run",
+    downsample: int = 50,
+    p95_error_limit_m: float = 20.0,
+    far_error_m: float = 20.0,
+    far_sample_ratio_limit: float = 0.05,
+) -> CourseGeometry:
+    required = {"latitude", "longitude"}
+
+    missing_lap = required - set(lap_df.columns)
+    if missing_lap:
+        raise DataQualityError(
+            f"{label}: GPS data is missing "
+            f"{', '.join(sorted(missing_lap))}"
+        )
+
+    missing_reference = required - set(reference_df.columns)
+    if missing_reference:
+        raise DataQualityError(
+            f"{label}: reference GPS data is missing "
+            f"{', '.join(sorted(missing_reference))}"
+        )
+
+    if lap_df.empty:
+        raise DataQualityError(f"{label}: GPS data is empty")
+
+    if reference_df.empty:
+        raise DataQualityError(f"{label}: reference GPS data is empty")
+
+    projected = project_lap_to_reference(
+        lap_df,
+        reference_df,
+        downsample=downsample,
+    )
+    reverse_projected = project_lap_to_reference(
+        reference_df,
+        lap_df,
+        downsample=downsample,
+    )
+
+    errors = projected["ref_error_m"].astype(float).to_numpy()
+    errors = errors[np.isfinite(errors)]
+
+    reverse_errors = (
+        reverse_projected["ref_error_m"].astype(float).to_numpy()
+    )
+    reverse_errors = reverse_errors[np.isfinite(reverse_errors)]
+
+    if len(errors) == 0 or len(reverse_errors) == 0:
+        raise DataQualityError(
+            f"{label}: course geometry could not be measured"
+        )
+
+    result = CourseGeometry(
+        median_error_m=float(np.median(errors)),
+        p90_error_m=float(np.percentile(errors, 90)),
+        p95_error_m=float(np.percentile(errors, 95)),
+        max_error_m=float(np.max(errors)),
+        far_sample_ratio=float(np.mean(errors > far_error_m)),
+        reverse_p95_error_m=float(
+            np.percentile(reverse_errors, 95)
+        ),
+        reverse_far_sample_ratio=float(
+            np.mean(reverse_errors > far_error_m)
+        ),
+    )
+
+    forward_mismatch = (
+        result.p95_error_m > p95_error_limit_m
+        and result.far_sample_ratio > far_sample_ratio_limit
+    )
+    reverse_mismatch = (
+        result.reverse_p95_error_m > p95_error_limit_m
+        and result.reverse_far_sample_ratio
+        > far_sample_ratio_limit
+    )
+
+    if forward_mismatch or reverse_mismatch:
+        raise DataQualityError(
+            f"{label}: course geometry does not match reference "
+            f"(forward P95 {result.p95_error_m:.1f}m, "
+            f"{result.far_sample_ratio * 100:.1f}% >"
+            f"{far_error_m:.1f}m; "
+            f"reverse P95 {result.reverse_p95_error_m:.1f}m, "
+            f"{result.reverse_far_sample_ratio * 100:.1f}% >"
+            f"{far_error_m:.1f}m)"
+        )
+
+    return result
 
 
 @dataclass(frozen=True)
