@@ -20,6 +20,7 @@ from racecoach.reference_path import (
 
 from racecoach.data_quality import (
     DataQualityError,
+    validate_course_geometry,
     validate_segment_coverage,
 )
 
@@ -638,6 +639,35 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
     segment_config = load_segment_config(event_dir)
 
     ref_path = reference_path or (event_dir / "reference.csv")
+
+    # Validate the physical GPS course before producing coaching whenever
+    # a separate reference run is available. On the first run of an event,
+    # the uploaded CSV may temporarily serve as its own analysis reference;
+    # there is nothing meaningful to validate in that case.
+    if (
+        ref_path.exists()
+        and ref_path.resolve() != csv_path.resolve()
+    ):
+        geometry_ref_df = normalize_columns(
+            select_timed_lap_rows(
+                read_racechrono_csv(ref_path),
+                ref_path.name,
+            )
+        )
+
+        geometry = validate_course_geometry(
+            df,
+            geometry_ref_df,
+            label=csv_path.name,
+        )
+
+        print(
+            "Course geometry validated: "
+            f"forward P95={geometry.p95_error_m:.1f}m, "
+            f">20m={geometry.far_sample_ratio * 100:.1f}%; "
+            f"reverse P95={geometry.reverse_p95_error_m:.1f}m, "
+            f">20m={geometry.reverse_far_sample_ratio * 100:.1f}%"
+        )
 
     if mode == "reference_path" and ref_path.exists():
         print("Using reference path segmentation.")
