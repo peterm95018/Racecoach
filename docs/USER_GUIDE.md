@@ -21,7 +21,7 @@ Prepare your equipment before arriving at the event.
 - Charge iPhone
 - Charge RaceBox GPS
 - Charge GoPro (if used)
-- Charge OBDLink (if required)
+- Pack OBDLink
 - Pack tire gauge and inflator
 - Pack helmet and autocross equipment
 
@@ -39,7 +39,9 @@ Prepare your equipment before arriving at the event.
 
 Create a new RaceCoach event if necessary.
 
-Walk the course carefully and divide it into meaningful driving segments.
+Review course map if available and try to create meaningful driving segments.
+
+Walk the course carefully and create a RaceChrono Pro track marking traps with driving segments.
 
 Good segment definitions produce better coaching.
 
@@ -146,7 +148,7 @@ Remember:
 # Typical Event Timeline
 
 1. Prepare the event.
-2. Walk the course.
+2. Walk the course; create a track map with segments.
 3. Record a run.
 4. Upload telemetry.
 5. Review the Grid Report.
