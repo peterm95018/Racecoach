@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from racecoach.analyze_run import course_segments_configured
+
 from racecoach.event_reflection import load_event_reflection
 
 from racecoach.coaching_themes import load_coaching_themes
@@ -167,6 +169,11 @@ def status_command(event_dir: Path) -> None:
     )
 
     problems = []
+    segments_path = event_dir / "segments.yaml"
+    if not segments_path.exists():
+        problems.append("segments.yaml missing")
+    elif not course_segments_configured(event_dir):
+        problems.append("course segments not configured")
 
     if len(uploads) != len(summaries):
         problems.append(
@@ -967,6 +974,11 @@ def today_command(event_dir: Path) -> None:
     )
 
     problems = []
+    segments_path = event_dir / "segments.yaml"
+    if not segments_path.exists():
+        problems.append("segments.yaml missing")
+    elif not course_segments_configured(event_dir):
+        problems.append("course segments not configured")
 
     if len(uploads) != len(summaries):
         problems.append("upload/summary mismatch")
@@ -1072,10 +1084,15 @@ def doctor_command(event_dir: Path) -> None:
 
     segments_path = event_dir / "segments.yaml"
 
-    if segments_path.exists():
-        pass_check("segments.yaml")
-    else:
+    if not segments_path.exists():
         fail_check("segments.yaml missing")
+    elif not course_segments_configured(event_dir):
+        fail_check(
+            "segments.yaml course configuration incomplete "
+            "(configured: false)"
+        )
+    else:
+        pass_check("segments.yaml course configuration")
 
     uploads = (
         sorted(uploads_dir.glob("*.csv"))

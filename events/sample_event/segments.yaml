@@ -1,3 +1,8 @@
+# RaceCoach course segmentation template.
+# Replace the sample segment boundaries during the course walk,
+# then change configured to true before live analysis.
+configured: false
+
 segments:
   - name: Launch / first element
     type: launch

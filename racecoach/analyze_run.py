@@ -312,8 +312,10 @@ def load_segment_config(event_dir: Path):
     return yaml.safe_load(segments_file.read_text())
 
 
-def load_segments(event_dir: Path):
-    return load_segment_config(event_dir)["segments"]
+def course_segments_configured(event_dir: Path) -> bool:
+    config = load_segment_config(event_dir)
+    return config.get("configured", True) is True
+
 
 def load_segments(event_dir: Path):
     return load_segment_config(event_dir)["segments"]
@@ -617,6 +619,13 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
 
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
+    if not course_segments_configured(event_dir):
+        raise DataQualityError(
+            "Course segments are not configured for this event. "
+            "Update segments.yaml during the course walk and set "
+            "configured: true before live analysis."
+        )
+
     df = normalize_columns(
         select_timed_lap_rows(
             read_racechrono_csv(csv_path),

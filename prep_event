@@ -83,6 +83,11 @@ if [ ! -f "$EVENT_DIR/segments.yaml" ]; then
     cp \
         events/sample_event/segments.yaml \
         "$EVENT_DIR/segments.yaml"
+    echo ""
+    echo "COURSE SEGMENTS: NOT CONFIGURED"
+    echo "Walk the course and update:"
+    echo "  $EVENT_DIR/segments.yaml"
+    echo "Then set configured: true before live analysis."
 fi
 
 ./set_active_event "$EVENT_NAME"

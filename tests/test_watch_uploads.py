@@ -10,6 +10,7 @@ import pandas as pd
 from racecoach.data_quality import DataQualityError
 from racecoach.watch_uploads import (
     UploadHandler,
+    wait_for_stable_file,
     write_data_quality_failure_reports,
 )
 
@@ -410,6 +411,63 @@ class WatchUploadTests(unittest.TestCase):
                 call_order,
                 ["rebuild", "publish"],
             )
+
+    def test_wait_for_stable_file_accepts_completed_upload(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "lap1.csv"
+            source.write_text("complete upload")
+
+            with patch("racecoach.watch_uploads.time.sleep"):
+                stable = wait_for_stable_file(
+                    source,
+                    stable_checks=2,
+                    timeout_s=1.0,
+                )
+
+            self.assertTrue(stable)
+
+    def test_wait_for_stable_file_rejects_missing_upload(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "lap1.csv"
+
+            monotonic_values = iter([0.0, 0.1, 0.2, 1.1])
+
+            with (
+                patch(
+                    "racecoach.watch_uploads.time.monotonic",
+                    side_effect=monotonic_values,
+                ),
+                patch("racecoach.watch_uploads.time.sleep"),
+            ):
+                stable = wait_for_stable_file(
+                    source,
+                    interval_s=0.1,
+                    stable_checks=2,
+                    timeout_s=1.0,
+                )
+
+            self.assertFalse(stable)
+
+    def test_wait_for_stable_file_waits_for_growing_upload(self):
+        states = iter(
+            [
+                SimpleNamespace(st_size=100, st_mtime_ns=1),
+                SimpleNamespace(st_size=200, st_mtime_ns=2),
+                SimpleNamespace(st_size=300, st_mtime_ns=3),
+                SimpleNamespace(st_size=300, st_mtime_ns=3),
+                SimpleNamespace(st_size=300, st_mtime_ns=3),
+            ]
+        )
+        fake_path = SimpleNamespace(stat=lambda: next(states))
+
+        with patch("racecoach.watch_uploads.time.sleep"):
+            stable = wait_for_stable_file(
+                fake_path,
+                stable_checks=2,
+                timeout_s=1.0,
+            )
+
+        self.assertTrue(stable)
 
 if __name__ == "__main__":
     unittest.main()

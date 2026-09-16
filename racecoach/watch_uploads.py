@@ -92,6 +92,42 @@ def publish_reports_to_drupal(project_dir: Path) -> None:
     )
 
 
+def wait_for_stable_file(
+    path: Path,
+    *,
+    interval_s: float = 1.0,
+    stable_checks: int = 3,
+    timeout_s: float = 60.0,
+) -> bool:
+    """Wait until an uploaded file has stopped changing."""
+    deadline = time.monotonic() + timeout_s
+    previous_state = None
+    unchanged = 0
+
+    while time.monotonic() < deadline:
+        try:
+            stat = path.stat()
+        except FileNotFoundError:
+            previous_state = None
+            unchanged = 0
+            time.sleep(interval_s)
+            continue
+
+        state = (stat.st_size, stat.st_mtime_ns)
+
+        if stat.st_size > 0 and state == previous_state:
+            unchanged += 1
+            if unchanged >= stable_checks:
+                return True
+        else:
+            unchanged = 0
+
+        previous_state = state
+        time.sleep(interval_s)
+
+    return False
+
+
 def read_optional_file(path: Path) -> bytes | None:
     if not path.exists():
         return None
@@ -125,7 +161,12 @@ class UploadHandler(FileSystemEventHandler):
         if path.suffix.lower() != ".csv":
             return
 
-        time.sleep(2)
+        if not wait_for_stable_file(path):
+            print(
+                f"ERROR: upload did not stabilize within timeout: "
+                f"{path.name}"
+            )
+            return
 
         project_dir = Path(__file__).resolve().parent.parent
         reference_path = self.event_dir / "reference.csv"
