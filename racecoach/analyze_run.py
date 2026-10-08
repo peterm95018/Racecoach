@@ -26,6 +26,14 @@ from racecoach.data_quality import (
 
 from racecoach.run_status import load_run_status
 
+from racecoach.racechrono_track import (
+    TrackCalibrationError,
+    load_racechrono_track,
+    calibrate_boundaries,
+    boundaries_to_segments,
+    render_course_trace,
+)
+
 MPS_TO_MPH = 2.2369362921
 
 @dataclass
@@ -315,6 +323,85 @@ def load_segment_config(event_dir: Path):
 def course_segments_configured(event_dir: Path) -> bool:
     config = load_segment_config(event_dir)
     return config.get("configured", True) is True
+
+
+def calibrate_course_from_racechrono(
+    event_dir: Path,
+    csv_path: Path,
+    df: pd.DataFrame,
+) -> list[dict]:
+    """Calibrate an unconfigured event from its RaceChrono track."""
+    track_files = sorted(event_dir.glob("*.rcz"))
+
+    if not track_files:
+        raise DataQualityError(
+            "Course segments are not configured and no RaceChrono "
+            "track file (.rcz) was found."
+        )
+
+    if len(track_files) > 1:
+        names = ", ".join(path.name for path in track_files)
+        raise DataQualityError(
+            "Course segments are not configured and multiple "
+            f"RaceChrono track files were found: {names}"
+        )
+
+    track_path = track_files[0]
+
+    try:
+        gates = load_racechrono_track(track_path)
+        boundaries = calibrate_boundaries(df, gates)
+        segments = boundaries_to_segments(boundaries)
+
+        # Generate the human-readable calibration check before marking
+        # the course configured. If trace generation fails, segments.yaml
+        # remains unchanged and the event stays fail-closed.
+        render_course_trace(
+            df,
+            boundaries,
+            event_dir / "reports" / "course_trace.png",
+            title=f"RaceCoach Course Trace - {event_dir.name}",
+        )
+    except TrackCalibrationError as exc:
+        raise DataQualityError(
+            f"RaceChrono course calibration failed: {exc}"
+        ) from exc
+
+    config = {
+        "configured": True,
+        "source": "racechrono",
+        "track_file": track_path.name,
+        "calibrated_from": csv_path.name,
+        "segments": segments,
+    }
+
+    segments_path = event_dir / "segments.yaml"
+    temp_segments_path = segments_path.with_suffix(".yaml.tmp")
+
+    # Persist calibration only after every calibration artifact has
+    # been generated successfully. Use an atomic replacement so an
+    # interrupted write cannot leave a partial configured course.
+    temp_segments_path.write_text(
+        yaml.safe_dump(
+            config,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    temp_segments_path.replace(segments_path)
+
+    print(
+        "RaceChrono course calibrated from "
+        f"{track_path.name} using {csv_path.name}"
+    )
+
+    for boundary in boundaries:
+        print(
+            f"  {boundary.distance_m:8.1f} m  "
+            f"{boundary.name}"
+        )
+
+    return segments
 
 
 def load_segments(event_dir: Path):
@@ -619,13 +706,6 @@ def attach_reference_metrics(metrics: list[SegmentMetric], ref_metrics: dict[str
 
 
 def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None):
-    if not course_segments_configured(event_dir):
-        raise DataQualityError(
-            "Course segments are not configured for this event. "
-            "Update segments.yaml during the course walk and set "
-            "configured: true before live analysis."
-        )
-
     df = normalize_columns(
         select_timed_lap_rows(
             read_racechrono_csv(csv_path),
@@ -643,6 +723,24 @@ def analyze(csv_path: Path, event_dir: Path, reference_path: Path | None = None)
     mode = config.get("segmentation_mode", "distance")
 
     print(f"Segmentation mode: {mode}")
+
+    if not course_segments_configured(event_dir):
+        if mode != "distance":
+            raise DataQualityError(
+                "Automatic RaceChrono course calibration requires "
+                "distance segmentation mode."
+            )
+
+        print(
+            "Course segments are not configured; "
+            "calibrating from RaceChrono track and this timed run."
+        )
+
+        calibrate_course_from_racechrono(
+            event_dir,
+            csv_path,
+            df,
+        )
 
     segments = load_segments(event_dir)
     segment_config = load_segment_config(event_dir)
