@@ -130,3 +130,40 @@ This resolved inflated time-loss calculations caused by segment boundaries endin
 - REPORT_INTERPRETATION.md
 - COACHING_PHILOSOPHY.md
 - OPERATIONS.md
+
+---
+
+# 2026-10-08 — RaceChrono Course Calibration
+
+**Commit:** `ed54353`
+
+## Problem
+
+Event-day course setup required manually configured segment distances. This was not practical because meaningful course stations can be identified during the course walk, but their telemetry distances are not known until a run has been recorded.
+
+## Added
+
+- RaceChrono `.rcz` track parsing.
+- Automatic calibration of intermediate RaceChrono gates against the first valid timed run.
+- Automatic generation of contiguous named course segments.
+- Persistent Run-1 segment geometry for all subsequent runs.
+- `course_trace.png` for visual calibration review.
+- Fail-closed handling of missing, malformed, or ambiguous course geometry.
+- Atomic persistence of calibrated `segments.yaml`.
+
+## Validation
+
+Validated with historical October 3 Crows Landing telemetry.
+
+- Run 1 successfully calibrated nine course segments.
+- Run 2 reused the Run-1 geometry without recalibration.
+- Run 3 completed the normal watcher, comparison, reporting, and Drupal publication workflow.
+- Focused regression suite: 43 tests passed.
+
+## Outcome
+
+RaceCoach no longer requires the driver to determine segment distances during the course walk.
+
+The event-day workflow is now:
+
+Course walk and RaceChrono station placement -> Run 1 automatic calibration -> fixed course geometry -> subsequent run comparison and coaching.
